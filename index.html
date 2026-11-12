@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RDP // RAGAZZI DI PROVINCIA — ARCHIVIO DIGITALE &amp; VOTAZIONE</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap"
+    rel="stylesheet"
+  />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <!-- HEADER TECNICO FISSO -->
+  <header class="site-header" id="siteHeader">
+    <!-- Top Woodland Camo Marquee -->
+    <div class="camo-marquee" aria-hidden="true">
+      <div class="camo-marquee__track">
+        <span class="camo-marquee__chunk">
+          RDP ARCHIVE SYS V3.0 // RAGAZZI DI PROVINCIA // DIGITAL SHOWCASE &amp; RATING PLATFORM // DROP 04 FW26-SS26 // VOTA I CAPI DA 0 A 10 // MILANO NORD - PROVINCIA //
+        </span>
+        <span class="camo-marquee__chunk">
+          RDP ARCHIVE SYS V3.0 // RAGAZZI DI PROVINCIA // DIGITAL SHOWCASE &amp; RATING PLATFORM // DROP 04 FW26-SS26 // VOTA I CAPI DA 0 A 10 // MILANO NORD - PROVINCIA //
+        </span>
+      </div>
+    </div>
+
+    <!-- System Telemetry Row -->
+    <div class="header-telemetry">
+      <div class="brand-block">
+        <span class="brand-block__dot" aria-hidden="true"></span>
+        <h1 class="brand-block__logo">RDP // RAGAZZI DI PROVINCIA</h1>
+        <span class="brand-block__tag">[SYS:/COMMUNITY_SHOWCASE_&amp;_RATING]</span>
+      </div>
+
+      <div class="telemetry-stats">
+        <div class="telemetry-cell">
+          <span class="telemetry-cell__label">CAPI</span>
+          <span class="telemetry-cell__value" id="fileCounter">11 / 11</span>
+        </div>
+        <div class="telemetry-cell">
+          <span class="telemetry-cell__label">VOTI_TOT</span>
+          <span class="telemetry-cell__value" id="totalVotesCounter">0</span>
+        </div>
+        <div class="telemetry-cell telemetry-cell--hide-sm">
+          <span class="telemetry-cell__label">LOCAL_TIME</span>
+          <span class="telemetry-cell__value" id="liveClock">00:00:00 CET</span>
+        </div>
+        <div class="telemetry-cell telemetry-cell--hide-sm">
+          <span class="telemetry-cell__label">STATUS</span>
+          <span class="telemetry-cell__value telemetry-cell__value--camo" id="sysStatus">VOTING_OPEN [0-10]</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filter & Control Bar -->
+    <nav class="control-bar" aria-label="Archive filters and controls">
+      <div class="filter-group" role="tablist" aria-label="Filtra per categoria">
+        <button class="filter-btn is-active" data-category="ALL" role="tab" aria-selected="true">
+          ALL <span class="filter-btn__count" data-count-for="ALL">11</span>
+        </button>
+        <button class="filter-btn" data-category="HOODIES" role="tab" aria-selected="false">
+          HOODIES <span class="filter-btn__count" data-count-for="HOODIES">02</span>
+        </button>
+        <button class="filter-btn" data-category="TEES" role="tab" aria-selected="false">
+          TEES <span class="filter-btn__count" data-count-for="TEES">04</span>
+        </button>
+        <button class="filter-btn" data-category="PANTS" role="tab" aria-selected="false">
+          PANTS <span class="filter-btn__count" data-count-for="PANTS">05</span>
+        </button>
+      </div>
+
+      <div class="header-actions">
+        <div class="rating-legend" title="Vota qualsiasi capo da 0 a 10 direttamente dalla card o dalla scheda tecnica">
+          <span class="rating-legend__star">★</span>
+          <span>RATING_SYS: VOTA DA 0 A 10</span>
+        </div>
+
+        <!-- Creator Account Auth Button & Status Pill -->
+        <button class="auth-btn" id="adminAuthBtn" type="button" title="Accedi con il tuo account Creator RDP per sbloccare l'upload dei mockup">
+          [ACCEDI CREATOR // LOGIN]
+        </button>
+
+        <div class="admin-logged-pill" id="adminLoggedPill" style="display: none;">
+          <span class="admin-status-dot"></span>
+          <span id="adminLoggedName">CREATOR: RICCARDO</span>
+          <button class="auth-logout-btn" id="adminLogoutBtn" type="button" title="Disconnetti account">[LOGOUT]</button>
+        </div>
+
+        <!-- Pulsante Upload: Visibile SOLO ed ESCLUSIVAMENTE quando autenticati con account Creator -->
+        <button class="upload-btn" id="openUploadBtn" type="button" style="display: none;" title="Carica nuovo mockup nell'archivio (Riservato Creator)">
+          + UPLOAD MOCKUP [CREATOR]
+        </button>
+
+        <button
+          class="antigravity-btn"
+          id="antigravityToggle"
+          type="button"
+          aria-pressed="false"
+        >
+          <span class="antigravity-btn__led" aria-hidden="true"></span>
+          <span class="antigravity-btn__label">ANTIGRAVITY MODE</span>
+          <span class="antigravity-btn__state" id="antigravityState">[OFF]</span>
+        </button>
+      </div>
+    </nav>
+  </header>
+
+  <!-- DIRECTORY SUB-HEADER & PAGE/SORT CONTROLS -->
+  <main class="archive-main" id="archiveMain">
+    <div class="directory-bar">
+      <div class="directory-bar__path">
+        <span>ROOT</span>
+        <span>/</span>
+        <span>RDP_LAB</span>
+        <span>/</span>
+        <span id="activeDirLabel">ALL_GARMENTS</span>
+      </div>
+
+      <!-- Controllo Due Pagine (Davanti / Retro) -->
+      <div class="directory-bar__pages">
+        <span class="directory-bar__pages-label">VISTA_PAGINE:</span>
+        <div class="page-mode-group" role="group" aria-label="Visualizzazione Pagine Davanti e Retro">
+          <button class="page-mode-btn is-active" data-page-mode="interactive" type="button" title="Ogni card ha switch rapido P.01 Davanti / P.02 Retro">
+            [FLIP // SINGOLA]
+          </button>
+          <button class="page-mode-btn" data-page-mode="front_only" type="button" title="Mostra solo le pagine Davanti per tutti i capi">
+            [P.01 DAVANTI]
+          </button>
+          <button class="page-mode-btn" data-page-mode="back_only" type="button" title="Mostra solo le pagine Retro per tutti i capi">
+            [P.02 RETRO]
+          </button>
+          <button class="page-mode-btn" data-page-mode="split_dual" type="button" title="Affianca entrambe le pagine (Davanti e Retro) nella griglia per ogni capo">
+            [DOPPIA PAGINA // AFFIANCATE]
+          </button>
+        </div>
+      </div>
+
+      <!-- Ordinamento per Voto o Codice -->
+      <div class="directory-bar__sort">
+        <span class="directory-bar__pages-label">ORDINA:</span>
+        <div class="sort-mode-group" role="group" aria-label="Ordinamento archivio">
+          <button class="sort-btn is-active" data-sort-by="code" type="button">[CODICE]</button>
+          <button class="sort-btn" data-sort-by="rating" type="button">[TOP VOTO ★]</button>
+          <button class="sort-btn" data-sort-by="votes" type="button">[PIÙ VOTATI]</button>
+        </div>
+      </div>
+
+      <div class="directory-bar__meta">
+        <button class="dir-action-btn" id="exportArchiveBtn" type="button" style="display: none;" title="Esporta catalogo (Riservato Creator)">
+          [ESPORTA_CATALOGO]
+        </button>
+        <button class="dir-action-btn dir-action-btn--warn" id="resetVotesBtn" type="button" title="Azzera i voti personali salvati">
+          [AZZERA_MIEI_VOTI]
+        </button>
+        <button class="dir-action-btn dir-action-btn--restore" id="restoreDeletedBtn" type="button" style="display: none;" title="Ripristina tutti i mockup rimossi dall'archivio">
+          [RIPRISTINA_ELIMINATI]
+        </button>
+      </div>
+    </div>
+
+    <!-- GRIGLIA MOCKUP STILE PDF CHANNEL CON FOTO AD ALTA RISOLUZIONE -->
+    <section class="archive-grid" id="archiveGrid" aria-label="Archivio Capi Ragazzi di Provincia"></section>
+  </main>
+
+  <!-- ANTIGRAVITY HUD OVERLAY (visibile solo quando attivo) -->
+  <div class="physics-hud" id="physicsHud" hidden>
+    <div class="physics-hud__info">
+      <span class="physics-hud__badge">PHYSICS // ACTIVE</span>
+      <span>DRAG &amp; THROW CARDS — CLICK TO INSPECT &amp; VOTE</span>
+    </div>
+    <div class="physics-hud__actions">
+      <button class="hud-action-btn" id="pulseZeroGBtn" type="button">[SHOCKWAVE]</button>
+      <button class="hud-action-btn" id="resetGridBtn" type="button">[RESTORE GRID]</button>
+    </div>
+  </div>
+
+  <!-- FOOTER TECNICO -->
+  <footer class="site-footer">
+    <div class="site-footer__inner">
+      <span>© 2026 RDP // RAGAZZI DI PROVINCIA — OFFICIAL SHOWCASE // DROP 04</span>
+      <span>1400×1400PX HD RESOLUTION // TWO PAGES PER GARMENT // COMMUNITY RATING 0-10</span>
+    </div>
+  </footer>
+
+  <!-- MODAL / LIGHTBOX ISPEZIONE & TERMINALE VOTAZIONE -->
+  <div class="modal-backdrop" id="inspectionModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle" hidden>
+    <div class="modal-window">
+      <div class="modal-header">
+        <div class="modal-header__left">
+          <span class="modal-code" id="modalCode">RDP-001</span>
+          <span class="camo-badge" id="modalBadge">CORE ARCHIVE</span>
+          <span class="modal-cat" id="modalCategory">TEES</span>
+        </div>
+        <div class="modal-header__right">
+          <button class="modal-util-btn modal-util-btn--danger" id="modalDeleteBtn" type="button" style="display: none;" title="Elimina questo capo dall'archivio (Solo Creator)">
+            [ELIMINA_CAPO]
+          </button>
+          <button class="modal-util-btn" id="modalDownloadBtn" type="button" style="display: none;" title="Scarica immagine HD 1400x1400 (Riservato Creator)">
+            [SCARICA_HD]
+          </button>
+          <button class="modal-close-btn" id="modalCloseBtn" type="button" aria-label="Chiudi scheda tecnica">
+            [CHIUDI // ESC]
+          </button>
+        </div>
+      </div>
+
+      <div class="modal-body">
+        <!-- Colonna Sinistra: Viewport Immagine ad Alta Risoluzione -->
+        <div class="modal-viewer">
+          <div class="modal-viewer__toolbar">
+            <div class="view-switch" role="group" aria-label="Seleziona Pagina 01 Davanti o Pagina 02 Retro">
+              <button class="view-switch__btn is-active" id="viewFrontBtn" type="button">P.01 // DAVANTI</button>
+              <button class="view-switch__btn" id="viewBackBtn" type="button">P.02 // RETRO</button>
+            </div>
+            <div class="viewer-toolbar-right">
+              <span class="zoom-indicator" id="zoomIndicator">ZOOM: 1.0X</span>
+              <button class="grid-toggle-btn" id="gridOverlayBtn" type="button" aria-pressed="false">
+                [CAD_GRID: OFF]
+              </button>
+            </div>
+          </div>
+
+          <div class="modal-viewer__stage" id="modalStage" title="Clicca per zoom 2.5X ad alta risoluzione e muovi il cursore per esplorare">
+            <div class="cad-grid-overlay" id="cadGridOverlay" aria-hidden="true"></div>
+            <img id="modalImage" src="" alt="" />
+            <div class="modal-viewer__corner modal-viewer__corner--tl"></div>
+            <div class="modal-viewer__corner modal-viewer__corner--tr"></div>
+            <div class="modal-viewer__corner modal-viewer__corner--bl"></div>
+            <div class="modal-viewer__corner modal-viewer__corner--br"></div>
+          </div>
+
+          <div class="modal-viewer__caption">
+            <span id="modalViewLabel">PAGINA 01 DI 02: VISTA DAVANTI (FRONT)</span>
+            <span id="modalAssetPath">SRC: /ASSETS/RDP-001-FRONT.JPG [1400×1400 HD]</span>
+          </div>
+        </div>
+
+        <!-- Colonna Destra: Scheda Tecnica & Blocco Votazione 0-10 -->
+        <div class="modal-specs">
+          <div class="modal-specs__title-block">
+            <div class="modal-page-badge-row">
+              <span class="modal-specs__eyebrow">TECHNICAL_SPEC_SHEET // ARCHIVE</span>
+              <span class="modal-page-pill" id="modalPageIndicator">PAGINA 01 DI 02 [DAVANTI]</span>
+            </div>
+            <h2 class="modal-specs__title" id="modalTitle">RAGAZZI DI PROVINCIA CRUCIFIX HEAVY TEE</h2>
+          </div>
+
+          <!-- SEZIONE VOTAZIONE DA 0 A 10 -->
+          <div class="voting-terminal" id="votingTerminal">
+            <div class="voting-terminal__head">
+              <span class="voting-terminal__title">TERMINALE VOTAZIONE // COMMUNITY RATING</span>
+              <span class="voting-terminal__score" id="modalRatingScore">★ 9.6 / 10</span>
+            </div>
+
+            <div class="voting-terminal__meta">
+              <span id="modalVoteCount">64 VOTI ESPRESSI</span>
+              <span class="voting-user-status" id="modalUserVoteStatus">TUO VOTO: NON ESPRESSO</span>
+            </div>
+
+            <!-- Scala Voti da 0 a 10 -->
+            <div class="voting-scale" role="group" aria-label="Vota questo capo da 0 a 10">
+              <button class="vote-num-btn" data-vote="0" type="button">0</button>
+              <button class="vote-num-btn" data-vote="1" type="button">1</button>
+              <button class="vote-num-btn" data-vote="2" type="button">2</button>
+              <button class="vote-num-btn" data-vote="3" type="button">3</button>
+              <button class="vote-num-btn" data-vote="4" type="button">4</button>
+              <button class="vote-num-btn" data-vote="5" type="button">5</button>
+              <button class="vote-num-btn" data-vote="6" type="button">6</button>
+              <button class="vote-num-btn" data-vote="7" type="button">7</button>
+              <button class="vote-num-btn" data-vote="8" type="button">8</button>
+              <button class="vote-num-btn" data-vote="9" type="button">9</button>
+              <button class="vote-num-btn" data-vote="10" type="button">10</button>
+            </div>
+
+            <!-- Barra Visuale Media Voti -->
+            <div class="voting-meter" aria-hidden="true">
+              <div class="voting-meter__fill" id="modalMeterFill" style="width: 96%;"></div>
+            </div>
+          </div>
+
+          <!-- Tabella Specifiche Tecniche -->
+          <dl class="spec-table">
+            <div class="spec-row">
+              <dt>FIT</dt>
+              <dd id="specFit">OVERSIZED RELAXED</dd>
+            </div>
+            <div class="spec-row">
+              <dt>GSM / PESO</dt>
+              <dd id="specGsm">310 GSM</dd>
+            </div>
+            <div class="spec-row">
+              <dt>TESSUTO / FABRIC</dt>
+              <dd id="specFabric">100% COMBED VINTAGE WASH COTTON</dd>
+            </div>
+            <div class="spec-row">
+              <dt>COLORWAY</dt>
+              <dd id="specColorway">RAW WHITE / BLOOD RED</dd>
+            </div>
+            <div class="spec-row">
+              <dt>PATTERN REF</dt>
+              <dd id="specPattern">PAT-26-T01</dd>
+            </div>
+            <div class="spec-row">
+              <dt>COSTRUZIONE</dt>
+              <dd id="specConstruction">COLLARE A COSTE FITTE 3CM</dd>
+            </div>
+            <div class="spec-row">
+              <dt>BATCH ARCHIVE</dt>
+              <dd id="specBatch">ATELIER SPEC 01/30</dd>
+            </div>
+          </dl>
+
+          <!-- Note di Produzione Dinamiche (Davanti / Retro) -->
+          <div class="production-notes">
+            <div class="production-notes__header">
+              <span id="specNotesHeader">NOTE VISTA DAVANTI // ATELIER_LOG</span>
+              <span class="camo-strip-mini" aria-hidden="true"></span>
+            </div>
+            <p class="production-notes__text" id="specNotes"></p>
+          </div>
+
+          <div class="modal-nav-footer">
+            <button class="modal-nav-btn" id="modalPrevBtn" type="button">← CAPO_PREC</button>
+            <div class="modal-page-flip-quick">
+              <button class="modal-page-flip-btn" id="modalFlipPageBtn" type="button" title="Gira tra Davanti e Retro (Scorciatoia: SPAZIO o TAB)">
+                [GIRA PAGINA ↻]
+              </button>
+              <span class="modal-nav-index" id="modalIndexLabel">01 / 11</span>
+            </div>
+            <button class="modal-nav-btn" id="modalNextBtn" type="button">CAPO_SUCC →</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL ACCESSO CREATOR / ADMIN -->
+  <div class="modal-backdrop" id="adminAuthModal" role="dialog" aria-modal="true" aria-labelledby="authModalTitle" hidden>
+    <div class="modal-window auth-modal-window">
+      <div class="modal-header">
+        <div class="modal-header__left">
+          <span class="modal-code">RDP-SEC-01</span>
+          <span class="camo-badge">CREATOR AUTH</span>
+          <span class="modal-cat" id="authModalTitle">TERMINALE SICUREZZA</span>
+        </div>
+        <button class="modal-close-btn" id="authCloseBtn" type="button" aria-label="Chiudi finestra accesso">
+          [CHIUDI // ESC]
+        </button>
+      </div>
+      <div class="auth-modal-body">
+        <div class="auth-banner-notice">
+          ACCESSO RISERVATO ALL'AMMINISTRATORE E CREATORE DEL BRAND RDP.<br />
+          INSERISCI LE CREDENZIALI PER SBLOCCARE IL CARICAMENTO, IL DOWNLOAD DEI FILE E LA GESTIONE DELL'ARCHIVIO.
+        </div>
+
+        <form id="adminAuthForm" class="upload-fields" style="padding: 0;">
+          <div class="field-group">
+            <label for="authUsername">EMAIL ACCOUNT CREATOR:</label>
+            <input type="email" id="authUsername" placeholder="ES. rikisolbiati@gmail.com" autocomplete="email" required />
+          </div>
+
+          <div class="field-group">
+            <label for="authPassword">PASSWORD DI SICUREZZA:</label>
+            <input type="password" id="authPassword" placeholder="••••••••••••" autocomplete="current-password" required />
+          </div>
+
+          <div class="upload-error-msg" id="authErrorMsg" hidden></div>
+
+          <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 8px;">
+            <button class="modal-util-btn" id="authCancelBtn" type="button">[ANNULLA]</button>
+            <button class="upload-submit-btn" type="submit" style="cursor: pointer;">[CONFERMA ACCESSO ↗]</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL CARICAMENTO NUOVO MOCKUP (RISERVATO AL CREATORE AUTENTICATO) -->
+  <div class="modal-backdrop" id="uploadModal" role="dialog" aria-modal="true" aria-labelledby="uploadModalTitle" hidden>
+    <div class="modal-window modal-window--upload">
+      <div class="modal-header">
+        <div class="modal-header__left">
+          <span class="modal-code" id="uploadNextCode">RDP-012</span>
+          <span class="camo-badge">CREATOR INGESTION</span>
+          <span class="modal-cat" id="uploadModalTitle">CANVAS ENGINE 1400×1400</span>
+        </div>
+        <button class="modal-close-btn" id="uploadCloseBtn" type="button" aria-label="Chiudi caricamento">[CHIUDI // ESC]</button>
+      </div>
+
+      <div class="upload-body">
+        <!-- Colonna Sinistra: Dropzone & Canvas Engine -->
+        <div class="upload-processor-col">
+          <div class="upload-dropzones">
+            <!-- Front Dropzone -->
+            <div class="dropzone-box" id="frontDropzone" title="Carica Pagina 01 (Davanti)">
+              <input type="file" id="frontFileInput" accept="image/png,image/jpeg,image/webp" hidden />
+              <span class="dropzone-box__tag">PAGINA 01 [DAVANTI] *</span>
+              <span class="dropzone-box__label" id="frontFileName">SELEZIONA O TRASCINA PNG/JPG</span>
+            </div>
+            <!-- Back Dropzone -->
+            <div class="dropzone-box" id="backDropzone" title="Carica Pagina 02 (Retro)">
+              <input type="file" id="backFileInput" accept="image/png,image/jpeg,image/webp" hidden />
+              <span class="dropzone-box__tag">PAGINA 02 [RETRO] (OPZ.)</span>
+              <span class="dropzone-box__label" id="backFileName">SELEZIONA O TRASCINA PNG/JPG</span>
+            </div>
+          </div>
+
+          <!-- Controlli Canvas Processing -->
+          <div class="processor-controls">
+            <label class="proc-check">
+              <input type="checkbox" id="optBgClean" checked />
+              <span>NORMALIZZA BIANCO (#FFFFFF)</span>
+            </label>
+            <label class="proc-check">
+              <input type="checkbox" id="optEnhance" checked />
+              <span>STUDIO CONTRASTO &amp; SHADOW</span>
+            </label>
+            <label class="proc-check">
+              <input type="checkbox" id="optTransparent" />
+              <span>FONDO TRASPARENTE</span>
+            </label>
+            <div class="proc-range">
+              <label for="optTolerance">TOLLERANZA:</label>
+              <input type="range" id="optTolerance" min="5" max="60" value="28" />
+              <span id="tolVal">28</span>
+            </div>
+          </div>
+
+          <!-- Live Preview Grid: Raw vs Elaborato -->
+          <div class="processor-preview-grid">
+            <div class="preview-pane">
+              <div class="preview-pane__head">
+                <span>ORIGINALE GREZZO</span>
+              </div>
+              <div class="preview-pane__stage" id="rawPreviewStage">
+                <span class="preview-placeholder">NESSUN FILE SELEZIONATO</span>
+                <img id="rawPreviewImg" src="" alt="Anteprima originale" hidden />
+              </div>
+            </div>
+            <div class="preview-pane">
+              <div class="preview-pane__head">
+                <span>OUTPUT CANVAS 1400×1400</span>
+                <span class="proc-status-pill" id="procStatusPill">IDLE</span>
+              </div>
+              <div class="preview-pane__stage" id="processedPreviewStage">
+                <span class="preview-placeholder">IN ATTESA DI FILE</span>
+                <img id="processedPreviewImg" src="" alt="Anteprima canvas elaborata" hidden />
+              </div>
+            </div>
+          </div>
+
+          <div class="processor-telemetry" id="processorTelemetry">
+            <span>ORIG: --</span>
+            <span>CROP: --</span>
+            <span>OUT: 1400×1400 (6% PAD)</span>
+            <span>BG: --</span>
+            <span>TIME: --</span>
+          </div>
+        </div>
+
+        <!-- Colonna Destra: Metadati Scheda Tecnica -->
+        <div class="upload-form-col">
+          <form id="uploadForm">
+            <div class="upload-fields">
+              <div class="field-group">
+                <label for="inputTitle">NOME CAPO / MODELLO *</label>
+                <input type="text" id="inputTitle" placeholder="ES. MILANO NORD HOODED JACKET" required />
+              </div>
+
+              <div class="field-row-2">
+                <div class="field-group">
+                  <label for="inputCategory">CATEGORIA *</label>
+                  <select id="inputCategory" required>
+                    <option value="HOODIES">HOODIES</option>
+                    <option value="TEES">TEES</option>
+                    <option value="PANTS">PANTS</option>
+                    <option value="ACCESSORIES">ACCESSORIES</option>
+                  </select>
+                </div>
+                <div class="field-group">
+                  <label for="inputGsm">PESO / GSM *</label>
+                  <input type="text" id="inputGsm" placeholder="ES. 480 GSM" required />
+                </div>
+              </div>
+
+              <div class="field-row-2">
+                <div class="field-group">
+                  <label for="inputFit">VESTIBILITÀ / FIT *</label>
+                  <input type="text" id="inputFit" placeholder="ES. OVERSIZED BOXY" required />
+                </div>
+                <div class="field-group">
+                  <label for="inputBadge">BADGE DI STATO</label>
+                  <input type="text" id="inputBadge" placeholder="ES. CREATOR ARCHIVE" value="CREATOR ARCHIVE" />
+                </div>
+              </div>
+
+              <div class="field-row-2">
+                <div class="field-group">
+                  <label for="inputFabric">TESSUTO / FABRIC</label>
+                  <input type="text" id="inputFabric" placeholder="ES. 100% FRENCH TERRY COTTON" value="100% HEAVYWEIGHT COTTON" />
+                </div>
+                <div class="field-group">
+                  <label for="inputColorway">COLORWAY</label>
+                  <input type="text" id="inputColorway" placeholder="ES. WOODLAND OLIVE / BLACK" value="STUDIO SPEC" />
+                </div>
+              </div>
+
+              <div class="field-group">
+                <label for="inputNotes">NOTE TECNICHE / ATELIER</label>
+                <textarea id="inputNotes" rows="2" placeholder="DETTAGLI GRAFICA, RICAMI E COSTRUZIONE..."></textarea>
+              </div>
+            </div>
+
+            <div class="upload-error-msg" id="uploadErrorMsg" hidden></div>
+
+            <div class="upload-submit-bar">
+              <button class="modal-util-btn" id="uploadCancelBtn" type="button">[ANNULLA]</button>
+              <button class="upload-submit-btn" id="uploadSubmitBtn" type="submit" disabled>[SALVA CAPO IN ARCHIVIO ↗]</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- OVERLAY DRAG & DROP GLOBALE (ATTIVO SOLO QUANDO LOGGATO COME ADMIN) -->
+  <div class="global-drop-overlay" id="globalDropOverlay" hidden>
+    <div class="global-drop-overlay__box">
+      <span class="global-drop-overlay__title">RDP // CREATOR DRAG &amp; DROP INGESTION</span>
+      <span class="global-drop-overlay__sub">RILASCIA I FILE DEL CAPO (DAVANTI E RETRO) PER APRIRE L'ENGINE CANVAS</span>
+    </div>
+  </div>
+
+  <!-- TOAST NOTIFICATION -->
+  <div class="archive-toast" id="archiveToast" hidden></div>
+
+  <script src="data.js"></script>
+  <script src="storage.js"></script>
+  <script src="processor.js"></script>
+  <script src="auth.js"></script>
+  <script src="ratings.js"></script>
+  <script src="physics.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
