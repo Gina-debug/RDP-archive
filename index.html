@@ -65,6 +65,16 @@
 
     <!-- Navigation Bar: Category Tabs & Actions -->
     <nav class="site-header__nav" aria-label="Filtri catalogo e azioni">
+            <!-- Navigazione Pagine: Vetrina Principale vs Scheda Feedback Secondaria -->
+      <div class="view-switch-tabs" role="tablist" aria-label="Navigazione pagine">
+        <button class="view-tab-btn is-active" id="tabShowcaseBtn" type="button" role="tab" aria-selected="true">
+          [01 // VETRINA ARCHIVIO]
+        </button>
+        <button class="view-tab-btn" id="tabFeedbackBtn" type="button" role="tab" aria-selected="false">
+          [02 // SCHEDA VOTI &amp; FEEDBACK]
+        </button>
+      </div>
+
       <div class="filter-group" role="tablist" aria-label="Filtra per categoria">
         <button class="filter-btn is-active" data-category="ALL" role="tab" aria-selected="true">
           ALL <span class="filter-btn__count" data-count-for="ALL">11</span>
@@ -130,126 +140,138 @@
 
   <!-- DIRECTORY SUB-HEADER & PAGE/SORT CONTROLS -->
   <main class="archive-main" id="archiveMain">
-    <div class="directory-bar">
-      <div class="directory-bar__path">
-        <span>ROOT</span>
-        <span>/</span>
-        <span>RDP_LAB</span>
-        <span>/</span>
-        <span id="activeDirLabel">ALL_GARMENTS</span>
-      </div>
+    <!-- VISTA 01: VETRINA ARCHIVIO MOCKUP (PRINCIPALE E ATTIVA PER DEFAULT) -->
+    <div class="main-page-view is-active" id="showcasePageView">
+      <div class="directory-bar">
+        <div class="directory-bar__path">
+          <span>ROOT</span>
+          <span>/</span>
+          <span>RDP_LAB</span>
+          <span>/</span>
+          <span id="activeDirLabel">ALL_GARMENTS</span>
+        </div>
 
-      <!-- Controllo Due Pagine (Davanti / Retro) -->
-      <div class="directory-bar__pages">
-        <span class="directory-bar__pages-label">VISTA_PAGINE:</span>
-        <div class="page-mode-group" role="group" aria-label="Visualizzazione Pagine Davanti e Retro">
-          <button class="page-mode-btn is-active" data-page-mode="interactive" type="button" title="Ogni card ha switch rapido P.01 Davanti / P.02 Retro">
-            [FLIP // SINGOLA]
+        <!-- Controllo Due Pagine (Davanti / Retro) -->
+        <div class="directory-bar__pages">
+          <span class="directory-bar__pages-label">VISTA_PAGINE:</span>
+          <div class="page-mode-group" role="group" aria-label="Visualizzazione Pagine Davanti e Retro">
+            <button class="page-mode-btn is-active" data-page-mode="interactive" type="button" title="Ogni card ha switch rapido P.01 Davanti / P.02 Retro">
+              [FLIP // SINGOLA]
+            </button>
+            <button class="page-mode-btn" data-page-mode="front_only" type="button" title="Mostra solo le pagine Davanti per tutti i capi">
+              [P.01 DAVANTI]
+            </button>
+            <button class="page-mode-btn" data-page-mode="back_only" type="button" title="Mostra solo le pagine Retro per tutti i capi">
+              [P.02 RETRO]
+            </button>
+            <button class="page-mode-btn" data-page-mode="split_dual" type="button" title="Affianca entrambe le pagine (Davanti e Retro) nella griglia per ogni capo">
+              [DOPPIA PAGINA // AFFIANCATE]
+            </button>
+          </div>
+        </div>
+
+        <!-- Ordinamento per Voto o Codice -->
+        <div class="directory-bar__sort">
+          <span class="directory-bar__pages-label">ORDINA:</span>
+          <div class="sort-mode-group" role="group" aria-label="Ordinamento archivio">
+            <button class="sort-btn is-active" data-sort-by="code" type="button">[CODICE]</button>
+            <button class="sort-btn" data-sort-by="rating" type="button">[TOP VOTO ★]</button>
+            <button class="sort-btn" data-sort-by="votes" type="button">[PIÙ VOTATI]</button>
+          </div>
+        </div>
+
+        <div class="directory-bar__meta">
+          <button class="dir-action-btn dir-action-btn--feedback" id="goToFeedbackBtn" type="button" title="Apri la pagina secondaria per trasmettere i voti e le proposte">
+            [SCHEDA_VOTI &amp; FEEDBACK ↗]
           </button>
-          <button class="page-mode-btn" data-page-mode="front_only" type="button" title="Mostra solo le pagine Davanti per tutti i capi">
-            [P.01 DAVANTI]
+          <button class="dir-action-btn" id="exportArchiveBtn" type="button" style="display: none;" title="Esporta catalogo (Riservato Creator)">
+            [ESPORTA_CATALOGO]
           </button>
-          <button class="page-mode-btn" data-page-mode="back_only" type="button" title="Mostra solo le pagine Retro per tutti i capi">
-            [P.02 RETRO]
+          <button class="dir-action-btn dir-action-btn--warn" id="resetVotesBtn" type="button" title="Azzera i voti personali salvati in questo browser">
+            [AZZERA_MIEI_VOTI]
           </button>
-          <button class="page-mode-btn" data-page-mode="split_dual" type="button" title="Affianca entrambe le pagine (Davanti e Retro) nella griglia per ogni capo">
-            [DOPPIA PAGINA // AFFIANCATE]
+          <button class="dir-action-btn dir-action-btn--restore" id="restoreDeletedBtn" type="button" style="display: none;" title="Ripristina tutti i mockup rimossi dall'archivio">
+            [RIPRISTINA_ELIMINATI]
           </button>
         </div>
       </div>
 
-      <!-- Ordinamento per Voto o Codice -->
-      <div class="directory-bar__sort">
-        <span class="directory-bar__pages-label">ORDINA:</span>
-        <div class="sort-mode-group" role="group" aria-label="Ordinamento archivio">
-          <button class="sort-btn is-active" data-sort-by="code" type="button">[CODICE]</button>
-          <button class="sort-btn" data-sort-by="rating" type="button">[TOP VOTO ★]</button>
-          <button class="sort-btn" data-sort-by="votes" type="button">[PIÙ VOTATI]</button>
-        </div>
-      </div>
-
-      <div class="directory-bar__meta">
-        <button class="dir-action-btn dir-action-btn--feedback" id="scrollToFeedbackBtn" type="button" title="Vai alla scheda per trasmettere i voti e le proposte all'Atelier RDP">
-          [SCHEDA_VOTI &amp; FEEDBACK ↗]
-        </button>
-        <button class="dir-action-btn" id="exportArchiveBtn" type="button" style="display: none;" title="Esporta catalogo (Riservato Creator)">
-          [ESPORTA_CATALOGO]
-        </button>
-        <button class="dir-action-btn dir-action-btn--warn" id="resetVotesBtn" type="button" title="Azzera i voti personali salvati in questo browser">
-          [AZZERA_MIEI_VOTI]
-        </button>
-        <button class="dir-action-btn dir-action-btn--restore" id="restoreDeletedBtn" type="button" style="display: none;" title="Ripristina tutti i mockup rimossi dall'archivio">
-          [RIPRISTINA_ELIMINATI]
-        </button>
-      </div>
+      <!-- GRIGLIA MOCKUP STILE PDF CHANNEL CON FOTO AD ALTA RISOLUZIONE -->
+      <section class="archive-grid" id="archiveGrid" aria-label="Archivio Capi Ragazzi di Provincia"></section>
     </div>
 
-    <!-- GRIGLIA MOCKUP STILE PDF CHANNEL CON FOTO AD ALTA RISOLUZIONE -->
-    <section class="archive-grid" id="archiveGrid" aria-label="Archivio Capi Ragazzi di Provincia"></section>
-
-    <!-- SEZIONE COMMUNITY FEEDBACK & SCHEDA VOTAZIONE -->
-    <section class="community-feedback-section" id="communityFeedbackSection" aria-label="Scheda Votazione e Feedback Community">
-      <div class="feedback-container">
-        <div class="feedback-header">
-          <div class="feedback-header__eyebrow">// 03. SCHEDA VOTAZIONE &amp; ATELIER FEEDBACK</div>
-          <h2 class="feedback-header__title">TRASMETTI I TUOI VOTI E PROPONI UN NUOVO CAPO</h2>
-          <p class="feedback-header__desc">
-            Registrati con Nome e Cognome, esprimi i tuoi voti (da 0 a 10) sui singoli capi dell'archivio e proponi idee, dettagli grafici o capi che vorresti vedere nella prossima release di <strong>Ragazzi di Provincia</strong>.
-            Tutte le schede vengono trasmesse direttamente alla direzione creativa (<span class="email-highlight">rikisolbiati@gmail.com</span>).
-          </p>
-        </div>
-
-        <!-- RIEPILOGO VOTI ASSEGNATI -->
-        <div class="ballot-summary-card">
-          <div class="ballot-summary-card__header">
-            <div class="ballot-summary-card__title">
-              <span>STATO VOTAZIONE ARCHIVIO</span>
-              <span class="ballot-counter-badge" id="ballotCounterBadge">0 / 11 CAPI VOTATI</span>
-            </div>
-            <div class="ballot-summary-card__voter" id="ballotVoterDisplay">
-              <span id="ballotVoterNameLabel">VOTANTE: NON REGISTRATO</span>
-              <button class="ballot-change-voter-btn" id="ballotChangeVoterBtn" type="button">[REGISTRATI ORA]</button>
-            </div>
-          </div>
-
-          <div class="ballot-chips-grid" id="ballotChipsGrid">
-            <!-- Generato dinamicamente da app.js -->
-          </div>
-        </div>
-
-        <!-- FORM INVIO FEEDBACK & PROPOSTE CAPI -->
-        <div class="feedback-form-box">
-          <div class="feedback-field-group">
-            <label for="feedbackTextInput">
-              LASCIA UN CONSIGLIO, UN FEEDBACK O UN CAPO CHE VORRESTI NELLA COLLEZIONE:
-            </label>
-            <textarea
-              id="feedbackTextInput"
-              rows="4"
-              placeholder="Es: Vorrei una felpa zip pesante 480 GSM con maxi grafica gotica sul retro, oppure una t-shirt lavata grigio cenere con fit boxy e colletto rinforzato..."
-            ></textarea>
-          </div>
-
-          <div class="feedback-submit-row">
-            <div class="feedback-dest-info">
-              <span class="feedback-dest-icon">✉</span>
-              <span>DESTINATARIO: <strong>rikisolbiati@gmail.com</strong> (CREATOR ATELIER)</span>
-            </div>
-
-            <div class="feedback-btn-group">
-              <a class="fallback-mailto-link" id="fallbackMailtoLink" href="#" style="display: none;" target="_blank" rel="noopener">
-                [INVIA VIA APP EMAIL CLIENT ↗]
-              </a>
-              <button class="feedback-submit-btn" id="feedbackSubmitBtn" type="button">
-                [TRASMETTI SCHEDA VOTI &amp; FEEDBACK ↗]
-              </button>
-            </div>
-          </div>
-
-          <div class="feedback-response-msg" id="feedbackResponseMsg" hidden></div>
-        </div>
+    <!-- VISTA 02: PAGINA AGGIUNTIVA SECONDARIA (SCHEDA VOTI & FEEDBACK) - NASCOSTA PER DEFAULT -->
+    <div class="main-page-view" id="feedbackPageView" hidden>
+      <div class="feedback-page-topbar">
+        <button class="back-to-showcase-btn" id="backToShowcaseBtn" type="button">
+          ← [TORNA ALLA VETRINA ARCHIVIO]
+        </button>
+        <span class="feedback-page-tag">// PAGINA SECONDARIA: SCHEDA VOTAZIONE &amp; ATELIER FEEDBACK</span>
       </div>
-    </section>
+
+      <section class="community-feedback-section" id="communityFeedbackSection" aria-label="Scheda Votazione e Feedback Community">
+        <div class="feedback-container">
+          <div class="feedback-header">
+            <div class="feedback-header__eyebrow">// ATELIER DIRECT LINE // RIKISOLBIATI@GMAIL.COM</div>
+            <h2 class="feedback-header__title">TRASMETTI I TUOI VOTI E PROPONI UN NUOVO CAPO</h2>
+            <p class="feedback-header__desc">
+              Registrati con Nome e Cognome, esprimi i tuoi voti (da 0 a 10) sui singoli capi dell'archivio e proponi idee, dettagli grafici o capi che vorresti vedere nella prossima release di <strong>Ragazzi di Provincia</strong>.
+              Tutte le schede vengono trasmesse direttamente alla direzione creativa (<span class="email-highlight">rikisolbiati@gmail.com</span>).
+            </p>
+          </div>
+
+          <!-- RIEPILOGO VOTI ASSEGNATI -->
+          <div class="ballot-summary-card">
+            <div class="ballot-summary-card__header">
+              <div class="ballot-summary-card__title">
+                <span>STATO VOTAZIONE ARCHIVIO</span>
+                <span class="ballot-counter-badge" id="ballotCounterBadge">0 / 11 CAPI VOTATI</span>
+              </div>
+              <div class="ballot-summary-card__voter" id="ballotVoterDisplay">
+                <span id="ballotVoterNameLabel">VOTANTE: NON REGISTRATO</span>
+                <button class="ballot-change-voter-btn" id="ballotChangeVoterBtn" type="button">[REGISTRATI ORA]</button>
+              </div>
+            </div>
+
+            <div class="ballot-chips-grid" id="ballotChipsGrid">
+              <!-- Generato dinamicamente da app.js -->
+            </div>
+          </div>
+
+          <!-- FORM INVIO FEEDBACK & PROPOSTE CAPI -->
+          <div class="feedback-form-box">
+            <div class="feedback-field-group">
+              <label for="feedbackTextInput">
+                LASCIA UN CONSIGLIO, UN FEEDBACK O UN CAPO CHE VORRESTI NELLA COLLEZIONE:
+              </label>
+              <textarea
+                id="feedbackTextInput"
+                rows="4"
+                placeholder="Es: Vorrei una felpa zip pesante 480 GSM con maxi grafica gotica sul retro, oppure una t-shirt lavata grigio cenere con fit boxy e colletto rinforzato..."
+              ></textarea>
+            </div>
+
+            <div class="feedback-submit-row">
+              <div class="feedback-dest-info">
+                <span class="feedback-dest-icon">✉</span>
+                <span>DESTINATARIO: <strong>rikisolbiati@gmail.com</strong> (CREATOR ATELIER)</span>
+              </div>
+
+              <div class="feedback-btn-group">
+                <a class="fallback-mailto-link" id="fallbackMailtoLink" href="#" style="display: none;" target="_blank" rel="noopener">
+                  [INVIA VIA APP EMAIL CLIENT ↗]
+                </a>
+                <button class="feedback-submit-btn" id="feedbackSubmitBtn" type="button">
+                  [TRASMETTI SCHEDA VOTI &amp; FEEDBACK ↗]
+                </button>
+              </div>
+            </div>
+
+            <div class="feedback-response-msg" id="feedbackResponseMsg" hidden></div>
+          </div>
+        </div>
+      </section>
+    </div>
   </main>
 
   <!-- ANTIGRAVITY HUD OVERLAY (visibile solo quando attivo) -->

@@ -34,8 +34,8 @@
 
   // DOM References — Header & Telemetry
   const archiveGrid = document.getElementById("archiveGrid");
-  const fileCounter = document.getElementById("fileCounter");
-  const totalVotesCounter = document.getElementById("totalVotesCounter");
+  const fileCounter = document.getElementById("totalGarmentsVal") || document.getElementById("fileCounter");
+  const totalVotesCounter = document.getElementById("totalVotesVal") || document.getElementById("totalVotesCounter");
   const liveClock = document.getElementById("liveClock");
   const sysStatus = document.getElementById("sysStatus");
   const activeDirLabel = document.getElementById("activeDirLabel");
@@ -72,6 +72,13 @@
   const cloudConfigMsg = document.getElementById("cloudConfigMsg");
 
   // Community Feedback Section Elements
+  // Main Page View Switch Elements
+  const tabShowcaseBtn = document.getElementById("tabShowcaseBtn");
+  const tabFeedbackBtn = document.getElementById("tabFeedbackBtn");
+  const showcasePageView = document.getElementById("showcasePageView");
+  const feedbackPageView = document.getElementById("feedbackPageView");
+  const goToFeedbackBtn = document.getElementById("goToFeedbackBtn");
+  const backToShowcaseBtn = document.getElementById("backToShowcaseBtn");
   const scrollToFeedbackBtn = document.getElementById("scrollToFeedbackBtn");
   const ballotCounterBadge = document.getElementById("ballotCounterBadge");
   const ballotVoterNameLabel = document.getElementById("ballotVoterNameLabel");
@@ -117,9 +124,9 @@
   const modalCategory = document.getElementById("modalCategory");
   const modalTitle = document.getElementById("modalTitle");
   const modalPageIndicator = document.getElementById("modalPageIndicator");
-  const modalStage = document.getElementById("modalStage");
+  const modalStage = document.getElementById("viewerStage") || document.getElementById("modalStage");
   const modalImage = document.getElementById("modalImage");
-  const cadGridOverlay = document.getElementById("cadGridOverlay");
+  const cadGridOverlay = document.getElementById("viewerGridLines") || document.getElementById("cadGridOverlay");
   const gridOverlayBtn = document.getElementById("gridOverlayBtn");
   const zoomIndicator = document.getElementById("zoomIndicator");
   const viewFrontBtn = document.getElementById("viewFrontBtn");
@@ -209,6 +216,7 @@
       reloadArchiveData();
     });
 
+    switchMainView("showcase");
     await reloadArchiveData();
   }
 
@@ -951,6 +959,7 @@
       return;
     }
     await RDPCloud.deleteGarment(itemId);
+    switchMainView("showcase");
     await reloadArchiveData();
     showToast(`CAPO ${itemCode || ""} ELIMINATO DALL'ARCHIVIO`);
   }
@@ -1190,7 +1199,8 @@
     try {
       const res = await RDPCloud.saveGarment(newItem);
       closeUploadModal();
-      await reloadArchiveData();
+      switchMainView("showcase");
+    await reloadArchiveData();
       if (res && res.syncedToCloud) {
         showToast(`CAPO ${newItem.code} AGGIUNTO E SINCRONIZZATO NEL CLOUD!`);
       } else {
@@ -1310,15 +1320,24 @@
     setupZoneDrag(backDropzone, (files) => setBackFile(files[0]));
 
     [optBgClean, optEnhance, optTransparent].forEach((el) => {
-      el.addEventListener("change", () => runCanvasProcessing());
+      if (el) el.addEventListener("change", () => runCanvasProcessing());
     });
 
-    optTolerance.addEventListener("input", () => {
-      tolVal.textContent = optTolerance.value;
-    });
-    optTolerance.addEventListener("change", () => runCanvasProcessing());
+    if (optTolerance) {
+      optTolerance.addEventListener("input", () => {
+        if (tolVal) tolVal.textContent = optTolerance.value;
+      });
+      optTolerance.addEventListener("change", () => runCanvasProcessing());
+    }
 
     uploadForm.addEventListener("submit", handleUploadSubmit);
+
+
+    // Main View Switcher Bindings (Showcase vs Secondary Feedback Page)
+    if (tabShowcaseBtn) tabShowcaseBtn.addEventListener("click", () => switchMainView("showcase"));
+    if (tabFeedbackBtn) tabFeedbackBtn.addEventListener("click", () => switchMainView("feedback"));
+    if (goToFeedbackBtn) goToFeedbackBtn.addEventListener("click", () => switchMainView("feedback"));
+    if (backToShowcaseBtn) backToShowcaseBtn.addEventListener("click", () => switchMainView("showcase"));
 
     // Category Filter Buttons
     filterButtons.forEach((btn) => {
@@ -1367,7 +1386,8 @@
     if (restoreDeletedBtn) {
       restoreDeletedBtn.addEventListener("click", async () => {
         await RDPCloud.restoreAllDeleted();
-        await reloadArchiveData();
+        switchMainView("showcase");
+    await reloadArchiveData();
         showToast("TUTTI I MOCKUP ELIMINATI SONO STATI RIPRISTINATI");
       });
     }
@@ -1395,17 +1415,19 @@
       renderInspectionModal(item);
     });
 
-    modalFlipPageBtn.addEventListener("click", toggleModalPage);
+    if (modalFlipPageBtn) modalFlipPageBtn.addEventListener("click", toggleModalPage);
 
-    gridOverlayBtn.addEventListener("click", () => {
-      isCadGridOn = !isCadGridOn;
-      cadGridOverlay.classList.toggle("is-visible", isCadGridOn);
-      gridOverlayBtn.setAttribute("aria-pressed", isCadGridOn ? "true" : "false");
-      gridOverlayBtn.textContent = isCadGridOn ? "[CAD_GRID: ON]" : "[CAD_GRID: OFF]";
-    });
+    if (gridOverlayBtn) {
+      gridOverlayBtn.addEventListener("click", () => {
+        isCadGridOn = !isCadGridOn;
+        if (cadGridOverlay) cadGridOverlay.classList.toggle("is-visible", isCadGridOn);
+        gridOverlayBtn.setAttribute("aria-pressed", isCadGridOn ? "true" : "false");
+        gridOverlayBtn.textContent = isCadGridOn ? "[CAD_GRID: ON]" : "[CAD_GRID: OFF]";
+      });
+    }
 
-    modalStage.addEventListener("click", toggleZoom);
-    modalStage.addEventListener("mousemove", updateZoomPan);
+    if (modalStage) modalStage.addEventListener("click", toggleZoom);
+    if (modalStage) modalStage.addEventListener("mousemove", updateZoomPan);
     modalPrevBtn.addEventListener("click", () => navigateModal(-1));
     modalNextBtn.addEventListener("click", () => navigateModal(1));
     modalDownloadBtn.addEventListener("click", handleDownloadCurrentImage);
@@ -1542,6 +1564,42 @@
     });
   }
 
+
+
+  // ========================================================================
+  // MAIN VIEW SWITCHER: SHOWCASE (DEFAULT) VS FEEDBACK (SECONDARY PAGE)
+  // ========================================================================
+  let activeMainView = "showcase"; // "showcase" | "feedback"
+
+  function switchMainView(targetView) {
+    activeMainView = targetView;
+    const isShowcase = targetView === "showcase";
+
+    if (showcasePageView) {
+      showcasePageView.hidden = !isShowcase;
+      showcasePageView.classList.toggle("is-active", isShowcase);
+    }
+    if (feedbackPageView) {
+      feedbackPageView.hidden = isShowcase;
+      feedbackPageView.classList.toggle("is-active", !isShowcase);
+    }
+
+    if (tabShowcaseBtn) {
+      tabShowcaseBtn.classList.toggle("is-active", isShowcase);
+      tabShowcaseBtn.setAttribute("aria-selected", isShowcase ? "true" : "false");
+    }
+    if (tabFeedbackBtn) {
+      tabFeedbackBtn.classList.toggle("is-active", !isShowcase);
+      tabFeedbackBtn.setAttribute("aria-selected", !isShowcase ? "true" : "false");
+    }
+
+    if (!isShowcase) {
+      updateBallotSummary();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } else {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  }
 
   // ========================================================================
   // VOTER REGISTRATION MODAL & UI HANDLERS
