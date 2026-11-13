@@ -47,6 +47,48 @@
   const physicsHud = document.getElementById("physicsHud");
   const pulseZeroGBtn = document.getElementById("pulseZeroGBtn");
   const resetGridBtn = document.getElementById("resetGridBtn");
+  // Voter Registration DOM Elements
+  const openVoterModalBtn = document.getElementById("openVoterModalBtn");
+  const voterDot = document.getElementById("voterDot");
+  const voterBtnLabel = document.getElementById("voterBtnLabel");
+  const voterRegistrationModal = document.getElementById("voterRegistrationModal");
+  const voterModalCloseBtn = document.getElementById("voterModalCloseBtn");
+  const voterCancelBtn = document.getElementById("voterCancelBtn");
+  const voterRegistrationForm = document.getElementById("voterRegistrationForm");
+  const voterInputName = document.getElementById("voterInputName");
+  const voterInputEmail = document.getElementById("voterInputEmail");
+  const voterErrorMsg = document.getElementById("voterErrorMsg");
+
+  // Creator Cloud Modal Elements
+  const openCloudModalBtn = document.getElementById("openCloudModalBtn");
+  const cloudDot = document.getElementById("cloudDot");
+  const cloudBtnLabel = document.getElementById("cloudBtnLabel");
+  const cloudConfigModal = document.getElementById("cloudConfigModal");
+  const cloudModalCloseBtn = document.getElementById("cloudModalCloseBtn");
+  const cloudCancelBtn = document.getElementById("cloudCancelBtn");
+  const cloudConfigForm = document.getElementById("cloudConfigForm");
+  const cloudConfigJson = document.getElementById("cloudConfigJson");
+  const cloudLiveStatusPill = document.getElementById("cloudLiveStatusPill");
+  const cloudConfigMsg = document.getElementById("cloudConfigMsg");
+
+  // Community Feedback Section Elements
+  const scrollToFeedbackBtn = document.getElementById("scrollToFeedbackBtn");
+  const ballotCounterBadge = document.getElementById("ballotCounterBadge");
+  const ballotVoterNameLabel = document.getElementById("ballotVoterNameLabel");
+  const ballotChangeVoterBtn = document.getElementById("ballotChangeVoterBtn");
+  const ballotChipsGrid = document.getElementById("ballotChipsGrid");
+  const feedbackTextInput = document.getElementById("feedbackTextInput");
+  const feedbackSubmitBtn = document.getElementById("feedbackSubmitBtn");
+  const feedbackResponseMsg = document.getElementById("feedbackResponseMsg");
+  const fallbackMailtoLink = document.getElementById("fallbackMailtoLink");
+
+  // Telemetry Elements
+  const totalGarmentsVal = document.getElementById("totalGarmentsVal");
+  const totalPagesVal = document.getElementById("totalPagesVal");
+  const globalRatingVal = document.getElementById("globalRatingVal");
+  const totalVotesVal = document.getElementById("totalVotesVal");
+
+  let pendingVote = null;
 
   // Admin / Creator Auth Elements
   const adminAuthBtn = document.getElementById("adminAuthBtn");
@@ -155,6 +197,18 @@
     startClock();
     bindEvents();
     updateAuthUI();
+    updateVoterUI();
+    updateCloudUI();
+
+    // Inizializza sincronizzazione cloud multi-dispositivo
+    RDPCloud.init();
+    RDPCloud.onGarmentsUpdated(() => {
+      reloadArchiveData();
+    });
+    RDPCloud.onDeletionsUpdated(() => {
+      reloadArchiveData();
+    });
+
     await reloadArchiveData();
   }
 
@@ -162,11 +216,12 @@
     // Official 11 user-uploaded garments (SS26)
     seedItems = typeof RDP_ARCHIVE !== "undefined" ? RDP_ARCHIVE : [];
 
-    // Capi aggiunti dal Creatore con il proprio account
-    userItems = await RDPStorage.getAllUserItems();
+    // Capi aggiunti dal Creatore con il proprio account (Cloud o Locale)
+    userItems = await RDPCloud.getAllCreatorGarments();
 
-    // Filtra tutti i capi rimossi dall'archivio
-    const deletedIds = new Set(RDPStorage.getDeletedItemIds());
+    // Filtra tutti i capi rimossi dall'archivio (Cloud o Locale)
+    const deletedIdsArray = await RDPCloud.getAllDeletedIds();
+    const deletedIds = new Set(deletedIdsArray);
     const activeSeed = seedItems.filter((item) => !deletedIds.has(item.id));
     const activeUser = userItems.filter((item) => !deletedIds.has(item.id));
     const combined = [...activeSeed, ...activeUser];
@@ -190,6 +245,7 @@
 
     updateCounts();
     renderGrid();
+    updateBallotSummary();
   }
 
   function formatArchiveCode(num) {
@@ -239,6 +295,7 @@
       if (adminLoggedPill) adminLoggedPill.style.display = "inline-flex";
       if (adminLoggedName) adminLoggedName.textContent = `CREATOR: ${username}`;
       if (openUploadBtn) openUploadBtn.style.display = "inline-flex";
+      if (openCloudModalBtn) openCloudModalBtn.style.display = "inline-flex";
       if (exportArchiveBtn) exportArchiveBtn.style.display = "inline-flex";
       if (modalDownloadBtn) modalDownloadBtn.style.display = "inline-block";
       if (sysStatus) {
@@ -249,6 +306,7 @@
       if (adminAuthBtn) adminAuthBtn.style.display = "inline-flex";
       if (adminLoggedPill) adminLoggedPill.style.display = "none";
       if (openUploadBtn) openUploadBtn.style.display = "none";
+      if (openCloudModalBtn) openCloudModalBtn.style.display = "none";
       if (exportArchiveBtn) exportArchiveBtn.style.display = "none";
       if (modalDownloadBtn) modalDownloadBtn.style.display = "none";
       if (sysStatus) {
@@ -352,6 +410,18 @@
     const globalStats = RDPRatings.getGlobalStats(allItems);
     if (totalVotesCounter) {
       totalVotesCounter.textContent = String(globalStats.totalVotes);
+    }
+    if (totalGarmentsVal) {
+      totalGarmentsVal.textContent = String(allItems.length);
+    }
+    if (totalPagesVal) {
+      totalPagesVal.textContent = String(allItems.length * 2);
+    }
+    if (globalRatingVal) {
+      globalRatingVal.textContent = `★ ${globalStats.globalAvg}`;
+    }
+    if (totalVotesVal) {
+      totalVotesVal.textContent = String(globalStats.totalVotes);
     }
 
     const categories = ["ALL", "HOODIES", "TEES", "PANTS", "ACCESSORIES"];
@@ -611,6 +681,14 @@
     const item = allItems.find((i) => i.id === itemId);
     if (!item) return;
 
+    // Registrazione obbligatoria (Nome e Cognome) prima di votare
+    if (!RDPVoter.isRegistered()) {
+      pendingVote = { itemId, score };
+      openVoterModal();
+      showToast("REGISTRA LA TUA IDENTITÀ (NOME E COGNOME) PER VOTARE");
+      return;
+    }
+
     RDPRatings.setRating(itemId, score);
     updateCounts();
 
@@ -619,6 +697,7 @@
     }
 
     renderGrid();
+    updateBallotSummary();
     showToast(`VOTO ${score}/10 REGISTRATO PER ${item.code}`);
   }
 
@@ -630,6 +709,7 @@
       if (currentItem) updateModalVotingTerminal(currentItem);
     }
     renderGrid();
+    updateBallotSummary();
     showToast("TUTTI I TUOI VOTI PERSONALI SONO STATI AZZERATI");
   }
 
@@ -870,7 +950,7 @@
       openAuthModal();
       return;
     }
-    await RDPStorage.deleteItem(itemId);
+    await RDPCloud.deleteGarment(itemId);
     await reloadArchiveData();
     showToast(`CAPO ${itemCode || ""} ELIMINATO DALL'ARCHIVIO`);
   }
@@ -1108,12 +1188,16 @@
     };
 
     try {
-      await RDPStorage.saveUserItem(newItem);
+      const res = await RDPCloud.saveGarment(newItem);
       closeUploadModal();
       await reloadArchiveData();
-      showToast(`CAPO ${newItem.code} AGGIUNTO CON SUCCESSO ALL'ARCHIVIO!`);
+      if (res && res.syncedToCloud) {
+        showToast(`CAPO ${newItem.code} AGGIUNTO E SINCRONIZZATO NEL CLOUD!`);
+      } else {
+        showToast(`CAPO ${newItem.code} AGGIUNTO CON SUCCESSO ALL'ARCHIVIO!`);
+      }
     } catch (_err) {
-      showUploadError("ERRORE SALVATAGGIO IN MEMORIA LOCALE.");
+      showUploadError("ERRORE SALVATAGGIO CAPO.");
     }
   }
 
@@ -1282,7 +1366,7 @@
     resetVotesBtn.addEventListener("click", handleResetUserVotes);
     if (restoreDeletedBtn) {
       restoreDeletedBtn.addEventListener("click", async () => {
-        RDPStorage.restoreAllDeletedItems();
+        await RDPCloud.restoreAllDeleted();
         await reloadArchiveData();
         showToast("TUTTI I MOCKUP ELIMINATI SONO STATI RIPRISTINATI");
       });
@@ -1456,6 +1540,292 @@
         onDropFiles(e.dataTransfer.files);
       }
     });
+  }
+
+
+  // ========================================================================
+  // VOTER REGISTRATION MODAL & UI HANDLERS
+  // ========================================================================
+  function openVoterModal() {
+    if (!voterRegistrationModal) return;
+    if (voterErrorMsg) voterErrorMsg.hidden = true;
+
+    const profile = RDPVoter.getProfile();
+    if (profile) {
+      if (voterInputName) voterInputName.value = profile.name;
+      if (voterInputEmail) voterInputEmail.value = profile.email || "";
+    } else {
+      if (voterInputName) voterInputName.value = "";
+      if (voterInputEmail) voterInputEmail.value = "";
+    }
+
+    voterRegistrationModal.hidden = false;
+    document.body.style.overflow = "hidden";
+    setTimeout(() => {
+      if (voterInputName) voterInputName.focus();
+    }, 80);
+  }
+
+  function closeVoterModal() {
+    if (!voterRegistrationModal) return;
+    voterRegistrationModal.hidden = true;
+    document.body.style.overflow = "";
+    if (voterErrorMsg) voterErrorMsg.hidden = true;
+  }
+
+  function handleVoterSubmit(e) {
+    e.preventDefault();
+    const nameVal = voterInputName ? voterInputName.value.trim() : "";
+    const emailVal = voterInputEmail ? voterInputEmail.value.trim() : "";
+
+    const res = RDPVoter.setProfile(nameVal, emailVal);
+    if (!res.success) {
+      if (voterErrorMsg) {
+        voterErrorMsg.textContent = res.message;
+        voterErrorMsg.hidden = false;
+      }
+      return;
+    }
+
+    closeVoterModal();
+    updateVoterUI();
+    showToast(`BENVENUTO ${res.profile.name}! ORA PUOI VOTARE I CAPI.`);
+
+    // Se un voto in sospeso ha scatenato la registrazione, eseguilo subito
+    if (pendingVote) {
+      const { itemId, score } = pendingVote;
+      pendingVote = null;
+      registerVote(itemId, score);
+    }
+  }
+
+  function updateVoterUI() {
+    const isReg = RDPVoter.isRegistered();
+    const profile = RDPVoter.getProfile();
+
+    if (openVoterModalBtn && voterBtnLabel && voterDot) {
+      if (isReg && profile) {
+        openVoterModalBtn.classList.add("is-registered");
+        voterBtnLabel.textContent = `VOTANTE: ${profile.name}`;
+      } else {
+        openVoterModalBtn.classList.remove("is-registered");
+        voterBtnLabel.textContent = `[REGISTRATI PER VOTARE]`;
+      }
+    }
+
+    if (ballotVoterNameLabel && ballotChangeVoterBtn) {
+      if (isReg && profile) {
+        ballotVoterNameLabel.textContent = `VOTANTE REGISTRATO: ${profile.name} ${profile.email ? `(${profile.email})` : ""}`;
+        ballotChangeVoterBtn.textContent = `[MODIFICA IDENTITÀ]`;
+      } else {
+        ballotVoterNameLabel.textContent = `VOTANTE: NON REGISTRATO`;
+        ballotChangeVoterBtn.textContent = `[REGISTRATI ORA]`;
+      }
+    }
+  }
+
+  // ========================================================================
+  // CREATOR CLOUD CONFIGURATION MODAL & UI HANDLERS
+  // ========================================================================
+  function openCloudModal() {
+    if (!cloudConfigModal) return;
+    if (cloudConfigMsg) cloudConfigMsg.hidden = true;
+
+    const isConfigured = RDP_FIREBASE_CONFIG.isConfigured();
+    const status = RDPCloud.getStatus();
+
+    if (cloudLiveStatusPill) {
+      if (status.connected) {
+        cloudLiveStatusPill.className = "cloud-live-status-pill is-connected";
+        cloudLiveStatusPill.textContent = "CONNESSO IN TEMPO REALE (FIREBASE FIRESTORE)";
+      } else if (isConfigured) {
+        cloudLiveStatusPill.className = "cloud-live-status-pill";
+        cloudLiveStatusPill.textContent = "CONFIGURATO // IN CONNESSIONE...";
+      } else {
+        cloudLiveStatusPill.className = "cloud-live-status-pill";
+        cloudLiveStatusPill.textContent = "NON CONFIGURATO (MODALITÀ LOCALE)";
+      }
+    }
+
+    if (cloudConfigJson && isConfigured) {
+      cloudConfigJson.value = JSON.stringify(RDP_FIREBASE_CONFIG.getConfig(), null, 2);
+    }
+
+    cloudConfigModal.hidden = false;
+    document.body.style.overflow = "hidden";
+  }
+
+  function closeCloudModal() {
+    if (!cloudConfigModal) return;
+    cloudConfigModal.hidden = true;
+    document.body.style.overflow = "";
+    if (cloudConfigMsg) cloudConfigMsg.hidden = true;
+  }
+
+  function handleCloudConfigSubmit(e) {
+    e.preventDefault();
+    const raw = cloudConfigJson ? cloudConfigJson.value.trim() : "";
+    if (!raw) return;
+
+    try {
+      let configObj = null;
+      if (raw.includes("{")) {
+        const clean = raw.replace(/^[^{]*/, "").replace(/[^}]*$/, "");
+        configObj = JSON.parse(clean);
+      }
+      if (configObj && configObj.apiKey && configObj.projectId) {
+        RDP_FIREBASE_CONFIG.setConfig(configObj);
+        RDPCloud.init();
+        showToast("CONFIGURAZIONE FIREBASE SALVATA CON SUCCESSO");
+        closeCloudModal();
+        updateCloudUI();
+        reloadArchiveData();
+      } else {
+        if (cloudConfigMsg) {
+          cloudConfigMsg.textContent = "FORMATO NON VALIDO: ASSICURATI DI INCLUDERE apiKey E projectId";
+          cloudConfigMsg.hidden = false;
+        }
+      }
+    } catch (err) {
+      if (cloudConfigMsg) {
+        cloudConfigMsg.textContent = `ERRORE PARSING CONFIGURAZIONE: ${err.message}`;
+        cloudConfigMsg.hidden = false;
+      }
+    }
+  }
+
+  function updateCloudUI() {
+    const status = RDPCloud.getStatus();
+    if (cloudBtnLabel && cloudDot && openCloudModalBtn) {
+      if (status.connected) {
+        openCloudModalBtn.classList.add("is-connected");
+        cloudBtnLabel.textContent = "[CLOUD: ONLINE ☁]";
+      } else if (status.configured) {
+        openCloudModalBtn.classList.remove("is-connected");
+        cloudBtnLabel.textContent = "[CLOUD: ATTESA ☁]";
+      } else {
+        openCloudModalBtn.classList.remove("is-connected");
+        cloudBtnLabel.textContent = "[CLOUD SYNC]";
+      }
+    }
+  }
+
+  // ========================================================================
+  // COMMUNITY BALLOT SUMMARY & FEEDBACK DISPATCH HANDLERS
+  // ========================================================================
+  function updateBallotSummary() {
+    if (!ballotCounterBadge || !ballotChipsGrid) return;
+
+    const userVotes = RDPRatings.getAllUserVotes();
+    let votedCount = 0;
+
+    ballotChipsGrid.innerHTML = "";
+
+    allItems.forEach((item) => {
+      const score = typeof userVotes[item.id] === "number" ? userVotes[item.id] : null;
+      if (score !== null) votedCount++;
+
+      const chip = document.createElement("div");
+      chip.className = `ballot-chip ${score !== null ? "is-voted" : ""}`;
+      chip.title = `Clicca per aprire la scheda di ${item.code}`;
+
+      chip.innerHTML = `
+        <span class="ballot-chip__code">${item.code}</span>
+        <span class="ballot-chip__score ${score !== null ? "has-score" : ""}">
+          ${score !== null ? `★ ${score}/10` : "NON VOTATO"}
+        </span>
+      `;
+
+      chip.addEventListener("click", () => {
+        openInspectionModal(item.id, "front");
+      });
+
+      ballotChipsGrid.appendChild(chip);
+    });
+
+    ballotCounterBadge.textContent = `${votedCount} / ${allItems.length} CAPI VOTATI`;
+  }
+
+  async function handleFeedbackSubmit() {
+    if (!feedbackSubmitBtn) return;
+
+    // 1. Verifica registrazione votante
+    if (!RDPVoter.isRegistered()) {
+      showToast("REGISTRAZIONE NOME E COGNOME OBBLIGATORIA PRIMA DELL'INVIO");
+      openVoterModal();
+      return;
+    }
+
+    const voter = RDPVoter.getProfile();
+    const userVotes = RDPRatings.getAllUserVotes();
+    const feedbackText = feedbackTextInput ? feedbackTextInput.value.trim() : "";
+    const votedItemIds = Object.keys(userVotes);
+
+    if (votedItemIds.length === 0 && (!feedbackText || feedbackText.length < 3)) {
+      if (feedbackResponseMsg) {
+        feedbackResponseMsg.className = "feedback-response-msg is-error";
+        feedbackResponseMsg.textContent = "ATTENZIONE: VOTA ALMENO UN CAPO O SCRIVI UN CONSIGLIO/PROPOSTA PRIMA DI INVIARE.";
+        feedbackResponseMsg.hidden = false;
+      }
+      return;
+    }
+
+    // Inizia invio
+    feedbackSubmitBtn.disabled = true;
+    feedbackSubmitBtn.textContent = "[TRASMISSIONE SCHEDA IN CORSO...]";
+    if (feedbackResponseMsg) feedbackResponseMsg.hidden = true;
+
+    try {
+      // 1. Invio Email a rikisolbiati@gmail.com
+      const emailResult = await RDPMailer.sendBallotAndFeedback({
+        voter,
+        votesMap: userVotes,
+        allItems,
+        feedbackText
+      });
+
+      // 2. Registrazione su Cloud Firestore (se connesso)
+      await RDPCloud.recordBallot({
+        voter,
+        votesMap: userVotes,
+        feedbackText
+      });
+
+      if (emailResult.success) {
+        if (feedbackResponseMsg) {
+          feedbackResponseMsg.className = "feedback-response-msg is-success";
+          feedbackResponseMsg.innerHTML = `
+            ✓ SCHEDA TRASMESSA CON SUCCESSO A <strong>${RDPMailer.CREATOR_EMAIL}</strong>!<br />
+            NOME: <strong>${voter.name}</strong> // CAPI VOTATI: <strong>${votedItemIds.length}</strong>.<br />
+            GRAZIE PER IL TUO CONTRIBUTO ALLA COMMUNITY DI RAGAZZI DI PROVINCIA.
+          `;
+          feedbackResponseMsg.hidden = false;
+        }
+        if (feedbackTextInput) feedbackTextInput.value = "";
+        showToast("✓ SCHEDA VOTI E FEEDBACK TRASMESSA A RIKISOLBIATI@GMAIL.COM");
+      } else {
+        // Fallback email client
+        if (fallbackMailtoLink && emailResult.fallbackUrl) {
+          fallbackMailtoLink.href = emailResult.fallbackUrl;
+          fallbackMailtoLink.style.display = "inline-flex";
+        }
+        if (feedbackResponseMsg) {
+          feedbackResponseMsg.className = "feedback-response-msg is-error";
+          feedbackResponseMsg.innerHTML = `
+            INVIO AUTOMATICO NON COMPLETATO. CLICCA SUL PULSANTE QUI ACCANTO <strong>[INVIA VIA APP EMAIL CLIENT]</strong> PER TRASMETTERE LA SCHEDA DIRETTAMENTE A <strong>${RDPMailer.CREATOR_EMAIL}</strong>.
+          `;
+          feedbackResponseMsg.hidden = false;
+        }
+      }
+    } catch (_err) {
+      if (fallbackMailtoLink) {
+        fallbackMailtoLink.href = RDPMailer.generateMailtoLink(voter, userVotes, allItems, feedbackText);
+        fallbackMailtoLink.style.display = "inline-flex";
+      }
+    } finally {
+      feedbackSubmitBtn.disabled = false;
+      feedbackSubmitBtn.textContent = "[TRASMETTI SCHEDA VOTI & FEEDBACK ↗]";
+    }
   }
 
   // ========================================================================

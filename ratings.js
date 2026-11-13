@@ -1,13 +1,96 @@
 // ==========================================================================
-// RDP // RAGAZZI DI PROVINCIA — RATING & COMMUNITY VOTING SYSTEM
-// Permette a chi entra nel sito di votare ogni singolo capo da 0 a 10.
-// Salva i voti in LocalStorage e calcola dinamicamente la media in tempo reale.
+// RDP // RAGAZZI DI PROVINCIA — RATING, VOTER IDENTITY & COMMUNITY VOTING SYSTEM
+// Permette a chi entra nel sito di registrarsi (Nome e Cognome) e votare
+// ogni singolo capo da 0 a 10. Tutti i voti iniziali sono azzerati (0.0 / 0 voti).
+// Supporta sincronizzazione cloud e riepilogo voti per invio email al Creator.
 // ==========================================================================
 
-const RDPRatings = (() => {
-  const STORAGE_KEY = "rdp_archive_user_ratings_v2";
+// --------------------------------------------------------------------------
+// 1. GESTIONE IDENTITÀ VOTANTE (Registrazione obbligatoria prima di votare)
+// --------------------------------------------------------------------------
+const RDPVoter = (() => {
+  "use strict";
 
-  // Carica i voti espressi dall'utente dal LocalStorage
+  const STORAGE_KEY = "rdp_voter_profile_v3";
+
+  function getProfile() {
+    try {
+      const raw = window.localStorage.getItem(STORAGE_KEY);
+      if (!raw) return null;
+      const data = JSON.parse(raw);
+      if (data && data.name && String(data.name).trim().length > 0) {
+        return {
+          name: String(data.name).trim().toUpperCase(),
+          email: String(data.email || "").trim().toLowerCase(),
+          registeredAt: data.registeredAt || Date.now()
+        };
+      }
+    } catch (_e) {}
+    return null;
+  }
+
+  function setProfile(name, email = "") {
+    const cleanName = String(name || "").trim().toUpperCase();
+    const cleanEmail = String(email || "").trim().toLowerCase();
+
+    if (!cleanName || cleanName.length < 2) {
+      return { success: false, message: "INSERIRE NOME E COGNOME VALIDO (MIN 2 CARATTERI)" };
+    }
+
+    const profile = {
+      name: cleanName,
+      email: cleanEmail,
+      registeredAt: Date.now()
+    };
+
+    try {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(profile));
+    } catch (_e) {}
+
+    return { success: true, profile };
+  }
+
+  function isRegistered() {
+    const profile = getProfile();
+    return Boolean(profile && profile.name);
+  }
+
+  function clearProfile() {
+    try {
+      window.localStorage.removeItem(STORAGE_KEY);
+    } catch (_e) {}
+  }
+
+  return {
+    getProfile,
+    setProfile,
+    isRegistered,
+    clearProfile
+  };
+})();
+
+// --------------------------------------------------------------------------
+// 2. SISTEMA DI VOTAZIONE 0-10 & STATISTICHE
+// --------------------------------------------------------------------------
+const RDPRatings = (() => {
+  "use strict";
+
+  const STORAGE_KEY = "rdp_archive_user_ratings_v3";
+
+  // Invalida vecchi voti pre-azzeramento (v1 e v2)
+  try {
+    window.localStorage.removeItem("rdp_archive_user_ratings_v1");
+    window.localStorage.removeItem("rdp_archive_user_ratings_v2");
+  } catch (_e) {}
+
+  // Cache per aggregati cloud (se Firebase è connesso)
+  let cloudAggregates = {};
+
+  function setCloudAggregates(aggregates) {
+    cloudAggregates = aggregates || {};
+  }
+
+  // Carica i voti espressi dal votante locale
   function getUserRatings() {
     try {
       const raw = window.localStorage.getItem(STORAGE_KEY);
@@ -17,69 +100,102 @@ const RDPRatings = (() => {
     }
   }
 
-  // Registra un voto da 0 a 10 per un capo
+  // Registra un voto da 0 a 10 per un dato capo
   function setRating(itemId, score) {
     const num = Math.max(0, Math.min(10, Math.round(Number(score))));
     const ratings = getUserRatings();
     ratings[itemId] = num;
     try {
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify(ratings));
-    } catch (_e) {
-      // Ignora se quota storage superata
-    }
+    } catch (_e) {}
     return num;
   }
 
-  // Ritorna il voto espresso dall'utente per un dato capo (o null se non ancora votato)
+  // Ritorna il voto espresso dal votante locale per un capo (o null)
   function getUserVote(itemId) {
     const ratings = getUserRatings();
     return typeof ratings[itemId] === "number" ? ratings[itemId] : null;
   }
 
-  // Calcola statistiche aggregate (media voti e totale voti) combinando il voto utente
+  // Ritorna l'elenco di tutti i capi votati dal votante locale con i rispettivi voti
+  function getAllUserVotes() {
+    return getUserRatings();
+  }
+
+  // Calcola statistiche (media e conteggio) partendo da zero assoluto
   function getItemStats(item) {
     const userVote = getUserVote(item.id);
-    const baseRating = typeof item.initialRating === "number" ? item.initialRating : 9.0;
-    const baseVotes = typeof item.initialVotes === "number" ? item.initialVotes : 40;
+
+    // Se sono presenti dati aggregati dal cloud
+    const cloudStat = cloudAggregates[item.id];
+    let baseSum = 0;
+    let baseVotes = 0;
+
+    if (cloudStat && typeof cloudStat.totalVotes === "number") {
+      baseVotes = cloudStat.totalVotes;
+      baseSum = (cloudStat.sum || 0);
+    } else {
+      // Base da dataset locale (azzerata a 0.0 e 0 voti)
+      const initRating = typeof item.initialRating === "number" ? item.initialRating : 0;
+      const initVotes = typeof item.initialVotes === "number" ? item.initialVotes : 0;
+      baseVotes = initVotes;
+      baseSum = initRating * initVotes;
+    }
 
     if (userVote === null) {
+      if (baseVotes === 0) {
+        return {
+          average: "0.0",
+          numericAverage: 0,
+          totalVotes: 0,
+          userVote: null,
+          hasVoted: false
+        };
+      }
+      const avg = baseSum / baseVotes;
       return {
-        average: baseRating.toFixed(1),
-        numericAverage: baseRating,
+        average: avg.toFixed(1),
+        numericAverage: avg,
         totalVotes: baseVotes,
         userVote: null,
         hasVoted: false
       };
     }
 
-    // Incorpora il voto utente nel calcolo medio
-    const totalSum = baseRating * baseVotes + userVote;
-    const newTotal = baseVotes + 1;
-    const newAvg = totalSum / newTotal;
+    // Incorpora il voto utente locale se non già contato nel cloud
+    const effectiveTotal = baseVotes === 0 ? 1 : baseVotes;
+    const effectiveSum = baseVotes === 0 ? userVote : baseSum;
+    const finalAvg = effectiveSum / effectiveTotal;
 
     return {
-      average: newAvg.toFixed(1),
-      numericAverage: newAvg,
-      totalVotes: newTotal,
+      average: finalAvg.toFixed(1),
+      numericAverage: finalAvg,
+      totalVotes: effectiveTotal,
       userVote,
       hasVoted: true
     };
   }
 
-  // Calcola il totale globale di voti registrati nell'archivio
+  // Statistiche globali dell'archivio
   function getGlobalStats(items) {
     let totalVotes = 0;
     let sumAvgs = 0;
-    items.forEach((item) => {
+    let itemsWithVotes = 0;
+
+    (items || []).forEach((item) => {
       const s = getItemStats(item);
       totalVotes += s.totalVotes;
-      sumAvgs += s.numericAverage;
+      if (s.totalVotes > 0) {
+        sumAvgs += s.numericAverage;
+        itemsWithVotes++;
+      }
     });
-    const globalAvg = items.length > 0 ? (sumAvgs / items.length).toFixed(1) : "0.0";
+
+    const globalAvg = itemsWithVotes > 0 ? (sumAvgs / itemsWithVotes).toFixed(1) : "0.0";
     return { totalVotes, globalAvg };
   }
 
-  // Reset voti utente
+  // Azzera tutti i voti salvati in locale
   function clearAllUserVotes() {
     try {
       window.localStorage.removeItem(STORAGE_KEY);
@@ -89,8 +205,10 @@ const RDPRatings = (() => {
   return {
     setRating,
     getUserVote,
+    getAllUserVotes,
     getItemStats,
     getGlobalStats,
+    setCloudAggregates,
     clearAllUserVotes
   };
 })();

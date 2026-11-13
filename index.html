@@ -11,6 +11,10 @@
     rel="stylesheet"
   />
   <link rel="stylesheet" href="styles.css" />
+
+  <!-- Firebase SDKs Compat (Sincronizzazione Cloud Multi-Dispositivo in Tempo Reale) -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 </head>
 <body>
   <!-- HEADER TECNICO FISSO -->
@@ -38,25 +42,29 @@
       <div class="telemetry-stats">
         <div class="telemetry-cell">
           <span class="telemetry-cell__label">CAPI</span>
-          <span class="telemetry-cell__value" id="fileCounter">11 / 11</span>
+          <span class="telemetry-cell__val" id="totalGarmentsVal">11</span>
         </div>
         <div class="telemetry-cell">
-          <span class="telemetry-cell__label">VOTI_TOT</span>
-          <span class="telemetry-cell__value" id="totalVotesCounter">0</span>
+          <span class="telemetry-cell__label">PAGINE HD</span>
+          <span class="telemetry-cell__val" id="totalPagesVal">22</span>
         </div>
-        <div class="telemetry-cell telemetry-cell--hide-sm">
-          <span class="telemetry-cell__label">LOCAL_TIME</span>
-          <span class="telemetry-cell__value" id="liveClock">00:00:00 CET</span>
+        <div class="telemetry-cell">
+          <span class="telemetry-cell__label">COMMUNITY AVG</span>
+          <span class="telemetry-cell__val" id="globalRatingVal">★ 0.0</span>
         </div>
-        <div class="telemetry-cell telemetry-cell--hide-sm">
-          <span class="telemetry-cell__label">STATUS</span>
-          <span class="telemetry-cell__value telemetry-cell__value--camo" id="sysStatus">VOTING_OPEN [0-10]</span>
+        <div class="telemetry-cell">
+          <span class="telemetry-cell__label">VOTI TOTALI</span>
+          <span class="telemetry-cell__val" id="totalVotesVal">0</span>
+        </div>
+        <div class="telemetry-cell telemetry-cell--camo">
+          <span class="telemetry-cell__label">COLORWAY</span>
+          <span class="telemetry-cell__val">WOODLAND / RAW</span>
         </div>
       </div>
     </div>
 
-    <!-- Filter & Control Bar -->
-    <nav class="control-bar" aria-label="Archive filters and controls">
+    <!-- Navigation Bar: Category Tabs & Actions -->
+    <nav class="site-header__nav" aria-label="Filtri catalogo e azioni">
       <div class="filter-group" role="tablist" aria-label="Filtra per categoria">
         <button class="filter-btn is-active" data-category="ALL" role="tab" aria-selected="true">
           ALL <span class="filter-btn__count" data-count-for="ALL">11</span>
@@ -73,10 +81,16 @@
       </div>
 
       <div class="header-actions">
-        <div class="rating-legend" title="Vota qualsiasi capo da 0 a 10 direttamente dalla card o dalla scheda tecnica">
+        <div class="rating-legend" title="Vota qualsiasi capo da 0 a 10 registrandoti con nome e cognome">
           <span class="rating-legend__star">★</span>
           <span>RATING_SYS: VOTA DA 0 A 10</span>
         </div>
+
+        <!-- Voter Registration / Status Button -->
+        <button class="voter-btn" id="openVoterModalBtn" type="button" title="Registra la tua identità per votare i capi dell'archivio">
+          <span class="voter-dot" id="voterDot"></span>
+          <span id="voterBtnLabel">[REGISTRATI PER VOTARE]</span>
+        </button>
 
         <!-- Creator Account Auth Button & Status Pill -->
         <button class="auth-btn" id="adminAuthBtn" type="button" title="Accedi con il tuo account Creator RDP per sbloccare l'upload dei mockup">
@@ -88,6 +102,12 @@
           <span id="adminLoggedName">CREATOR: RICCARDO</span>
           <button class="auth-logout-btn" id="adminLogoutBtn" type="button" title="Disconnetti account">[LOGOUT]</button>
         </div>
+
+        <!-- Creator Cloud Sync Button (visibile quando autenticati) -->
+        <button class="cloud-btn" id="openCloudModalBtn" type="button" style="display: none;" title="Configurazione Sincronizzazione Cloud Firebase (Riservato Creator)">
+          <span class="cloud-dot" id="cloudDot"></span>
+          <span id="cloudBtnLabel">[CLOUD SYNC]</span>
+        </button>
 
         <!-- Pulsante Upload: Visibile SOLO ed ESCLUSIVAMENTE quando autenticati con account Creator -->
         <button class="upload-btn" id="openUploadBtn" type="button" style="display: none;" title="Carica nuovo mockup nell'archivio (Riservato Creator)">
@@ -149,10 +169,13 @@
       </div>
 
       <div class="directory-bar__meta">
+        <button class="dir-action-btn dir-action-btn--feedback" id="scrollToFeedbackBtn" type="button" title="Vai alla scheda per trasmettere i voti e le proposte all'Atelier RDP">
+          [SCHEDA_VOTI &amp; FEEDBACK ↗]
+        </button>
         <button class="dir-action-btn" id="exportArchiveBtn" type="button" style="display: none;" title="Esporta catalogo (Riservato Creator)">
           [ESPORTA_CATALOGO]
         </button>
-        <button class="dir-action-btn dir-action-btn--warn" id="resetVotesBtn" type="button" title="Azzera i voti personali salvati">
+        <button class="dir-action-btn dir-action-btn--warn" id="resetVotesBtn" type="button" title="Azzera i voti personali salvati in questo browser">
           [AZZERA_MIEI_VOTI]
         </button>
         <button class="dir-action-btn dir-action-btn--restore" id="restoreDeletedBtn" type="button" style="display: none;" title="Ripristina tutti i mockup rimossi dall'archivio">
@@ -163,6 +186,70 @@
 
     <!-- GRIGLIA MOCKUP STILE PDF CHANNEL CON FOTO AD ALTA RISOLUZIONE -->
     <section class="archive-grid" id="archiveGrid" aria-label="Archivio Capi Ragazzi di Provincia"></section>
+
+    <!-- SEZIONE COMMUNITY FEEDBACK & SCHEDA VOTAZIONE -->
+    <section class="community-feedback-section" id="communityFeedbackSection" aria-label="Scheda Votazione e Feedback Community">
+      <div class="feedback-container">
+        <div class="feedback-header">
+          <div class="feedback-header__eyebrow">// 03. SCHEDA VOTAZIONE &amp; ATELIER FEEDBACK</div>
+          <h2 class="feedback-header__title">TRASMETTI I TUOI VOTI E PROPONI UN NUOVO CAPO</h2>
+          <p class="feedback-header__desc">
+            Registrati con Nome e Cognome, esprimi i tuoi voti (da 0 a 10) sui singoli capi dell'archivio e proponi idee, dettagli grafici o capi che vorresti vedere nella prossima release di <strong>Ragazzi di Provincia</strong>.
+            Tutte le schede vengono trasmesse direttamente alla direzione creativa (<span class="email-highlight">rikisolbiati@gmail.com</span>).
+          </p>
+        </div>
+
+        <!-- RIEPILOGO VOTI ASSEGNATI -->
+        <div class="ballot-summary-card">
+          <div class="ballot-summary-card__header">
+            <div class="ballot-summary-card__title">
+              <span>STATO VOTAZIONE ARCHIVIO</span>
+              <span class="ballot-counter-badge" id="ballotCounterBadge">0 / 11 CAPI VOTATI</span>
+            </div>
+            <div class="ballot-summary-card__voter" id="ballotVoterDisplay">
+              <span id="ballotVoterNameLabel">VOTANTE: NON REGISTRATO</span>
+              <button class="ballot-change-voter-btn" id="ballotChangeVoterBtn" type="button">[REGISTRATI ORA]</button>
+            </div>
+          </div>
+
+          <div class="ballot-chips-grid" id="ballotChipsGrid">
+            <!-- Generato dinamicamente da app.js -->
+          </div>
+        </div>
+
+        <!-- FORM INVIO FEEDBACK & PROPOSTE CAPI -->
+        <div class="feedback-form-box">
+          <div class="feedback-field-group">
+            <label for="feedbackTextInput">
+              LASCIA UN CONSIGLIO, UN FEEDBACK O UN CAPO CHE VORRESTI NELLA COLLEZIONE:
+            </label>
+            <textarea
+              id="feedbackTextInput"
+              rows="4"
+              placeholder="Es: Vorrei una felpa zip pesante 480 GSM con maxi grafica gotica sul retro, oppure una t-shirt lavata grigio cenere con fit boxy e colletto rinforzato..."
+            ></textarea>
+          </div>
+
+          <div class="feedback-submit-row">
+            <div class="feedback-dest-info">
+              <span class="feedback-dest-icon">✉</span>
+              <span>DESTINATARIO: <strong>rikisolbiati@gmail.com</strong> (CREATOR ATELIER)</span>
+            </div>
+
+            <div class="feedback-btn-group">
+              <a class="fallback-mailto-link" id="fallbackMailtoLink" href="#" style="display: none;" target="_blank" rel="noopener">
+                [INVIA VIA APP EMAIL CLIENT ↗]
+              </a>
+              <button class="feedback-submit-btn" id="feedbackSubmitBtn" type="button">
+                [TRASMETTI SCHEDA VOTI &amp; FEEDBACK ↗]
+              </button>
+            </div>
+          </div>
+
+          <div class="feedback-response-msg" id="feedbackResponseMsg" hidden></div>
+        </div>
+      </div>
+    </section>
   </main>
 
   <!-- ANTIGRAVITY HUD OVERLAY (visibile solo quando attivo) -->
@@ -218,23 +305,23 @@
             <div class="viewer-toolbar-right">
               <span class="zoom-indicator" id="zoomIndicator">ZOOM: 1.0X</span>
               <button class="grid-toggle-btn" id="gridOverlayBtn" type="button" aria-pressed="false">
-                [CAD_GRID: OFF]
+                [GRID: OFF]
               </button>
             </div>
           </div>
 
-          <div class="modal-viewer__stage" id="modalStage" title="Clicca per zoom 2.5X ad alta risoluzione e muovi il cursore per esplorare">
-            <div class="cad-grid-overlay" id="cadGridOverlay" aria-hidden="true"></div>
-            <img id="modalImage" src="" alt="" />
-            <div class="modal-viewer__corner modal-viewer__corner--tl"></div>
-            <div class="modal-viewer__corner modal-viewer__corner--tr"></div>
-            <div class="modal-viewer__corner modal-viewer__corner--bl"></div>
-            <div class="modal-viewer__corner modal-viewer__corner--br"></div>
+          <div class="modal-viewer__stage" id="viewerStage">
+            <div class="canvas-grid-lines" id="viewerGridLines" hidden></div>
+            <img
+              class="modal-viewer__img"
+              id="modalImage"
+              src=""
+              alt="Mockup ad alta risoluzione"
+            />
           </div>
 
-          <div class="modal-viewer__caption">
-            <span id="modalViewLabel">PAGINA 01 DI 02: VISTA DAVANTI (FRONT)</span>
-            <span id="modalAssetPath">SRC: /ASSETS/RDP-001-FRONT.JPG [1400×1400 HD]</span>
+          <div class="viewer-instruction">
+            <span>DRAG PER PAN // DOPPIO CLICK PER ZOOM // ARROWS PER NAVIGARE CAPI // CLICK SUI NUMERI PER VOTARE</span>
           </div>
         </div>
 
@@ -252,11 +339,11 @@
           <div class="voting-terminal" id="votingTerminal">
             <div class="voting-terminal__head">
               <span class="voting-terminal__title">TERMINALE VOTAZIONE // COMMUNITY RATING</span>
-              <span class="voting-terminal__score" id="modalRatingScore">★ 9.6 / 10</span>
+              <span class="voting-terminal__score" id="modalRatingScore">★ 0.0 / 10</span>
             </div>
 
             <div class="voting-terminal__meta">
-              <span id="modalVoteCount">64 VOTI ESPRESSI</span>
+              <span id="modalVoteCount">0 VOTI ESPRESSI</span>
               <span class="voting-user-status" id="modalUserVoteStatus">TUO VOTO: NON ESPRESSO</span>
             </div>
 
@@ -277,7 +364,7 @@
 
             <!-- Barra Visuale Media Voti -->
             <div class="voting-meter" aria-hidden="true">
-              <div class="voting-meter__fill" id="modalMeterFill" style="width: 96%;"></div>
+              <div class="voting-meter__fill" id="modalMeterFill" style="width: 0%;"></div>
             </div>
           </div>
 
@@ -300,53 +387,54 @@
               <dd id="specColorway">RAW WHITE / BLOOD RED</dd>
             </div>
             <div class="spec-row">
-              <dt>PATTERN REF</dt>
-              <dd id="specPattern">PAT-26-T01</dd>
-            </div>
-            <div class="spec-row">
               <dt>COSTRUZIONE</dt>
-              <dd id="specConstruction">COLLARE A COSTE FITTE 3CM</dd>
+              <dd id="specConstruction">COLLARE A COSTE 3CM // CUCITURE DOPPIE</dd>
             </div>
             <div class="spec-row">
-              <dt>BATCH ARCHIVE</dt>
+              <dt>ATELIER BATCH</dt>
               <dd id="specBatch">ATELIER SPEC 01/30</dd>
             </div>
           </dl>
 
-          <!-- Note di Produzione Dinamiche (Davanti / Retro) -->
-          <div class="production-notes">
-            <div class="production-notes__header">
-              <span id="specNotesHeader">NOTE VISTA DAVANTI // ATELIER_LOG</span>
-              <span class="camo-strip-mini" aria-hidden="true"></span>
-            </div>
-            <p class="production-notes__text" id="specNotes"></p>
+          <div class="page-specific-notes">
+            <span class="page-specific-notes__tag" id="pageNotesTag">PAGINA 01 NOTE (DAVANTI):</span>
+            <p class="page-specific-notes__body" id="pageNotesBody">
+              VISTA FRONTALE: SCRITTA ICONICA SUL PETTO...
+            </p>
           </div>
 
-          <div class="modal-nav-footer">
-            <button class="modal-nav-btn" id="modalPrevBtn" type="button">← CAPO_PREC</button>
-            <div class="modal-page-flip-quick">
-              <button class="modal-page-flip-btn" id="modalFlipPageBtn" type="button" title="Gira tra Davanti e Retro (Scorciatoia: SPAZIO o TAB)">
-                [GIRA PAGINA ↻]
-              </button>
-              <span class="modal-nav-index" id="modalIndexLabel">01 / 11</span>
-            </div>
-            <button class="modal-nav-btn" id="modalNextBtn" type="button">CAPO_SUCC →</button>
+          <div class="spec-notes">
+            <span class="spec-notes__tag">NOTE CONCEPT // RDP ARCHIVE:</span>
+            <p class="spec-notes__body" id="specNotes">
+              TEE ICONICA DELLA PROVINCIA LOMBARDA...
+            </p>
+          </div>
+
+          <!-- Paginazione Modale -->
+          <div class="modal-pagination">
+            <button class="nav-prev-btn" id="modalPrevBtn" type="button" aria-label="Capo precedente">
+              ← PREV [KEY: ←]
+            </button>
+            <span class="modal-pagination__index" id="modalIndexLabel">01 / 11</span>
+            <button class="nav-next-btn" id="modalNextBtn" type="button" aria-label="Capo successivo">
+              NEXT [KEY: →] →
+            </button>
           </div>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- MODAL ACCESSO CREATOR / ADMIN -->
+  <!-- MODAL AUTENTICAZIONE ACCOUNT CREATOR (ACCESSO ESCLUSIVO) -->
   <div class="modal-backdrop" id="adminAuthModal" role="dialog" aria-modal="true" aria-labelledby="authModalTitle" hidden>
-    <div class="modal-window auth-modal-window">
+    <div class="modal-window modal-window--auth">
       <div class="modal-header">
         <div class="modal-header__left">
-          <span class="modal-code">RDP-SEC-01</span>
+          <span class="modal-code">RDP // SECURITY_GATE</span>
           <span class="camo-badge">CREATOR AUTH</span>
-          <span class="modal-cat" id="authModalTitle">TERMINALE SICUREZZA</span>
+          <span class="modal-cat" id="authModalTitle">ACCESSO CREATOR AUTORIZZATO</span>
         </div>
-        <button class="modal-close-btn" id="authCloseBtn" type="button" aria-label="Chiudi finestra accesso">
+        <button class="modal-close-btn" id="authCloseBtn" type="button" aria-label="Chiudi autenticazione">
           [CHIUDI // ESC]
         </button>
       </div>
@@ -372,6 +460,93 @@
           <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 8px;">
             <button class="modal-util-btn" id="authCancelBtn" type="button">[ANNULLA]</button>
             <button class="upload-submit-btn" type="submit" style="cursor: pointer;">[CONFERMA ACCESSO ↗]</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL REGISTRAZIONE VOTANTE (OBBLIGATORIA PRIMA DI VOTARE) -->
+  <div class="modal-backdrop" id="voterRegistrationModal" role="dialog" aria-modal="true" aria-labelledby="voterModalTitle" hidden>
+    <div class="modal-window modal-window--voter">
+      <div class="modal-header">
+        <div class="modal-header__left">
+          <span class="modal-code">RDP // VOTER_ID</span>
+          <span class="camo-badge">COMMUNITY VERIFICATION</span>
+          <span class="modal-cat" id="voterModalTitle">REGISTRAZIONE VOTANTE</span>
+        </div>
+        <button class="modal-close-btn" id="voterModalCloseBtn" type="button" aria-label="Chiudi">[CHIUDI // ESC]</button>
+      </div>
+      <div class="auth-modal-body">
+        <div class="auth-banner-notice">
+          PER GARANTIRE L'AUTENTICITÀ DELLA VALUTAZIONE DELL'ARCHIVIO, È RICHIESTO IL NOME E COGNOME PRIMA DI ESPRIMERE I VOTI.<br />
+          I TUOI VOTI E LE TUE PROPOSTE VERRANNO TRASMESSI AL CREATOR (<span class="email-highlight">rikisolbiati@gmail.com</span>).
+        </div>
+
+        <form id="voterRegistrationForm" class="upload-fields" style="padding: 0;">
+          <div class="field-group">
+            <label for="voterInputName">NOME E COGNOME *</label>
+            <input type="text" id="voterInputName" placeholder="ES. MARCO ROSSI" required />
+          </div>
+
+          <div class="field-group">
+            <label for="voterInputEmail">EMAIL (OPZIONALE / CONSIGLIATA):</label>
+            <input type="email" id="voterInputEmail" placeholder="ES. marco.rossi@email.com" />
+          </div>
+
+          <div class="upload-error-msg" id="voterErrorMsg" hidden></div>
+
+          <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px;">
+            <button class="modal-util-btn" id="voterCancelBtn" type="button">[ANNULLA]</button>
+            <button class="upload-submit-btn" type="submit" style="cursor: pointer;">[CONFERMA E PROCEDI AL VOTO ↗]</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL CONFIGURAZIONE CLOUD FIREBASE (SOLO CREATOR) -->
+  <div class="modal-backdrop" id="cloudConfigModal" role="dialog" aria-modal="true" aria-labelledby="cloudModalTitle" hidden>
+    <div class="modal-window modal-window--cloud">
+      <div class="modal-header">
+        <div class="modal-header__left">
+          <span class="modal-code">RDP // CLOUD_SYNC</span>
+          <span class="camo-badge">MULTI-DEVICE ENGINE</span>
+          <span class="modal-cat" id="cloudModalTitle">CONFIGURAZIONE GOOGLE FIREBASE</span>
+        </div>
+        <button class="modal-close-btn" id="cloudModalCloseBtn" type="button" aria-label="Chiudi">[CHIUDI // ESC]</button>
+      </div>
+      <div class="auth-modal-body">
+        <div class="auth-banner-notice">
+          SINCRONIZZAZIONE IN TEMPO REALE TRA COMPUTER, SMARTPHONE E TABLET NEL MONDO.<br />
+          QUANDO AGGIUNGI O ELIMINI UN MOCKUP, QUALSIASI ALTRO DISPOSITIVO CONNESSO LO VEDE ALL'ISTANTE.
+        </div>
+
+        <div class="cloud-steps-guide">
+          <p><strong>GUIDA RAPIDA IN 3 PASSAGGI:</strong></p>
+          <ol>
+            <li>Vai su <a href="https://console.firebase.google.com/" target="_blank" rel="noopener">console.firebase.google.com</a> e crea un progetto gratuito (es. <em>rdp-archive</em>).</li>
+            <li>Aggiungi un'app Web (&lt;/&gt;) e abilita <strong>Cloud Firestore</strong> (modalità test).</li>
+            <li>Copia l'oggetto <code>firebaseConfig = { ... }</code> e incollalo nel riquadro qui sotto:</li>
+          </ol>
+        </div>
+
+        <form id="cloudConfigForm" class="upload-fields" style="padding: 0;">
+          <div class="field-group">
+            <label for="cloudConfigJson">INCOLLA FIREBASE CONFIG (JSON O JS OBJECT):</label>
+            <textarea id="cloudConfigJson" rows="6" placeholder='{ "apiKey": "...", "authDomain": "...", "projectId": "...", "storageBucket": "...", "appId": "..." }'></textarea>
+          </div>
+
+          <div class="cloud-status-badge-row">
+            <span>STATO ATTUALE:</span>
+            <span class="cloud-live-status-pill" id="cloudLiveStatusPill">NON CONFIGURATO (MODALITÀ LOCALE)</span>
+          </div>
+
+          <div class="upload-error-msg" id="cloudConfigMsg" hidden></div>
+
+          <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px;">
+            <button class="modal-util-btn" id="cloudCancelBtn" type="button">[ANNULLA]</button>
+            <button class="upload-submit-btn" type="submit" style="cursor: pointer;">[CONNETTI CLOUD ☁]</button>
           </div>
         </form>
       </div>
@@ -418,35 +593,19 @@
               <input type="checkbox" id="optEnhance" checked />
               <span>STUDIO CONTRASTO &amp; SHADOW</span>
             </label>
-            <label class="proc-check">
-              <input type="checkbox" id="optTransparent" />
-              <span>FONDO TRASPARENTE</span>
-            </label>
-            <div class="proc-range">
-              <label for="optTolerance">TOLLERANZA:</label>
-              <input type="range" id="optTolerance" min="5" max="60" value="28" />
-              <span id="tolVal">28</span>
-            </div>
           </div>
 
-          <!-- Live Preview Grid: Raw vs Elaborato -->
-          <div class="processor-preview-grid">
-            <div class="preview-pane">
-              <div class="preview-pane__head">
-                <span>ORIGINALE GREZZO</span>
-              </div>
-              <div class="preview-pane__stage" id="rawPreviewStage">
-                <span class="preview-placeholder">NESSUN FILE SELEZIONATO</span>
-                <img id="rawPreviewImg" src="" alt="Anteprima originale" hidden />
-              </div>
+          <!-- Live Canvas Stage -->
+          <div class="processor-stage">
+            <div class="processor-stage__header">
+              <span class="processor-stage__title">CANVAS ENGINE PROCESSED OUTPUT (1400×1400)</span>
+              <span class="processor-stage__ratio">[1:1 ULTRA-RES]</span>
             </div>
-            <div class="preview-pane">
-              <div class="preview-pane__head">
-                <span>OUTPUT CANVAS 1400×1400</span>
-                <span class="proc-status-pill" id="procStatusPill">IDLE</span>
+            <div class="processor-stage__viewport">
+              <div class="processor-placeholder" id="processorPlaceholder">
+                <span>IN ATTESA DI FILE IMMAGINE...</span>
               </div>
-              <div class="preview-pane__stage" id="processedPreviewStage">
-                <span class="preview-placeholder">IN ATTESA DI FILE</span>
+              <div class="processor-canvas-wrapper" id="processorCanvasWrapper" hidden>
                 <img id="processedPreviewImg" src="" alt="Anteprima canvas elaborata" hidden />
               </div>
             </div>
@@ -537,11 +696,15 @@
   <!-- TOAST NOTIFICATION -->
   <div class="archive-toast" id="archiveToast" hidden></div>
 
+  <!-- Core Scripts -->
   <script src="data.js"></script>
+  <script src="firebase-config.js"></script>
   <script src="storage.js"></script>
+  <script src="cloud.js"></script>
   <script src="processor.js"></script>
   <script src="auth.js"></script>
   <script src="ratings.js"></script>
+  <script src="mailer.js"></script>
   <script src="physics.js"></script>
   <script src="app.js"></script>
 </body>

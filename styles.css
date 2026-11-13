@@ -2068,3 +2068,445 @@ img {
   color: #FFFFFF;
 }
 
+
+/* ==========================================================================
+   VOTER REGISTRATION & CLOUD SYNC UI STYLES
+   ========================================================================== */
+.voter-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 32px;
+  padding: 0 12px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  background-color: var(--bg);
+  border: 1px solid var(--ink);
+  color: var(--ink);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.voter-btn:hover {
+  background-color: var(--ink);
+  color: var(--bg);
+}
+
+.voter-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: #B42318; /* Rosso se non registrato */
+  box-shadow: 0 0 4px rgba(180, 35, 24, 0.6);
+  flex-shrink: 0;
+}
+
+.voter-btn.is-registered .voter-dot {
+  background-color: #12B76A; /* Verde se registrato */
+  box-shadow: 0 0 6px rgba(18, 183, 106, 0.8);
+}
+
+.voter-btn.is-registered {
+  border-color: var(--camo-olive);
+}
+
+.cloud-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 10px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  background-color: #F4F5F0;
+  border: 1px dashed var(--camo-olive);
+  color: var(--camo-olive);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.cloud-btn:hover {
+  background-color: var(--camo-olive);
+  color: #FFFFFF;
+}
+
+.cloud-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: #F79009;
+}
+
+.cloud-btn.is-connected .cloud-dot {
+  background-color: #12B76A;
+}
+
+.dir-action-btn--feedback {
+  border-color: var(--camo-olive);
+  color: var(--camo-olive);
+  font-weight: 700;
+}
+
+.dir-action-btn--feedback:hover {
+  background-color: var(--camo-olive);
+  color: #FFFFFF;
+}
+
+/* ==========================================================================
+   COMMUNITY FEEDBACK & VOTING BALLOT SECTION
+   ========================================================================== */
+.community-feedback-section {
+  width: 100%;
+  margin-top: 48px;
+  border-top: 2px solid var(--ink);
+  background-color: #FFFFFF;
+  padding: 40px 24px 60px 24px;
+}
+
+.feedback-container {
+  max-width: 1360px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.feedback-header {
+  border-left: 3px solid var(--ink);
+  padding-left: 16px;
+}
+
+.feedback-header__eyebrow {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--camo-olive);
+  margin-bottom: 6px;
+}
+
+.feedback-header__title {
+  margin: 0 0 10px 0;
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+
+.feedback-header__desc {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--muted);
+  max-width: 900px;
+}
+
+.email-highlight {
+  color: #B42318;
+  font-weight: 700;
+  text-decoration: underline;
+}
+
+/* Ballot Summary Card */
+.ballot-summary-card {
+  border: 1px solid var(--ink);
+  background-color: var(--surface);
+  padding: 20px;
+}
+
+.ballot-summary-card__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--divider);
+  margin-bottom: 16px;
+}
+
+.ballot-summary-card__title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.ballot-counter-badge {
+  display: inline-block;
+  padding: 3px 8px;
+  font-size: 11px;
+  font-weight: 700;
+  background-color: var(--ink);
+  color: #FFFFFF;
+  letter-spacing: 0.05em;
+}
+
+.ballot-summary-card__voter {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.ballot-change-voter-btn {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--camo-olive);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.ballot-chips-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 8px;
+}
+
+.ballot-chip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  font-size: 11px;
+  border: 1px solid var(--divider);
+  background-color: #FFFFFF;
+  cursor: pointer;
+  transition: all 0.14s ease;
+}
+
+.ballot-chip:hover {
+  border-color: var(--ink);
+  transform: translateY(-1px);
+}
+
+.ballot-chip.is-voted {
+  border-color: var(--ink);
+  background-color: #FFFFFF;
+}
+
+.ballot-chip__code {
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.ballot-chip__score {
+  font-weight: 700;
+  color: #B42318;
+}
+
+.ballot-chip__score.has-score {
+  color: #12B76A;
+}
+
+/* Feedback Form Box */
+.feedback-form-box {
+  border: 1px solid var(--ink);
+  padding: 24px;
+  background-color: #FFFFFF;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.feedback-field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.feedback-field-group label {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: var(--ink);
+}
+
+.feedback-field-group textarea {
+  width: 100%;
+  padding: 12px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.6;
+  text-transform: uppercase;
+  color: var(--ink);
+  background-color: var(--surface);
+  border: 1px solid var(--ink);
+  outline: none;
+  resize: vertical;
+}
+
+.feedback-field-group textarea:focus {
+  border-color: var(--camo-olive);
+  background-color: #FFFFFF;
+}
+
+.feedback-submit-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--divider);
+}
+
+.feedback-dest-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.feedback-dest-icon {
+  font-size: 14px;
+  color: #B42318;
+}
+
+.feedback-btn-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.feedback-submit-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 44px;
+  padding: 0 24px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  background-color: var(--ink);
+  color: #FFFFFF;
+  border: 1px solid var(--ink);
+  cursor: pointer;
+  transition: all 0.16s ease;
+}
+
+.feedback-submit-btn:hover {
+  background-color: var(--camo-olive);
+  border-color: var(--camo-olive);
+}
+
+.feedback-submit-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.fallback-mailto-link {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 12px;
+  height: 44px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #B42318;
+  border: 1px solid #B42318;
+  text-decoration: none;
+  transition: all 0.14s ease;
+}
+
+.fallback-mailto-link:hover {
+  background-color: #B42318;
+  color: #FFFFFF;
+}
+
+.feedback-response-msg {
+  padding: 12px 16px;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.5;
+  border: 1px solid var(--ink);
+  background-color: var(--surface);
+}
+
+.feedback-response-msg.is-success {
+  border-color: #12B76A;
+  background-color: #ECFDF3;
+  color: #027A48;
+}
+
+.feedback-response-msg.is-error {
+  border-color: #B42318;
+  background-color: #FEF3F2;
+  color: #B42318;
+}
+
+/* Modals sizing and special layouts */
+.modal-window--voter {
+  max-width: 520px;
+}
+
+.modal-window--cloud {
+  max-width: 620px;
+}
+
+.cloud-steps-guide {
+  margin-bottom: 14px;
+  padding: 12px 14px;
+  font-size: 11px;
+  line-height: 1.6;
+  background-color: var(--surface);
+  border: 1px solid var(--divider);
+  color: var(--ink);
+}
+
+.cloud-steps-guide ol {
+  margin: 6px 0 0 16px;
+  padding: 0;
+}
+
+.cloud-steps-guide li {
+  margin-bottom: 4px;
+}
+
+.cloud-steps-guide a {
+  color: var(--camo-olive);
+  font-weight: 700;
+}
+
+.cloud-status-badge-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.cloud-live-status-pill {
+  display: inline-block;
+  padding: 3px 8px;
+  font-size: 10px;
+  font-weight: 700;
+  background-color: #FEF0C7;
+  color: #B54708;
+  border: 1px solid #F79009;
+}
+
+.cloud-live-status-pill.is-connected {
+  background-color: #ECFDF3;
+  color: #027A48;
+  border-color: #12B76A;
+}
+
+@media (max-width: 900px) {
+  .feedback-header__title {
+    font-size: 18px;
+  }
+  .feedback-submit-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .feedback-submit-btn {
+    width: 100%;
+  }
+}
