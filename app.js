@@ -174,14 +174,9 @@
   const backFileName = document.getElementById("backFileName");
   const optBgClean = document.getElementById("optBgClean");
   const optEnhance = document.getElementById("optEnhance");
-  const optTransparent = document.getElementById("optTransparent");
-  const optTolerance = document.getElementById("optTolerance");
-  const tolVal = document.getElementById("tolVal");
-  const rawPreviewStage = document.getElementById("rawPreviewStage");
-  const rawPreviewImg = document.getElementById("rawPreviewImg");
-  const processedPreviewStage = document.getElementById("processedPreviewStage");
+  const processorPlaceholder = document.getElementById("processorPlaceholder");
+  const processorCanvasWrapper = document.getElementById("processorCanvasWrapper");
   const processedPreviewImg = document.getElementById("processedPreviewImg");
-  const procStatusPill = document.getElementById("procStatusPill");
   const processorTelemetry = document.getElementById("processorTelemetry");
   const uploadErrorMsg = document.getElementById("uploadErrorMsg");
   const uploadSubmitBtn = document.getElementById("uploadSubmitBtn");
@@ -219,6 +214,11 @@
 
     switchMainView("showcase");
     await reloadArchiveData();
+
+    // Registrazione obbligatoria (Nome e Cognome) all'ingresso per i visitatori non ancora registrati
+    if (!RDPVoter.isRegistered() && !RDPAuth.isAuthenticated()) {
+      openVoterModal();
+    }
   }
 
   async function reloadArchiveData() {
@@ -318,10 +318,9 @@
       if (adminAuthBtn) adminAuthBtn.style.display = "inline-flex";
       if (adminLoggedPill) adminLoggedPill.style.display = "none";
       if (openUploadBtn) {
-        openUploadBtn.style.display = "inline-flex";
-        openUploadBtn.textContent = "+ CARICA MOCKUP";
+        openUploadBtn.style.display = "none";
       }
-      if (openCloudModalBtn) openCloudModalBtn.style.display = "none";
+      if (openCloudModalBtn) openCloudModalBtn.style.display = "inline-flex";
       if (exportArchiveBtn) exportArchiveBtn.style.display = "none";
       if (modalDownloadBtn) modalDownloadBtn.style.display = "none";
       if (sysStatus) {
@@ -1001,35 +1000,38 @@
   }
 
   function resetUploadForm() {
-    uploadForm.reset();
+    if (uploadForm) uploadForm.reset();
     draftFrontFile = null;
     draftBackFile = null;
     draftFrontResult = null;
     draftBackResult = null;
-    frontFileName.textContent = "SELEZIONA O TRASCINA PNG/JPG (DAVANTI)";
-    backFileName.textContent = "SELEZIONA O TRASCINA PNG/JPG (RETRO)";
-    frontDropzone.classList.remove("has-file");
-    backDropzone.classList.remove("has-file");
+    if (frontFileName) frontFileName.textContent = "TOCCA PER SELEZIONARE O SCATTARE FOTO";
+    if (backFileName) backFileName.textContent = "TOCCA PER SELEZIONARE O SCATTARE FOTO";
+    if (frontDropzone) frontDropzone.classList.remove("has-file");
+    if (backDropzone) backDropzone.classList.remove("has-file");
 
-    rawPreviewImg.hidden = true;
-    rawPreviewImg.src = "";
-    rawPreviewStage.querySelector(".preview-placeholder").hidden = false;
+    if (processedPreviewImg) {
+      processedPreviewImg.hidden = true;
+      processedPreviewImg.src = "";
+    }
+    if (processorCanvasWrapper) {
+      processorCanvasWrapper.hidden = true;
+    }
+    if (processorPlaceholder) {
+      processorPlaceholder.hidden = false;
+    }
 
-    processedPreviewImg.hidden = true;
-    processedPreviewImg.src = "";
-    processedPreviewStage.querySelector(".preview-placeholder").hidden = false;
-
-    procStatusPill.textContent = "IDLE";
-    tolVal.textContent = optTolerance.value;
-    processorTelemetry.innerHTML = `
-      <span>ORIG: --</span>
-      <span>CROP: --</span>
-      <span>OUT: 1400×1400 (6% PAD)</span>
-      <span>BG: --</span>
-      <span>TIME: --</span>
-    `;
-    uploadErrorMsg.hidden = true;
-    uploadSubmitBtn.disabled = true;
+    if (processorTelemetry) {
+      processorTelemetry.innerHTML = `
+        <span>ORIG: --</span>
+        <span>CROP: --</span>
+        <span>OUT: 1400×1400 (6% PAD)</span>
+        <span>BG: --</span>
+        <span>TIME: --</span>
+      `;
+    }
+    if (uploadErrorMsg) uploadErrorMsg.hidden = true;
+    if (uploadSubmitBtn) uploadSubmitBtn.disabled = true;
   }
 
   function isValidImageFile(file) {
@@ -1089,28 +1091,30 @@
     if (!draftFrontFile) return;
 
     isProcessingImage = true;
-    uploadSubmitBtn.disabled = true;
-    uploadErrorMsg.hidden = true;
-    procStatusPill.textContent = "PROCESSING...";
+    if (uploadSubmitBtn) uploadSubmitBtn.disabled = true;
+    if (uploadErrorMsg) uploadErrorMsg.hidden = true;
 
     const options = {
-      bgNormalize: optBgClean.checked,
-      studioEnhance: optEnhance.checked,
-      transparentBg: optTransparent.checked,
-      bgTolerance: Number(optTolerance.value),
+      bgNormalize: optBgClean ? optBgClean.checked : true,
+      studioEnhance: optEnhance ? optEnhance.checked : true,
+      transparentBg: false,
+      bgTolerance: 28,
       paddingPct: 0.06 // 6% padding for ~94% fill
     };
 
     try {
       draftFrontResult = await RDPImageProcessor.processGarmentFile(draftFrontFile, options);
 
-      rawPreviewImg.src = draftFrontResult.originalDataUrl;
-      rawPreviewImg.hidden = false;
-      rawPreviewStage.querySelector(".preview-placeholder").hidden = true;
-
-      processedPreviewImg.src = draftFrontResult.processedDataUrl;
-      processedPreviewImg.hidden = false;
-      processedPreviewStage.querySelector(".preview-placeholder").hidden = true;
+      if (processedPreviewImg) {
+        processedPreviewImg.src = draftFrontResult.processedDataUrl;
+        processedPreviewImg.hidden = false;
+      }
+      if (processorCanvasWrapper) {
+        processorCanvasWrapper.hidden = false;
+      }
+      if (processorPlaceholder) {
+        processorPlaceholder.hidden = true;
+      }
 
       if (draftBackFile) {
         draftBackResult = await RDPImageProcessor.processGarmentFile(draftBackFile, options);
@@ -1119,17 +1123,17 @@
       }
 
       const t = draftFrontResult.telemetry;
-      procStatusPill.textContent = "READY 1:1 HD";
-      processorTelemetry.innerHTML = `
-        <span>ORIG: ${t.originalSize}</span>
-        <span>CROP: ${t.cropBox}</span>
-        <span>OUT: ${t.outputSize} (${t.padding} PAD)</span>
-        <span>BG: ${t.bgMode} (${t.bgNormalizedPct})</span>
-        <span>TIME: ${t.processingMs}</span>
-      `;
-      uploadSubmitBtn.disabled = false;
+      if (processorTelemetry) {
+        processorTelemetry.innerHTML = `
+          <span>ORIG: ${t.originalSize}</span>
+          <span>CROP: ${t.cropBox}</span>
+          <span>OUT: ${t.outputSize} (${t.padding} PAD)</span>
+          <span>BG: ${t.bgMode} (${t.bgNormalizedPct})</span>
+          <span>TIME: ${t.processingMs}</span>
+        `;
+      }
+      if (uploadSubmitBtn) uploadSubmitBtn.disabled = false;
     } catch (err) {
-      procStatusPill.textContent = "ERROR";
       showUploadError(err.message || "ERRORE DURANTE OTTIMIZZAZIONE CANVAS.");
     } finally {
       isProcessingImage = false;
@@ -1317,37 +1321,60 @@
         }
       });
     }
-    uploadCloseBtn.addEventListener("click", closeUploadModal);
-    uploadCancelBtn.addEventListener("click", closeUploadModal);
-    uploadModal.addEventListener("click", (e) => {
-      if (e.target === uploadModal) closeUploadModal();
-    });
+    if (uploadCloseBtn) uploadCloseBtn.addEventListener("click", closeUploadModal);
+    if (uploadCancelBtn) uploadCancelBtn.addEventListener("click", closeUploadModal);
+    if (uploadModal) {
+      uploadModal.addEventListener("click", (e) => {
+        if (e.target === uploadModal) closeUploadModal();
+      });
+    }
 
-    frontDropzone.addEventListener("click", () => frontFileInput.click());
-    backDropzone.addEventListener("click", () => backFileInput.click());
+    if (frontFileInput) {
+      frontFileInput.addEventListener("change", (e) => {
+        if (e.target.files && e.target.files[0]) setFrontFile(e.target.files[0]);
+      });
+    }
+    if (backFileInput) {
+      backFileInput.addEventListener("change", (e) => {
+        if (e.target.files && e.target.files[0]) setBackFile(e.target.files[0]);
+      });
+    }
 
-    frontFileInput.addEventListener("change", (e) => {
-      if (e.target.files && e.target.files[0]) setFrontFile(e.target.files[0]);
-    });
-    backFileInput.addEventListener("change", (e) => {
-      if (e.target.files && e.target.files[0]) setBackFile(e.target.files[0]);
-    });
+    if (frontDropzone) setupZoneDrag(frontDropzone, (files) => setFrontFile(files[0]));
+    if (backDropzone) setupZoneDrag(backDropzone, (files) => setBackFile(files[0]));
 
-    setupZoneDrag(frontDropzone, (files) => setFrontFile(files[0]));
-    setupZoneDrag(backDropzone, (files) => setBackFile(files[0]));
-
-    [optBgClean, optEnhance, optTransparent].forEach((el) => {
+    [optBgClean, optEnhance].forEach((el) => {
       if (el) el.addEventListener("change", () => runCanvasProcessing());
     });
 
-    if (optTolerance) {
-      optTolerance.addEventListener("input", () => {
-        if (tolVal) tolVal.textContent = optTolerance.value;
-      });
-      optTolerance.addEventListener("change", () => runCanvasProcessing());
-    }
+    if (uploadForm) uploadForm.addEventListener("submit", handleUploadSubmit);
 
-    uploadForm.addEventListener("submit", handleUploadSubmit);
+    // Voter Registration Modal Bindings
+    if (openVoterModalBtn) openVoterModalBtn.addEventListener("click", openVoterModal);
+    if (voterModalCloseBtn) voterModalCloseBtn.addEventListener("click", closeVoterModal);
+    if (voterCancelBtn) voterCancelBtn.addEventListener("click", closeVoterModal);
+    if (voterRegistrationModal) {
+      voterRegistrationModal.addEventListener("click", (e) => {
+        if (e.target === voterRegistrationModal) closeVoterModal();
+      });
+    }
+    if (voterRegistrationForm) voterRegistrationForm.addEventListener("submit", handleVoterSubmit);
+    if (ballotChangeVoterBtn) ballotChangeVoterBtn.addEventListener("click", openVoterModal);
+
+    // Cloud Configuration Modal Bindings
+    if (openCloudModalBtn) openCloudModalBtn.addEventListener("click", openCloudModal);
+    if (cloudModalCloseBtn) cloudModalCloseBtn.addEventListener("click", closeCloudModal);
+    if (cloudCancelBtn) cloudCancelBtn.addEventListener("click", closeCloudModal);
+    if (cloudConfigModal) {
+      cloudConfigModal.addEventListener("click", (e) => {
+        if (e.target === cloudConfigModal) closeCloudModal();
+      });
+    }
+    if (cloudConfigForm) cloudConfigForm.addEventListener("submit", handleCloudConfigSubmit);
+
+    // Feedback Page Bindings
+    if (feedbackSubmitBtn) feedbackSubmitBtn.addEventListener("click", handleFeedbackSubmit);
+    if (scrollToFeedbackBtn) scrollToFeedbackBtn.addEventListener("click", () => switchMainView("feedback"));
 
 
     // Main View Switcher Bindings (Showcase vs Secondary Feedback Page)
@@ -1506,11 +1533,15 @@
     // Global Keyboard Shortcuts
     window.addEventListener("keydown", (e) => {
       if (e.key === "Escape") {
-        if (!adminAuthModal.hidden) {
+        if (voterRegistrationModal && !voterRegistrationModal.hidden) {
+          closeVoterModal();
+        } else if (cloudConfigModal && !cloudConfigModal.hidden) {
+          closeCloudModal();
+        } else if (adminAuthModal && !adminAuthModal.hidden) {
           closeAuthModal();
-        } else if (!uploadModal.hidden) {
+        } else if (uploadModal && !uploadModal.hidden) {
           closeUploadModal();
-        } else if (!inspectionModal.hidden) {
+        } else if (inspectionModal && !inspectionModal.hidden) {
           closeInspectionModal();
         }
       } else if (!inspectionModal.hidden) {
