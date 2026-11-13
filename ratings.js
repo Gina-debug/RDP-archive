@@ -1,12 +1,13 @@
 // ==========================================================================
 // RDP // RAGAZZI DI PROVINCIA — RATING, VOTER IDENTITY & COMMUNITY VOTING SYSTEM
-// Permette a chi entra nel sito di registrarsi (Nome e Cognome) e votare
-// ogni singolo capo da 0 a 10. Tutti i voti iniziali sono azzerati (0.0 / 0 voti).
-// Supporta sincronizzazione cloud e riepilogo voti per invio email al Creator.
+// Permette a chi entra nel sito di registrarsi (Nome e Cognome) 1 SOLA VOLTA
+// e votare ogni singolo capo da 0 a 10 liberamente.
+// Se l'utente è autenticato come Creator, l'identità è già attiva automaticamente.
+// Tutti i voti iniziali sono azzerati (0.0 / 0 voti).
 // ==========================================================================
 
 // --------------------------------------------------------------------------
-// 1. GESTIONE IDENTITÀ VOTANTE (Registrazione obbligatoria prima di votare)
+// 1. GESTIONE IDENTITÀ VOTANTE (Login / Registrazione 1 sola volta)
 // --------------------------------------------------------------------------
 const RDPVoter = (() => {
   "use strict";
@@ -14,6 +15,17 @@ const RDPVoter = (() => {
   const STORAGE_KEY = "rdp_voter_profile_v3";
 
   function getProfile() {
+    // 1. Se autenticato come Creator, usa automaticamente le credenziali Creator
+    if (typeof RDPAuth !== "undefined" && RDPAuth.isAuthenticated()) {
+      return {
+        name: "RIKI SOLBIATI",
+        email: "rikisolbiati@gmail.com",
+        isCreator: true,
+        registeredAt: Date.now()
+      };
+    }
+
+    // 2. Altrimenti carica il profilo salvato da localStorage (memorizzato per sempre)
     try {
       const raw = window.localStorage.getItem(STORAGE_KEY);
       if (!raw) return null;
@@ -22,6 +34,7 @@ const RDPVoter = (() => {
         return {
           name: String(data.name).trim().toUpperCase(),
           email: String(data.email || "").trim().toLowerCase(),
+          isCreator: false,
           registeredAt: data.registeredAt || Date.now()
         };
       }
@@ -40,6 +53,7 @@ const RDPVoter = (() => {
     const profile = {
       name: cleanName,
       email: cleanEmail,
+      isCreator: false,
       registeredAt: Date.now()
     };
 
@@ -76,12 +90,6 @@ const RDPRatings = (() => {
   "use strict";
 
   const STORAGE_KEY = "rdp_archive_user_ratings_v3";
-
-  // Invalida vecchi voti pre-azzeramento (v1 e v2)
-  try {
-    window.localStorage.removeItem("rdp_archive_user_ratings_v1");
-    window.localStorage.removeItem("rdp_archive_user_ratings_v2");
-  } catch (_e) {}
 
   // Cache per aggregati cloud (se Firebase è connesso)
   let cloudAggregates = {};

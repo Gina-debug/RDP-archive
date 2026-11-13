@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover" />
   <title>RDP // RAGAZZI DI PROVINCIA — ARCHIVIO DIGITALE &amp; VOTAZIONE</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -120,8 +120,8 @@
         </button>
 
         <!-- Pulsante Upload: Visibile SOLO ed ESCLUSIVAMENTE quando autenticati con account Creator -->
-        <button class="upload-btn" id="openUploadBtn" type="button" style="display: none;" title="Carica nuovo mockup nell'archivio (Riservato Creator)">
-          + UPLOAD MOCKUP [CREATOR]
+        <button class="upload-btn" id="openUploadBtn" type="button" title="Carica nuovo mockup nell'archivio">
+          + CARICA MOCKUP
         </button>
 
         <button
@@ -591,18 +591,18 @@
         <!-- Colonna Sinistra: Dropzone & Canvas Engine -->
         <div class="upload-processor-col">
           <div class="upload-dropzones">
-            <!-- Front Dropzone -->
-            <div class="dropzone-box" id="frontDropzone" title="Carica Pagina 01 (Davanti)">
-              <input type="file" id="frontFileInput" accept="image/png,image/jpeg,image/webp" hidden />
+            <!-- Front Dropzone (Label nativo touch-friendly per smartphone e desktop) -->
+            <label class="dropzone-box" id="frontDropzone" for="frontFileInput" title="Carica Pagina 01 (Davanti)">
+              <input type="file" id="frontFileInput" accept="image/png,image/jpeg,image/webp" style="position: absolute; opacity: 0; width: 0.1px; height: 0.1px; overflow: hidden; z-index: -1;" />
               <span class="dropzone-box__tag">PAGINA 01 [DAVANTI] *</span>
-              <span class="dropzone-box__label" id="frontFileName">SELEZIONA O TRASCINA PNG/JPG</span>
-            </div>
+              <span class="dropzone-box__label" id="frontFileName">TOCCA PER SELEZIONARE O SCATTARE FOTO</span>
+            </label>
             <!-- Back Dropzone -->
-            <div class="dropzone-box" id="backDropzone" title="Carica Pagina 02 (Retro)">
-              <input type="file" id="backFileInput" accept="image/png,image/jpeg,image/webp" hidden />
+            <label class="dropzone-box" id="backDropzone" for="backFileInput" title="Carica Pagina 02 (Retro)">
+              <input type="file" id="backFileInput" accept="image/png,image/jpeg,image/webp" style="position: absolute; opacity: 0; width: 0.1px; height: 0.1px; overflow: hidden; z-index: -1;" />
               <span class="dropzone-box__tag">PAGINA 02 [RETRO] (OPZ.)</span>
-              <span class="dropzone-box__label" id="backFileName">SELEZIONA O TRASCINA PNG/JPG</span>
-            </div>
+              <span class="dropzone-box__label" id="backFileName">TOCCA PER SELEZIONARE O SCATTARE FOTO</span>
+            </label>
           </div>
 
           <!-- Controlli Canvas Processing -->

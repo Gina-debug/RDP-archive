@@ -96,6 +96,7 @@
   const totalVotesVal = document.getElementById("totalVotesVal");
 
   let pendingVote = null;
+  let pendingOpenUpload = false;
 
   // Admin / Creator Auth Elements
   const adminAuthBtn = document.getElementById("adminAuthBtn");
@@ -302,7 +303,10 @@
       if (adminAuthBtn) adminAuthBtn.style.display = "none";
       if (adminLoggedPill) adminLoggedPill.style.display = "inline-flex";
       if (adminLoggedName) adminLoggedName.textContent = `CREATOR: ${username}`;
-      if (openUploadBtn) openUploadBtn.style.display = "inline-flex";
+      if (openUploadBtn) {
+        openUploadBtn.style.display = "inline-flex";
+        openUploadBtn.textContent = "+ CARICA MOCKUP [CREATOR]";
+      }
       if (openCloudModalBtn) openCloudModalBtn.style.display = "inline-flex";
       if (exportArchiveBtn) exportArchiveBtn.style.display = "inline-flex";
       if (modalDownloadBtn) modalDownloadBtn.style.display = "inline-block";
@@ -313,7 +317,10 @@
     } else {
       if (adminAuthBtn) adminAuthBtn.style.display = "inline-flex";
       if (adminLoggedPill) adminLoggedPill.style.display = "none";
-      if (openUploadBtn) openUploadBtn.style.display = "none";
+      if (openUploadBtn) {
+        openUploadBtn.style.display = "inline-flex";
+        openUploadBtn.textContent = "+ CARICA MOCKUP";
+      }
       if (openCloudModalBtn) openCloudModalBtn.style.display = "none";
       if (exportArchiveBtn) exportArchiveBtn.style.display = "none";
       if (modalDownloadBtn) modalDownloadBtn.style.display = "none";
@@ -1299,7 +1306,17 @@
     adminLogoutBtn.addEventListener("click", handleLogout);
 
     // Upload Trigger & Modal
-    openUploadBtn.addEventListener("click", () => openUploadModal());
+    if (openUploadBtn) {
+      openUploadBtn.addEventListener("click", () => {
+        if (RDPAuth.isAuthenticated()) {
+          openUploadModal();
+        } else {
+          pendingOpenUpload = true;
+          showToast("ACCESSO RICHIESTO: ACCEDI COME CREATOR PER CARICARE I MOCKUP");
+          openAuthModal();
+        }
+      });
+    }
     uploadCloseBtn.addEventListener("click", closeUploadModal);
     uploadCancelBtn.addEventListener("click", closeUploadModal);
     uploadModal.addEventListener("click", (e) => {

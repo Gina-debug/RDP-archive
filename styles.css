@@ -2595,3 +2595,378 @@ img {
   color: var(--muted);
   letter-spacing: 0.05em;
 }
+
+/* ==========================================================================
+   ADVANCED MOBILE & SMARTPHONE RESPONSIVE ARCHITECTURE (iOS & Android)
+   ========================================================================== */
+@media (max-width: 768px) {
+  :root {
+    --header-height: auto;
+  }
+
+  html,
+  body {
+    -webkit-text-size-adjust: 100%;
+    touch-action: manipulation;
+  }
+
+  /* Fixed/Sticky Header on Smartphone */
+  .site-header {
+    position: sticky;
+    top: 0;
+    z-index: 200;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  }
+
+  .archive-main {
+    margin-top: 0 !important;
+  }
+
+  /* Compact Marquee on Mobile */
+  .camo-marquee {
+    height: 18px;
+  }
+
+  .camo-marquee__chunk {
+    font-size: 8px;
+    letter-spacing: 0.08em;
+  }
+
+  /* Compact Telemetry Header */
+  .header-telemetry {
+    padding: 6px 12px;
+    min-height: auto;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .brand-block__logo {
+    font-size: 13px;
+    letter-spacing: 0.04em;
+  }
+
+  .brand-block__tag {
+    display: none;
+  }
+
+  .telemetry-stats {
+    gap: 0;
+    font-size: 10px;
+  }
+
+  .telemetry-cell {
+    padding: 3px 6px;
+    font-size: 9px;
+    gap: 4px;
+  }
+
+  .telemetry-cell--camo {
+    display: none;
+  }
+
+  /* Swipeable Technical Toolbar on Mobile */
+  .site-header__nav {
+    display: flex;
+    align-items: center;
+    padding: 6px 10px;
+    gap: 8px;
+    overflow-x: auto;
+    white-space: nowrap;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .site-header__nav::-webkit-scrollbar {
+    display: none;
+  }
+
+  .view-switch-tabs {
+    flex-shrink: 0;
+    height: 30px;
+  }
+
+  .view-tab-btn {
+    height: 100%;
+    padding: 0 10px;
+    font-size: 10px;
+  }
+
+  .filter-group {
+    display: flex;
+    flex-wrap: nowrap;
+    flex-shrink: 0;
+    gap: 4px;
+  }
+
+  .filter-btn {
+    flex-shrink: 0;
+    height: 30px;
+    padding: 0 8px;
+    font-size: 10px;
+  }
+
+  .header-actions {
+    display: flex;
+    flex-wrap: nowrap;
+    flex-shrink: 0;
+    gap: 6px;
+  }
+
+  .rating-legend {
+    display: none;
+  }
+
+  .antigravity-btn {
+    display: none;
+  }
+
+  .voter-btn,
+  .auth-btn,
+  .upload-btn,
+  .cloud-btn,
+  .admin-logged-pill {
+    flex-shrink: 0;
+    height: 30px;
+    padding: 0 8px;
+    font-size: 10px;
+  }
+
+  /* Directory Bar on Mobile */
+  .directory-bar {
+    padding: 10px 12px;
+    gap: 8px;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .directory-bar__path {
+    font-size: 10px;
+  }
+
+  .directory-bar__pages,
+  .directory-bar__sort,
+  .directory-bar__meta {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    overflow-x: auto;
+    white-space: nowrap;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding-bottom: 2px;
+  }
+
+  .directory-bar__pages::-webkit-scrollbar,
+  .directory-bar__sort::-webkit-scrollbar,
+  .directory-bar__meta::-webkit-scrollbar {
+    display: none;
+  }
+
+  .directory-bar__pages-label {
+    font-size: 9px;
+    flex-shrink: 0;
+  }
+
+  .page-mode-group,
+  .sort-mode-group {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 4px;
+  }
+
+  .page-mode-btn,
+  .sort-btn,
+  .dir-action-btn {
+    flex-shrink: 0;
+    height: 32px;
+    padding: 0 10px;
+    font-size: 10px;
+    touch-action: manipulation;
+  }
+
+  /* 1-Column Grid on Smartphone */
+  .archive-grid {
+    grid-template-columns: 1fr;
+    padding: 10px;
+    gap: 16px;
+  }
+
+  .archive-card {
+    border: 1px solid var(--ink);
+  }
+
+  .archive-card__head {
+    padding: 8px 10px;
+    font-size: 10px;
+  }
+
+  /* Mobile Quick Vote Strip (0 to 10) */
+  .archive-card__voting-bar {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    padding: 8px 6px;
+    background-color: var(--surface);
+    border-top: 1px solid var(--divider);
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .archive-card__voting-bar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .quick-vote-btn {
+    min-width: 30px;
+    height: 36px;
+    flex: 1 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 700;
+    background-color: #FFFFFF;
+    border: 1px solid var(--divider);
+    touch-action: manipulation;
+    cursor: pointer;
+    border-radius: 0;
+  }
+
+  .quick-vote-btn:active,
+  .quick-vote-btn.is-voted {
+    background-color: var(--ink);
+    color: #FFFFFF;
+    border-color: var(--ink);
+  }
+
+  /* Modal Lightbox on Mobile */
+  .modal-backdrop {
+    padding: 0;
+    align-items: flex-end;
+  }
+
+  .modal-window {
+    width: 100%;
+    max-width: 100%;
+    height: 94vh;
+    max-height: 94vh;
+    border-radius: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .modal-header {
+    padding: 10px 14px;
+    flex-shrink: 0;
+  }
+
+  .modal-body {
+    flex: 1;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .modal-viewer {
+    height: 320px;
+    min-height: 260px;
+    flex-shrink: 0;
+    border-right: none;
+    border-bottom: 1px solid var(--divider);
+  }
+
+  .modal-specs {
+    padding: 16px;
+    overflow-y: visible;
+  }
+
+  .voting-terminal {
+    padding: 14px;
+  }
+
+  .voting-scale {
+    display: flex;
+    gap: 4px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .voting-scale::-webkit-scrollbar {
+    display: none;
+  }
+
+  .vote-num-btn {
+    min-width: 32px;
+    height: 36px;
+    font-size: 13px;
+    flex: 1 0 auto;
+  }
+
+  .modal-pagination {
+    margin-top: 20px;
+    padding-top: 14px;
+    border-top: 1px solid var(--divider);
+  }
+
+  .nav-prev-btn,
+  .nav-next-btn {
+    height: 40px;
+    padding: 0 14px;
+    font-size: 11px;
+    touch-action: manipulation;
+  }
+
+  /* Upload Modal on Mobile */
+  .modal-window--upload {
+    height: 96vh;
+    max-height: 96vh;
+    overflow-y: auto;
+  }
+
+  .upload-body {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .dropzone-box {
+    min-height: 90px;
+    padding: 16px;
+    cursor: pointer;
+    touch-action: manipulation;
+  }
+
+  /* Feedback Page on Mobile */
+  .feedback-page-topbar {
+    padding: 10px 14px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .back-to-showcase-btn {
+    width: 100%;
+    justify-content: center;
+    height: 42px;
+    font-size: 12px;
+  }
+
+  .feedback-container {
+    padding: 12px;
+    gap: 16px;
+  }
+
+  .ballot-chips-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px;
+  }
+
+  .feedback-submit-btn {
+    width: 100%;
+    height: 48px;
+    font-size: 12px;
+  }
+}
