@@ -207,6 +207,9 @@
 
     // Inizializza sincronizzazione cloud multi-dispositivo
     RDPCloud.init();
+    RDPCloud.onStatusChange(() => {
+      updateCloudUI();
+    });
     RDPCloud.onGarmentsUpdated(() => {
       reloadArchiveData();
     });
@@ -370,6 +373,11 @@
       updateAuthUI();
       renderGrid();
       showToast(`ACCESSO ESEGUITO: BENVENUTO ${result.user} // UPLOAD & GESTIONE SBLOCCATI`);
+
+      if (pendingOpenUpload) {
+        pendingOpenUpload = false;
+        openUploadModal();
+      }
     } else {
       authErrorMsg.textContent = result.message;
       authErrorMsg.hidden = false;
@@ -899,25 +907,25 @@
 
   function resetZoom() {
     isZoomed = false;
-    modalStage.classList.remove("is-zoomed");
-    modalImage.style.transformOrigin = "center center";
-    zoomIndicator.textContent = "ZOOM: 1.0X";
+    if (modalStage) modalStage.classList.remove("is-zoomed");
+    if (modalImage) modalImage.style.transformOrigin = "center center";
+    if (zoomIndicator) zoomIndicator.textContent = "ZOOM: 1.0X";
   }
 
   function toggleZoom(e) {
     isZoomed = !isZoomed;
-    modalStage.classList.toggle("is-zoomed", isZoomed);
-    zoomIndicator.textContent = isZoomed ? "ZOOM: 2.5X" : "ZOOM: 1.0X";
+    if (modalStage) modalStage.classList.toggle("is-zoomed", isZoomed);
+    if (zoomIndicator) zoomIndicator.textContent = isZoomed ? "ZOOM: 2.5X" : "ZOOM: 1.0X";
 
     if (isZoomed && e) {
       updateZoomPan(e);
     } else {
-      modalImage.style.transformOrigin = "center center";
+      if (modalImage) modalImage.style.transformOrigin = "center center";
     }
   }
 
   function updateZoomPan(e) {
-    if (!isZoomed) return;
+    if (!isZoomed || !modalStage || !modalImage) return;
     const rect = modalStage.getBoundingClientRect();
     const xPct = Math.max(0, Math.min(100, ((e.clientX - rect.left) / rect.width) * 100));
     const yPct = Math.max(0, Math.min(100, ((e.clientY - rect.top) / rect.height) * 100));
@@ -996,10 +1004,14 @@
       openAuthModal();
       return;
     }
-    await RDPCloud.deleteGarment(itemId);
+    const res = await RDPCloud.deleteGarment(itemId);
     switchMainView("showcase");
     await reloadArchiveData();
-    showToast(`CAPO ${itemCode || ""} ELIMINATO DALL'ARCHIVIO`);
+    if (res && res.syncedToCloud) {
+      showToast(`✓ CAPO ${itemCode || ""} ELIMINATO E SINCRONIZZATO NEL CLOUD!`);
+    } else {
+      showToast(`⚠ CAPO ${itemCode || ""} RIMOSSO IN LOCALE (DATABASE NON CREATO SU FIREBASE)`);
+    }
   }
 
   // ========================================================================
@@ -1068,9 +1080,8 @@
 
   function isValidImageFile(file) {
     if (!file) return false;
-    const validTypes = ["image/png", "image/jpeg", "image/webp"];
-    if (validTypes.includes(file.type)) return true;
-    return /\.(png|jpe?g|webp)$/i.test(file.name);
+    if (file.type && file.type.startsWith("image/")) return true;
+    return /\.(png|jpe?g|webp|heic|heif|avif|bmp)$/i.test(file.name || "");
   }
 
   async function handleDroppedFiles(fileList) {
@@ -1189,15 +1200,10 @@
       return;
     }
 
-    const title = inputTitle.value.trim().toUpperCase();
-    const category = inputCategory.value;
-    let gsm = inputGsm.value.trim().toUpperCase();
-    const fit = inputFit.value.trim().toUpperCase();
-
-    if (!title || !gsm || !fit) {
-      showUploadError("COMPILA I CAMPI OBBLIGATORI (NOME, CATEGORIA, GSM, FIT).");
-      return;
-    }
+    const title = inputTitle.value.trim().toUpperCase() || `MOCKUP ${formatArchiveCode(allItems.length + 1)}`;
+    const category = inputCategory.value || "TEES";
+    let gsm = inputGsm.value.trim().toUpperCase() || "450 GSM";
+    const fit = inputFit.value.trim().toUpperCase() || "OVERSIZED BOXY";
 
     if (/^\d+$/.test(gsm)) {
       gsm = `${gsm} GSM`;
@@ -1243,11 +1249,11 @@
       const res = await RDPCloud.saveGarment(newItem);
       closeUploadModal();
       switchMainView("showcase");
-    await reloadArchiveData();
+      await reloadArchiveData();
       if (res && res.syncedToCloud) {
-        showToast(`CAPO ${newItem.code} AGGIUNTO E SINCRONIZZATO NEL CLOUD!`);
+        showToast(`✓ CAPO ${newItem.code} AGGIUNTO E SINCRONIZZATO NEL CLOUD!`);
       } else {
-        showToast(`CAPO ${newItem.code} AGGIUNTO CON SUCCESSO ALL'ARCHIVIO!`);
+        showToast(`⚠ CAPO ${newItem.code} SALVATO IN LOCALE MA NON NEL CLOUD (${res && res.error ? res.error : "DATABASE NON CREATO"}). APRI [CLOUD SYNC]!`);
       }
     } catch (_err) {
       showUploadError("ERRORE SALVATAGGIO CAPO.");
@@ -1277,7 +1283,7 @@
     antigravityToggle.classList.add("is-active");
     antigravityToggle.setAttribute("aria-pressed", "true");
     antigravityState.textContent = "[ON]";
-    sysStatus.textContent = "ZERO_G_PHYSICS";
+    if (sysStatus) sysStatus.textContent = "ZERO_G_PHYSICS";
     physicsHud.hidden = false;
   }
 
@@ -1365,15 +1371,40 @@
       frontFileInput.addEventListener("change", (e) => {
         if (e.target.files && e.target.files[0]) setFrontFile(e.target.files[0]);
       });
+      frontFileInput.addEventListener("click", (e) => e.stopPropagation());
     }
     if (backFileInput) {
       backFileInput.addEventListener("change", (e) => {
         if (e.target.files && e.target.files[0]) setBackFile(e.target.files[0]);
       });
+      backFileInput.addEventListener("click", (e) => e.stopPropagation());
     }
 
-    if (frontDropzone) setupZoneDrag(frontDropzone, (files) => setFrontFile(files[0]));
-    if (backDropzone) setupZoneDrag(backDropzone, (files) => setBackFile(files[0]));
+    if (frontDropzone && frontFileInput) {
+      frontDropzone.addEventListener("click", (e) => {
+        if (e.target !== frontFileInput) frontFileInput.click();
+      });
+      frontDropzone.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          frontFileInput.click();
+        }
+      });
+      setupZoneDrag(frontDropzone, (files) => setFrontFile(files[0]));
+    }
+
+    if (backDropzone && backFileInput) {
+      backDropzone.addEventListener("click", (e) => {
+        if (e.target !== backFileInput) backFileInput.click();
+      });
+      backDropzone.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          backFileInput.click();
+        }
+      });
+      setupZoneDrag(backDropzone, (files) => setBackFile(files[0]));
+    }
 
     [optBgClean, optEnhance].forEach((el) => {
       if (el) el.addEventListener("change", () => runCanvasProcessing());
@@ -1782,6 +1813,12 @@
       if (status.connected) {
         cloudLiveStatusPill.className = "cloud-live-status-pill is-connected";
         cloudLiveStatusPill.textContent = "CONNESSO IN TEMPO REALE (FIREBASE FIRESTORE)";
+      } else if (status.dbMissing) {
+        cloudLiveStatusPill.className = "cloud-live-status-pill is-error";
+        cloudLiveStatusPill.textContent = "DATABASE NON ANCORA CREATO SU FIREBASE CONSOLE ⚠";
+      } else if (status.permissionDenied) {
+        cloudLiveStatusPill.className = "cloud-live-status-pill is-error";
+        cloudLiveStatusPill.textContent = "REGOLE BLOCCATE: ABILITA MODALITÀ TEST IN FIRESTORE ⚠";
       } else if (isConfigured) {
         cloudLiveStatusPill.className = "cloud-live-status-pill";
         cloudLiveStatusPill.textContent = "CONFIGURATO // IN CONNESSIONE...";
@@ -1840,13 +1877,19 @@
 
   function updateCloudUI() {
     const status = RDPCloud.getStatus();
-    if (cloudBtnLabel && cloudDot && openCloudModalBtn) {
+    if (cloudBtnLabel && openCloudModalBtn) {
       if (status.connected) {
         openCloudModalBtn.classList.add("is-connected");
         cloudBtnLabel.textContent = "[CLOUD: ONLINE ☁]";
+      } else if (status.dbMissing) {
+        openCloudModalBtn.classList.remove("is-connected");
+        cloudBtnLabel.textContent = "[CLOUD: DB DA CREARE ⚠]";
+      } else if (status.permissionDenied) {
+        openCloudModalBtn.classList.remove("is-connected");
+        cloudBtnLabel.textContent = "[CLOUD: REGOLE ⚠]";
       } else if (status.configured) {
         openCloudModalBtn.classList.remove("is-connected");
-        cloudBtnLabel.textContent = "[CLOUD: ATTESA ☁]";
+        cloudBtnLabel.textContent = "[CLOUD: IN CONNESSIONE ☁]";
       } else {
         openCloudModalBtn.classList.remove("is-connected");
         cloudBtnLabel.textContent = "[CLOUD SYNC]";

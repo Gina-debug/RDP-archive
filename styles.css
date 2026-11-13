@@ -2498,6 +2498,31 @@ img {
   border-color: #12B76A;
 }
 
+.cloud-live-status-pill.is-error {
+  background-color: #FEF3F2;
+  color: #B42318;
+  border-color: #F04438;
+}
+
+.cloud-action-notice {
+  margin: 12px 0;
+  padding: 12px 14px;
+  background-color: #141414;
+  border: 1px solid #F79009;
+  color: #EDEDED;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.cloud-action-notice ol {
+  margin: 8px 0 8px 18px;
+  padding: 0;
+}
+
+.cloud-action-notice li {
+  margin-bottom: 4px;
+}
+
 @media (max-width: 900px) {
   .feedback-header__title {
     font-size: 18px;

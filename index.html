@@ -119,7 +119,7 @@
           <span id="cloudBtnLabel">[CLOUD SYNC]</span>
         </button>
 
-        <!-- Pulsante Upload: Visibile SOLO ed ESCLUSIVAMENTE quando autenticati con account Creator -->
+        <!-- Pulsante Upload Mockup: visibile solo ed esclusivamente al Creator autenticato -->
         <button class="upload-btn" id="openUploadBtn" type="button" style="display: none;" title="Carica nuovo mockup nell'archivio">
           + CARICA MOCKUP [CREATOR]
         </button>
@@ -551,12 +551,16 @@
         </div>
 
         <div class="cloud-steps-guide">
-          <p><strong>GUIDA RAPIDA IN 3 PASSAGGI:</strong></p>
-          <ol>
-            <li>Vai su <a href="https://console.firebase.google.com/" target="_blank" rel="noopener">console.firebase.google.com</a> e crea un progetto gratuito (es. <em>rdp-archive</em>).</li>
-            <li>Aggiungi un'app Web (&lt;/&gt;) e abilita <strong>Cloud Firestore</strong> (modalità test).</li>
-            <li>Copia l'oggetto <code>firebaseConfig = { ... }</code> e incollalo nel riquadro qui sotto:</li>
-          </ol>
+          <div class="cloud-action-notice" id="cloudActionNotice">
+            <p><strong>PROGETTO FIREBASE ATTIVO: <code>rdp--archive</code></strong></p>
+            <p>Le credenziali sono già configurate nel codice! Per far sì che <strong>tutti i cellulari e computer nel mondo</strong> vedano i mockup che aggiungi o togli in tempo reale, assicurati di aver creato il database Firestore (richiede solo 10 secondi):</p>
+            <ol>
+              <li>Apri il link: <a href="https://console.firebase.google.com/project/rdp--archive/firestore" target="_blank" rel="noopener" style="color: #FFFFFF; text-decoration: underline; font-weight: 700;">console.firebase.google.com/project/rdp--archive/firestore ↗</a></li>
+              <li>Clicca sul pulsante <strong>"Crea database"</strong> (Create database).</li>
+              <li>Seleziona <strong>"Avvia in modalità test"</strong> (Test mode) e clicca su <strong>"Abilita"</strong>.</li>
+            </ol>
+            <p style="margin-bottom: 0;">Fatto! Non appena abilitato, lo stato diventerà verde <strong>[ONLINE ☁]</strong> e ogni mockup aggiunto o rimosso apparirà su tutti i dispositivi in tempo reale.</p>
+          </div>
         </div>
 
         <form id="cloudConfigForm" class="upload-fields" style="padding: 0;">
@@ -597,18 +601,18 @@
         <!-- Colonna Sinistra: Dropzone & Canvas Engine -->
         <div class="upload-processor-col">
           <div class="upload-dropzones">
-            <!-- Front Dropzone (Label nativo touch-friendly per smartphone e desktop) -->
-            <label class="dropzone-box" id="frontDropzone" for="frontFileInput" title="Carica Pagina 01 (Davanti)">
-              <input type="file" id="frontFileInput" accept="image/png,image/jpeg,image/webp" style="position: absolute; opacity: 0; width: 0.1px; height: 0.1px; overflow: hidden; z-index: -1;" />
+            <!-- Front Dropzone (Touch & Desktop friendly) -->
+            <div class="dropzone-box" id="frontDropzone" role="button" tabindex="0" title="Carica Pagina 01 (Davanti)">
+              <input type="file" id="frontFileInput" accept="image/*,image/png,image/jpeg,image/webp" style="display: none;" />
               <span class="dropzone-box__tag">PAGINA 01 [DAVANTI] *</span>
               <span class="dropzone-box__label" id="frontFileName">TOCCA PER SELEZIONARE O SCATTARE FOTO</span>
-            </label>
+            </div>
             <!-- Back Dropzone -->
-            <label class="dropzone-box" id="backDropzone" for="backFileInput" title="Carica Pagina 02 (Retro)">
-              <input type="file" id="backFileInput" accept="image/png,image/jpeg,image/webp" style="position: absolute; opacity: 0; width: 0.1px; height: 0.1px; overflow: hidden; z-index: -1;" />
+            <div class="dropzone-box" id="backDropzone" role="button" tabindex="0" title="Carica Pagina 02 (Retro)">
+              <input type="file" id="backFileInput" accept="image/*,image/png,image/jpeg,image/webp" style="display: none;" />
               <span class="dropzone-box__tag">PAGINA 02 [RETRO] (OPZ.)</span>
               <span class="dropzone-box__label" id="backFileName">TOCCA PER SELEZIONARE O SCATTARE FOTO</span>
-            </label>
+            </div>
           </div>
 
           <!-- Controlli Canvas Processing -->
@@ -669,14 +673,14 @@
                 </div>
                 <div class="field-group">
                   <label for="inputGsm">PESO / GSM *</label>
-                  <input type="text" id="inputGsm" placeholder="ES. 480 GSM" required />
+                  <input type="text" id="inputGsm" placeholder="ES. 450 GSM" value="450 GSM" required />
                 </div>
               </div>
 
               <div class="field-row-2">
                 <div class="field-group">
                   <label for="inputFit">VESTIBILITÀ / FIT *</label>
-                  <input type="text" id="inputFit" placeholder="ES. OVERSIZED BOXY" required />
+                  <input type="text" id="inputFit" placeholder="ES. OVERSIZED BOXY" value="OVERSIZED BOXY" required />
                 </div>
                 <div class="field-group">
                   <label for="inputBadge">BADGE DI STATO</label>

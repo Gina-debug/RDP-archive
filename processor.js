@@ -182,8 +182,14 @@ const RDPImageProcessor = (() => {
 
     const elapsed = Math.round(performance.now() - startTime);
     const mime = transparentBg ? "image/png" : "image/jpeg";
-    const quality = transparentBg ? undefined : 0.94;
-    const processedDataUrl = outCanvas.toDataURL(mime, quality);
+    const quality = transparentBg ? undefined : 0.84;
+    let processedDataUrl = outCanvas.toDataURL(mime, quality);
+
+    // Salvaguardia per non superare il limite di 1MB per documento di Google Cloud Firestore:
+    // Se la stringa base64 supera 450KB, ricomprimi a 0.76 per garantire la sincronizzazione cloud multi-dispositivo
+    if (!transparentBg && processedDataUrl.length > 450000) {
+      processedDataUrl = outCanvas.toDataURL("image/jpeg", 0.76);
+    }
 
     // Telemetria di Processamento
     const telemetry = {

@@ -12,6 +12,13 @@ const RDPAuth = (() => {
 
   // Credenziali univoche ed esclusive autorizzate
   const AUTHORIZED_EMAIL = "rikisolbiati@gmail.com";
+  const AUTHORIZED_USERNAMES = [
+    "rikisolbiati@gmail.com",
+    "rikisolbiati",
+    "riki",
+    "riccardo",
+    "riccardosolbiati"
+  ];
   const AUTHORIZED_PASS = "11settembre1965";
 
   // Invalida vecchie sessioni v1 se presenti
@@ -28,7 +35,7 @@ const RDPAuth = (() => {
       if (
         data &&
         data.isLoggedIn &&
-        String(data.email || "").toLowerCase() === AUTHORIZED_EMAIL
+        AUTHORIZED_USERNAMES.includes(String(data.email || "").toLowerCase())
       ) {
         return data;
       }
@@ -50,15 +57,18 @@ const RDPAuth = (() => {
     return session ? session.username || session.email : null;
   }
 
-  // Esegue il login con verifica rigorosa di email e password
+  // Esegue il login con verifica di email/username e password
   function login(usernameOrEmail, password) {
-    const cleanEmail = String(usernameOrEmail || "").trim().toLowerCase();
+    const cleanUser = String(usernameOrEmail || "").trim().toLowerCase();
     const cleanPass = String(password || "").trim();
 
-    if (cleanEmail !== AUTHORIZED_EMAIL || cleanPass !== AUTHORIZED_PASS) {
+    const isUserValid = AUTHORIZED_USERNAMES.includes(cleanUser);
+    const isPassValid = cleanPass === AUTHORIZED_PASS;
+
+    if (!isUserValid || !isPassValid) {
       return {
         success: false,
-        message: "ACCESSO NEGATO: CREDENZIALI NON CORRETTE."
+        message: "ACCESSO NEGATO: EMAIL O PASSWORD NON CORRETTE."
       };
     }
 
