@@ -325,6 +325,7 @@
               <button class="view-switch__btn" id="viewBackBtn" type="button">P.02 // RETRO</button>
             </div>
             <div class="viewer-toolbar-right">
+              <span class="modal-view-label" id="modalViewLabel" style="font-size: 10px; color: var(--muted); font-weight: 700;">P.01 DAVANTI</span>
               <span class="zoom-indicator" id="zoomIndicator">ZOOM: 1.0X</span>
               <button class="grid-toggle-btn" id="gridOverlayBtn" type="button" aria-pressed="false">
                 [GRID: OFF]
@@ -343,6 +344,7 @@
           </div>
 
           <div class="viewer-instruction">
+            <span id="modalAssetPath" style="display: none;"></span>
             <span>DRAG PER PAN // DOPPIO CLICK PER ZOOM // ARROWS PER NAVIGARE CAPI // CLICK SUI NUMERI PER VOTARE</span>
           </div>
         </div>
@@ -407,6 +409,10 @@
             <div class="spec-row">
               <dt>COLORWAY</dt>
               <dd id="specColorway">RAW WHITE / BLOOD RED</dd>
+            </div>
+            <div class="spec-row">
+              <dt>PATTERN REF</dt>
+              <dd id="specPattern">PAT-RDP-001</dd>
             </div>
             <div class="spec-row">
               <dt>COSTRUZIONE</dt>

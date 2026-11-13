@@ -7,14 +7,15 @@
 const RDP_FIREBASE_CONFIG = (() => {
   "use strict";
 
-  // Configurazione predefinita (sostituisci i campi con quelli del tuo progetto Firebase)
+  // Configurazione predefinita ufficiale del progetto Firebase (rdp--archive)
   const defaultConfig = {
-    apiKey: "",
-    authDomain: "",
-    projectId: "",
-    storageBucket: "",
-    messagingSenderId: "",
-    appId: ""
+    apiKey: "AIzaSyDic3Xu4l6KZcqC4498Zfkz1MaVikAD9Kc",
+    authDomain: "rdp--archive.firebaseapp.com",
+    projectId: "rdp--archive",
+    storageBucket: "rdp--archive.firebasestorage.app",
+    messagingSenderId: "611066064576",
+    appId: "1:611066064576:web:e1bbe942d73edf7a478725",
+    measurementId: "G-GT4HR39CKV"
   };
 
   // Permette al Creator di incollare la configurazione anche da interfaccia web

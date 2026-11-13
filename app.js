@@ -158,6 +158,8 @@
   const specBatch = document.getElementById("specBatch");
   const specNotesHeader = document.getElementById("specNotesHeader");
   const specNotes = document.getElementById("specNotes");
+  const pageNotesTag = document.getElementById("pageNotesTag");
+  const pageNotesBody = document.getElementById("pageNotesBody");
 
   // Creator Upload Modal Elements
   const globalDropOverlay = document.getElementById("globalDropOverlay");
@@ -739,16 +741,20 @@
     resetDeleteArmed();
     resetZoom();
     renderInspectionModal(item);
-    inspectionModal.hidden = false;
-    document.body.style.overflow = "hidden";
+    if (inspectionModal) {
+      inspectionModal.hidden = false;
+      document.body.style.overflow = "hidden";
+    }
   }
 
   function closeInspectionModal() {
-    inspectionModal.hidden = true;
+    if (inspectionModal) {
+      inspectionModal.hidden = true;
+      document.body.style.overflow = "";
+    }
     activeModalItemId = null;
     resetDeleteArmed();
     resetZoom();
-    document.body.style.overflow = "";
   }
 
   function toggleModalPage() {
@@ -766,38 +772,54 @@
       visible.findIndex((i) => i.id === item.id)
     );
 
-    modalCode.textContent = item.code;
-    modalBadge.textContent = item.statusBadge || "ARCHIVE SPEC";
-    modalCategory.textContent = item.category;
-    modalTitle.textContent = item.title;
+    if (modalCode) modalCode.textContent = item.code;
+    if (modalBadge) modalBadge.textContent = item.statusBadge || "ARCHIVE SPEC";
+    if (modalCategory) modalCategory.textContent = item.category;
+    if (modalTitle) modalTitle.textContent = item.title;
 
-    specFit.textContent = item.fit || "--";
-    specGsm.textContent = item.gsm || "--";
-    specFabric.textContent = item.fabric || "100% HEAVYWEIGHT COMBED COTTON";
-    specColorway.textContent = item.colorway || "ARCHIVE STANDARD";
-    specPattern.textContent = item.patternRef || `PAT-${item.code}`;
-    specConstruction.textContent = item.construction || "STANDARD INDUSTRIAL STITCH";
-    specBatch.textContent = item.batch || "OFFICIAL ARCHIVE SPEC";
+    if (specFit) specFit.textContent = item.fit || "--";
+    if (specGsm) specGsm.textContent = item.gsm || "--";
+    if (specFabric) specFabric.textContent = item.fabric || "100% HEAVYWEIGHT COMBED COTTON";
+    if (specColorway) specColorway.textContent = item.colorway || "ARCHIVE STANDARD";
+    if (specPattern) specPattern.textContent = item.patternRef || `PAT-${item.code}`;
+    if (specConstruction) specConstruction.textContent = item.construction || "STANDARD INDUSTRIAL STITCH";
+    if (specBatch) specBatch.textContent = item.batch || "OFFICIAL ARCHIVE SPEC";
 
-    if (activeModalView === "back") {
-      modalPageIndicator.textContent = "PAGINA 02 DI 02 [RETRO]";
-      specNotesHeader.textContent = "NOTE VISTA RETRO // ATELIER_LOG";
+    const isBack = activeModalView === "back";
+    if (modalPageIndicator) {
+      modalPageIndicator.textContent = isBack
+        ? "PAGINA 02 DI 02 [RETRO]"
+        : "PAGINA 01 DI 02 [DAVANTI]";
+    }
+
+    if (pageNotesTag) {
+      pageNotesTag.textContent = isBack
+        ? "PAGINA 02 NOTE (RETRO):"
+        : "PAGINA 01 NOTE (DAVANTI):";
+    }
+
+    if (pageNotesBody) {
+      pageNotesBody.textContent = isBack
+        ? (item.backNotes || "VISTA DORSALE STANDARDIZZATA AD ALTA DEFINIZIONE (1400×1400PX // ~94% FILL).")
+        : (item.frontNotes || "VISTA FRONTALE STANDARDIZZATA AD ALTA DEFINIZIONE (1400×1400PX // ~94% FILL).");
+    }
+
+    if (specNotesHeader) {
+      specNotesHeader.textContent = isBack
+        ? "NOTE VISTA RETRO // ATELIER_LOG"
+        : "NOTE VISTA DAVANTI // ATELIER_LOG";
+    }
+
+    if (specNotes) {
       specNotes.textContent =
-        item.backNotes ||
         item.notes ||
-        "VISTA DORSALE STANDARDIZZATA AD ALTA DEFINIZIONE (1400×1400PX // ~94% FILL).";
-    } else {
-      modalPageIndicator.textContent = "PAGINA 01 DI 02 [DAVANTI]";
-      specNotesHeader.textContent = "NOTE VISTA DAVANTI // ATELIER_LOG";
-      specNotes.textContent =
         item.frontNotes ||
-        item.notes ||
-        "VISTA FRONTALE STANDARDIZZATA AD ALTA DEFINIZIONE (1400×1400PX // ~94% FILL).";
+        "CAPO UFFICIALE ARCHIVIO RAGAZZI DI PROVINCIA // STANDARDIZZATO AD ALTA RISOLUZIONE.";
     }
 
     const hasBack = Boolean(item.images && item.images.back);
-    viewBackBtn.disabled = !hasBack;
-    modalFlipPageBtn.disabled = !hasBack;
+    if (viewBackBtn) viewBackBtn.disabled = !hasBack;
+    if (modalFlipPageBtn) modalFlipPageBtn.disabled = !hasBack;
     if (!hasBack && activeModalView === "back") {
       activeModalView = "front";
     }
@@ -815,7 +837,9 @@
 
     updateModalViewImage(item);
     updateModalVotingTerminal(item);
-    modalIndexLabel.textContent = `${pad2(indexInVisible + 1)} / ${pad2(visible.length)}`;
+    if (modalIndexLabel) {
+      modalIndexLabel.textContent = `${pad2(indexInVisible + 1)} / ${pad2(visible.length)}`;
+    }
   }
 
   function updateModalVotingTerminal(item) {
@@ -837,32 +861,40 @@
       modalMeterFill.style.width = `${pct.toFixed(1)}%`;
     }
 
-    modalVoteButtons.forEach((btn) => {
-      const btnScore = Number(btn.dataset.vote);
-      btn.classList.toggle("is-active", stats.hasVoted && stats.userVote === btnScore);
-    });
+    if (modalVoteButtons) {
+      modalVoteButtons.forEach((btn) => {
+        const btnScore = Number(btn.dataset.vote);
+        btn.classList.toggle("is-active", stats.hasVoted && stats.userVote === btnScore);
+      });
+    }
   }
 
   function updateModalViewImage(item) {
     const src =
-      activeModalView === "back" && item.images.back
+      activeModalView === "back" && item.images && item.images.back
         ? item.images.back
-        : item.images.front;
+        : (item.images ? item.images.front : "");
 
-    modalImage.src = src;
-    modalImage.alt = `${item.title} — ${activeModalView === "front" ? "Pagina 01 Davanti" : "Pagina 02 Retro"}`;
+    if (modalImage) {
+      modalImage.src = src;
+      modalImage.alt = `${item.title} — ${activeModalView === "front" ? "Pagina 01 Davanti" : "Pagina 02 Retro"}`;
+    }
 
-    viewFrontBtn.classList.toggle("is-active", activeModalView === "front");
-    viewBackBtn.classList.toggle("is-active", activeModalView === "back");
-    modalViewLabel.textContent =
-      activeModalView === "front"
-        ? "PAGINA 01 DI 02: VISTA DAVANTI (FRONT)"
-        : "PAGINA 02 DI 02: VISTA RETRO (BACK)";
+    if (viewFrontBtn) viewFrontBtn.classList.toggle("is-active", activeModalView === "front");
+    if (viewBackBtn) viewBackBtn.classList.toggle("is-active", activeModalView === "back");
+    if (modalViewLabel) {
+      modalViewLabel.textContent =
+        activeModalView === "front"
+          ? "PAGINA 01 DI 02: VISTA DAVANTI (FRONT)"
+          : "PAGINA 02 DI 02: VISTA RETRO (BACK)";
+    }
 
-    const isDataUrl = src.startsWith("data:");
-    modalAssetPath.textContent = isDataUrl
-      ? `SRC: CREATOR_INGESTION://${item.code}_${activeModalView.toUpperCase()} [1400×1400 HD]`
-      : `SRC: /${src.toUpperCase()} [1400×1400 HD]`;
+    if (modalAssetPath) {
+      const isDataUrl = src && src.startsWith("data:");
+      modalAssetPath.textContent = isDataUrl
+        ? `SRC: CREATOR_INGESTION://${item.code}_${activeModalView.toUpperCase()} [1400×1400 HD]`
+        : `SRC: /${src ? src.toUpperCase() : "IMG"} [1400×1400 HD]`;
+    }
   }
 
   function resetZoom() {
@@ -1437,27 +1469,33 @@
     }
 
     // Lightbox Modal Controls
-    modalCloseBtn.addEventListener("click", closeInspectionModal);
-    inspectionModal.addEventListener("click", (e) => {
-      if (e.target === inspectionModal) closeInspectionModal();
-    });
+    if (modalCloseBtn) modalCloseBtn.addEventListener("click", closeInspectionModal);
+    if (inspectionModal) {
+      inspectionModal.addEventListener("click", (e) => {
+        if (e.target === inspectionModal) closeInspectionModal();
+      });
+    }
 
-    viewFrontBtn.addEventListener("click", () => {
-      activeModalView = "front";
-      const item = allItems.find((i) => i.id === activeModalItemId);
-      if (item) {
+    if (viewFrontBtn) {
+      viewFrontBtn.addEventListener("click", () => {
+        activeModalView = "front";
+        const item = allItems.find((i) => i.id === activeModalItemId);
+        if (item) {
+          resetZoom();
+          renderInspectionModal(item);
+        }
+      });
+    }
+
+    if (viewBackBtn) {
+      viewBackBtn.addEventListener("click", () => {
+        const item = allItems.find((i) => i.id === activeModalItemId);
+        if (!item || !item.images.back) return;
+        activeModalView = "back";
         resetZoom();
         renderInspectionModal(item);
-      }
-    });
-
-    viewBackBtn.addEventListener("click", () => {
-      const item = allItems.find((i) => i.id === activeModalItemId);
-      if (!item || !item.images.back) return;
-      activeModalView = "back";
-      resetZoom();
-      renderInspectionModal(item);
-    });
+      });
+    }
 
     if (modalFlipPageBtn) modalFlipPageBtn.addEventListener("click", toggleModalPage);
 
@@ -1472,9 +1510,9 @@
 
     if (modalStage) modalStage.addEventListener("click", toggleZoom);
     if (modalStage) modalStage.addEventListener("mousemove", updateZoomPan);
-    modalPrevBtn.addEventListener("click", () => navigateModal(-1));
-    modalNextBtn.addEventListener("click", () => navigateModal(1));
-    modalDownloadBtn.addEventListener("click", handleDownloadCurrentImage);
+    if (modalPrevBtn) modalPrevBtn.addEventListener("click", () => navigateModal(-1));
+    if (modalNextBtn) modalNextBtn.addEventListener("click", () => navigateModal(1));
+    if (modalDownloadBtn) modalDownloadBtn.addEventListener("click", handleDownloadCurrentImage);
     if (modalDeleteBtn) {
       modalDeleteBtn.addEventListener("click", handleDeleteCurrentItem);
     }
