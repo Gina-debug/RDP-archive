@@ -2,7 +2,7 @@
 // RDP // RAGAZZI DI PROVINCIA — CLOUD REAL-TIME SYNCHRONIZATION ENGINE
 // Sincronizza mockup aggiunti, capi rimossi e schede votazione/feedback
 // su TUTTI i dispositivi nel mondo in tempo reale (PC, smartphone, tablet).
-// Basato su Google Firebase Firestore con diagnostica attiva e fallback locale.
+// Basato su Google Firebase Firestore con cache reattiva e riconciliazione bi-direzionale.
 // ==========================================================================
 
 const RDPCloud = (() => {
@@ -14,6 +14,10 @@ const RDPCloud = (() => {
   let cloudDbMissing = false;
   let cloudDbPermissionDenied = false;
   let initError = null;
+
+  // Cache in memoria dei documenti Firestore per aggiornamenti istantanei senza ricaricamento
+  let latestCloudGarments = null;
+  let latestCloudDeletions = null;
 
   // Callback registrate per aggiornamenti in tempo reale
   let onGarmentsChangeCallbacks = [];
@@ -29,7 +33,7 @@ const RDPCloud = (() => {
     });
   }
 
-  // Inizializza la connessione a Firebase se configurato
+  // Inizializza la connessione a Firebase
   function init() {
     if (isInitialized && db) return true;
 
@@ -80,6 +84,9 @@ const RDPCloud = (() => {
             const data = doc.data();
             cloudGarments.push({ ...data, id: doc.id });
           });
+
+          latestCloudGarments = cloudGarments;
+
           onGarmentsChangeCallbacks.forEach((cb) => {
             try {
               cb(cloudGarments);
@@ -117,6 +124,16 @@ const RDPCloud = (() => {
           snapshot.forEach((doc) => {
             deletedIds.push(doc.id);
           });
+
+          latestCloudDeletions = deletedIds;
+
+          // Sincronizza anche la memoria locale con le eliminazioni del cloud
+          deletedIds.forEach((id) => {
+            try {
+              RDPStorage.addDeletedItemId(id);
+            } catch (_e) {}
+          });
+
           onDeletionsChangeCallbacks.forEach((cb) => {
             try {
               cb(deletedIds);
@@ -158,26 +175,48 @@ const RDPCloud = (() => {
     }
   }
 
-  // Carica tutti i capi caricati dal Creator (Cloud e Locale)
+  // Carica tutti i capi caricati dal Creator (Cloud e Locale sincronizzati)
   async function getAllCreatorGarments() {
-    const localItems = RDPStorage.getAllUserItems();
+    let localItems = [];
+    try {
+      const items = await RDPStorage.getAllUserItems();
+      localItems = Array.isArray(items) ? items : [];
+    } catch (_e) {
+      localItems = [];
+    }
 
     if (init() && db) {
       try {
-        const snap = await db.collection("rdp_garments").get();
+        let cloudGarments = latestCloudGarments;
+        if (!cloudGarments) {
+          const snap = await db.collection("rdp_garments").get();
+          cloudGarments = [];
+          snap.forEach((doc) => {
+            cloudGarments.push({ ...doc.data(), id: doc.id });
+          });
+          latestCloudGarments = cloudGarments;
+        }
+
         isConnected = true;
         cloudDbMissing = false;
         notifyStatusChange();
 
         const cloudMap = new Map();
-        snap.forEach((doc) => {
-          cloudMap.set(doc.id, { ...doc.data(), id: doc.id });
+        cloudGarments.forEach((g) => {
+          if (g && g.id) {
+            cloudMap.set(g.id, g);
+          }
         });
 
         // Unisci anche eventuali capi locali non ancora presenti sul cloud
+        // e caricali in background su Firestore per sincronizzarli a tutti i dispositivi
         localItems.forEach((local) => {
-          if (!cloudMap.has(local.id)) {
+          if (local && local.id && !cloudMap.has(local.id)) {
             cloudMap.set(local.id, local);
+            db.collection("rdp_garments").doc(local.id).set({
+              ...local,
+              updatedAt: Date.now()
+            }).catch(() => {});
           }
         });
 
@@ -194,19 +233,51 @@ const RDPCloud = (() => {
     return localItems;
   }
 
-  // Carica tutti gli ID eliminati (Cloud e Locale)
+  // Carica tutti gli ID eliminati (Cloud e Locale sincronizzati)
   async function getAllDeletedIds() {
-    const localIds = RDPStorage.getDeletedItemIds();
+    let localIds = [];
+    try {
+      const ids = RDPStorage.getDeletedItemIds();
+      localIds = Array.isArray(ids) ? ids : [];
+    } catch (_e) {
+      localIds = [];
+    }
 
     if (init() && db) {
       try {
-        const snap = await db.collection("rdp_deletions").get();
+        let cloudDeletions = latestCloudDeletions;
+        if (!cloudDeletions) {
+          const snap = await db.collection("rdp_deletions").get();
+          cloudDeletions = [];
+          snap.forEach((doc) => {
+            cloudDeletions.push(doc.id);
+          });
+          latestCloudDeletions = cloudDeletions;
+        }
+
         isConnected = true;
         cloudDbMissing = false;
         notifyStatusChange();
 
         const set = new Set(localIds);
-        snap.forEach((doc) => set.add(doc.id));
+        cloudDeletions.forEach((id) => {
+          set.add(id);
+          try {
+            RDPStorage.addDeletedItemId(id);
+          } catch (_e) {}
+        });
+
+        // Se nel dispositivo corrente ci sono eliminazioni non ancora nel cloud, sincronizzale
+        const cloudSet = new Set(cloudDeletions);
+        localIds.forEach((id) => {
+          if (!cloudSet.has(id)) {
+            db.collection("rdp_deletions").doc(id).set({
+              id,
+              deletedAt: Date.now()
+            }).catch(() => {});
+          }
+        });
+
         return Array.from(set);
       } catch (err) {
         console.warn("[RDP Cloud] getAllDeletedIds fallback:", err);
@@ -229,12 +300,25 @@ const RDPCloud = (() => {
       try {
         // Se era tra gli eliminati, rimuovilo da rdp_deletions
         await db.collection("rdp_deletions").doc(item.id).delete().catch(() => {});
+        if (latestCloudDeletions) {
+          latestCloudDeletions = latestCloudDeletions.filter((id) => id !== item.id);
+        }
 
         // Salva su Firestore
         await db.collection("rdp_garments").doc(item.id).set({
           ...item,
           updatedAt: Date.now()
         });
+
+        // Aggiorna cache locale immediata
+        if (latestCloudGarments) {
+          const existingIdx = latestCloudGarments.findIndex((g) => g.id === item.id);
+          if (existingIdx >= 0) {
+            latestCloudGarments[existingIdx] = item;
+          } else {
+            latestCloudGarments.push(item);
+          }
+        }
 
         isConnected = true;
         cloudDbMissing = false;
@@ -278,6 +362,14 @@ const RDPCloud = (() => {
         // Se era un capo caricato dal creator, rimuovilo anche da rdp_garments
         await db.collection("rdp_garments").doc(id).delete().catch(() => {});
 
+        // Aggiorna cache locale in memoria
+        if (latestCloudDeletions && !latestCloudDeletions.includes(id)) {
+          latestCloudDeletions.push(id);
+        }
+        if (latestCloudGarments) {
+          latestCloudGarments = latestCloudGarments.filter((g) => g.id !== id);
+        }
+
         isConnected = true;
         cloudDbMissing = false;
         notifyStatusChange();
@@ -296,6 +388,7 @@ const RDPCloud = (() => {
   // Ripristina tutti i capi eliminati
   async function restoreAllDeleted() {
     RDPStorage.restoreAllDeletedItems();
+    latestCloudDeletions = [];
 
     if (init() && db) {
       try {

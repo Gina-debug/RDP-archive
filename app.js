@@ -635,7 +635,7 @@
       </div>
     `;
 
-    card.addEventListener("click", (e) => {
+    card.addEventListener("click", async (e) => {
       if (RDPPhysics.getActiveState()) return;
 
       // Handle Quick Delete button directly on the card
@@ -656,7 +656,7 @@
           return;
         }
 
-        removeItemFromArchive(item.id, item.code);
+        await removeItemFromArchive(item.id, item.code);
         return;
       }
 
