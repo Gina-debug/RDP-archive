@@ -1555,13 +1555,43 @@
     const utilityMenuToggle = document.getElementById("utilityMenuToggle");
     const utilityMenuPopover = document.getElementById("utilityMenuPopover");
     if (utilityMenuToggle && utilityMenuPopover) {
+      const closePopover = () => {
+        utilityMenuPopover.hidden = true;
+        utilityMenuToggle.classList.remove("is-active");
+        utilityMenuToggle.setAttribute("aria-expanded", "false");
+      };
+
+      const openPopover = () => {
+        utilityMenuPopover.hidden = false;
+        utilityMenuToggle.classList.add("is-active");
+        utilityMenuToggle.setAttribute("aria-expanded", "true");
+      };
+
       utilityMenuToggle.addEventListener("click", (e) => {
         e.stopPropagation();
-        utilityMenuPopover.hidden = !utilityMenuPopover.hidden;
+        if (utilityMenuPopover.hidden) {
+          openPopover();
+        } else {
+          closePopover();
+        }
       });
+
       document.addEventListener("click", (e) => {
         if (!utilityMenuPopover.hidden && !utilityMenuPopover.contains(e.target) && e.target !== utilityMenuToggle) {
-          utilityMenuPopover.hidden = true;
+          closePopover();
+        }
+      });
+
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && !utilityMenuPopover.hidden) {
+          closePopover();
+        }
+      });
+
+      utilityMenuPopover.addEventListener("click", (e) => {
+        const btn = e.target.closest("button");
+        if (btn && btn.id !== "antigravityToggle") {
+          closePopover();
         }
       });
     }

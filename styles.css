@@ -256,6 +256,12 @@ img {
   background-color: #EEEEEE;
 }
 
+.utility-toggle-btn.is-active {
+  background-color: var(--ink);
+  color: #FFFFFF;
+  border-color: var(--ink);
+}
+
 .utility-menu-popover {
   position: absolute;
   top: calc(100% + 8px);
@@ -269,6 +275,10 @@ img {
   flex-direction: column;
   gap: 6px;
   z-index: 220;
+}
+
+.utility-menu-popover[hidden] {
+  display: none !important;
 }
 
 .utility-popover-header {
