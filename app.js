@@ -615,17 +615,17 @@
             class="card-page-btn ${activePage === "front" ? "is-active" : ""}"
             data-switch-to="front"
             type="button"
-            title="Mostra Pagina 01 (Davanti)"
+            title="Mostra Davanti"
           >
-            P.01
+            01 FRONTE
           </button>
           <button
             class="card-page-btn ${activePage === "back" ? "is-active" : ""}"
             data-switch-to="back"
             type="button"
-            title="Mostra Pagina 02 (Retro)"
+            title="Mostra Retro"
           >
-            P.02
+            02 RETRO
           </button>
         </div>
       `;
@@ -640,7 +640,7 @@
     const stats = RDPRatings.getItemStats(item);
     const userVote = stats.userVote;
 
-    // Pulsanti voto rapido 0..10
+    // Pulsanti voto rapido 0..10 segmentati
     let quickVoteButtonsHtml = "";
     for (let i = 0; i <= 10; i++) {
       const isSelected = userVote === i;
@@ -666,39 +666,50 @@
       ? `<span class="archive-card__creator-badge">[CREATOR_DROP]</span>`
       : "";
 
+    const ratingBadgeText = stats.hasVoted
+      ? `★ ${stats.average} (TUO: ${stats.userVote}★)`
+      : `★ ${stats.average} (${stats.totalVotes} VOTI)`;
+
+    const voteRowLabel = stats.hasVoted
+      ? `TUO VOTO: ★ ${stats.userVote}/10 ✓`
+      : "VOTA QUESTO CAPO (0-10):";
+
     card.innerHTML = `
       <div class="archive-card__head">
-        <div class="flex items-center gap-2">
+        <div class="archive-card__head-left">
           <span class="archive-card__code">${escapeHtml(item.code)}</span>
-          ${headerPageControls}
+          ${creatorBadgeHtml}
         </div>
-        <div class="flex items-center gap-2">
+        <div class="archive-card__head-right">
           ${quickDeleteHtml}
-          <span class="camo-badge">${escapeHtml(item.statusBadge || "ARCHIVE SPEC")}</span>
+          ${headerPageControls}
         </div>
       </div>
       <div class="archive-card__media">
-        ${creatorBadgeHtml}
         <span class="archive-card__rating-badge ${stats.hasVoted ? "has-user-vote" : ""}">
-          ★ ${escapeHtml(stats.average)} (${stats.totalVotes} VOTI)
+          ${escapeHtml(ratingBadgeText)}
         </span>
-        <span class="archive-card__page-indicator">${pageBadgeText}</span>
         <img
           class="archive-card__img"
           src="${escapeAttr(imgSrc)}"
           alt="${escapeAttr(item.title)} (${pageBadgeText})"
           loading="lazy"
         />
-        <span class="archive-card__inspect-hint">[INSPECT // ${activePage === "front" ? "P.01 DAVANTI" : "P.02 RETRO"}]</span>
+        <span class="archive-card__inspect-hint">[ISPEZIONA HD ↗]</span>
       </div>
       <div class="archive-card__foot">
-        <h2 class="archive-card__title">${escapeHtml(item.title)}</h2>
+        <div class="archive-card__title-row">
+          <h2 class="archive-card__title">${escapeHtml(item.title)}</h2>
+        </div>
         <div class="archive-card__meta">
           <span>${escapeHtml(item.gsm)} // ${escapeHtml(item.fit)}</span>
-          <span>${escapeHtml(item.category)}</span>
+          <span class="archive-card__cat-pill">${escapeHtml(item.category)}</span>
         </div>
         <div class="archive-card__vote-row" title="Vota da 0 a 10 per ${escapeAttr(item.code)}">
-          <span class="archive-card__vote-label">VOTA:</span>
+          <div class="archive-card__vote-head">
+            <span class="archive-card__vote-label">${escapeHtml(voteRowLabel)}</span>
+            <span class="archive-card__inspect-trigger">[SCHEDA TECNICA ↗]</span>
+          </div>
           <div class="archive-card__vote-btns" role="group" aria-label="Vota ${escapeAttr(item.code)} da 0 a 10">
             ${quickVoteButtonsHtml}
           </div>
@@ -802,17 +813,16 @@
       codeEl.textContent = item.code;
     }
 
-    // Badge status
-    const badgeEl = card.querySelector(".camo-badge");
-    const targetBadge = item.statusBadge || "ARCHIVE SPEC";
-    if (badgeEl && badgeEl.textContent !== targetBadge) {
-      badgeEl.textContent = targetBadge;
-    }
-
     // Titolo
     const titleEl = card.querySelector(".archive-card__title");
     if (titleEl && titleEl.textContent !== item.title) {
       titleEl.textContent = item.title;
+    }
+
+    // Meta & category
+    const metaEl = card.querySelector(".archive-card__meta");
+    if (metaEl) {
+      metaEl.innerHTML = `<span>${escapeHtml(item.gsm)} // ${escapeHtml(item.fit)}</span><span class="archive-card__cat-pill">${escapeHtml(item.category)}</span>`;
     }
 
     // Indicatore pagina
@@ -821,11 +831,6 @@
       : activePage === "front"
       ? "P.01 // DAVANTI"
       : "P.02 // RETRO";
-
-    const pageInd = card.querySelector(".archive-card__page-indicator");
-    if (pageInd && pageInd.textContent !== pageBadgeText) {
-      pageInd.textContent = pageBadgeText;
-    }
 
     // Immagine: AGGIORNA SOLO SE CAMBIATA per impedire flicker/ricaricamento browser!
     const hasBack = Boolean(item.images && item.images.back);
@@ -842,12 +847,12 @@
     let creatorBadge = card.querySelector(".archive-card__creator-badge");
     if (item.isCreatorUpload) {
       if (!creatorBadge) {
-        const mediaEl = card.querySelector(".archive-card__media");
-        if (mediaEl) {
+        const headLeft = card.querySelector(".archive-card__head-left") || card.querySelector(".archive-card__head");
+        if (headLeft) {
           const badge = document.createElement("span");
           badge.className = "archive-card__creator-badge";
           badge.textContent = "[CREATOR_DROP]";
-          mediaEl.prepend(badge);
+          headLeft.appendChild(badge);
         }
       }
     } else if (creatorBadge) {
@@ -856,7 +861,7 @@
 
     // Pulsante eliminazione rapida per Creator
     const isCreator = RDPAuth.isAuthenticated();
-    const headRight = card.querySelector(".archive-card__head .flex:last-child");
+    const headRight = card.querySelector(".archive-card__head-right") || card.querySelector(".archive-card__head");
     let deleteBtn = card.querySelector(".card-delete-quick-btn");
     if (isCreator) {
       if (!deleteBtn && headRight) {
@@ -884,11 +889,20 @@
     const stats = RDPRatings.getItemStats(item);
     const ratingBadge = card.querySelector(".archive-card__rating-badge");
     if (ratingBadge) {
-      const badgeText = `★ ${stats.average} (${stats.totalVotes} VOTI)`;
+      const badgeText = stats.hasVoted
+        ? `★ ${stats.average} (TUO: ${stats.userVote}★)`
+        : `★ ${stats.average} (${stats.totalVotes} VOTI)`;
       if (ratingBadge.textContent !== badgeText) {
         ratingBadge.textContent = badgeText;
       }
       ratingBadge.classList.toggle("has-user-vote", Boolean(stats.hasVoted));
+    }
+
+    const voteLabel = card.querySelector(".archive-card__vote-label");
+    if (voteLabel) {
+      voteLabel.textContent = stats.hasVoted
+        ? `TUO VOTO: ★ ${stats.userVote}/10 ✓`
+        : "VOTA QUESTO CAPO (0-10):";
     }
 
     const voteBtns = card.querySelectorAll(".quick-vote-btn");
@@ -1537,6 +1551,21 @@
   // EVENT BINDINGS & GLOBAL LISTENERS
   // ========================================================================
   function bindEvents() {
+    // Utility Menu Popover Toggle
+    const utilityMenuToggle = document.getElementById("utilityMenuToggle");
+    const utilityMenuPopover = document.getElementById("utilityMenuPopover");
+    if (utilityMenuToggle && utilityMenuPopover) {
+      utilityMenuToggle.addEventListener("click", (e) => {
+        e.stopPropagation();
+        utilityMenuPopover.hidden = !utilityMenuPopover.hidden;
+      });
+      document.addEventListener("click", (e) => {
+        if (!utilityMenuPopover.hidden && !utilityMenuPopover.contains(e.target) && e.target !== utilityMenuToggle) {
+          utilityMenuPopover.hidden = true;
+        }
+      });
+    }
+
     // Auth Trigger & Modal
     adminAuthBtn.addEventListener("click", openAuthModal);
     authCloseBtn.addEventListener("click", closeAuthModal);
@@ -2131,6 +2160,12 @@
     });
 
     ballotCounterBadge.textContent = `${votedCount} / ${allItems.length} CAPI VOTATI`;
+
+    const tabVoteCountPill = document.getElementById("tabVoteCountPill");
+    if (tabVoteCountPill) {
+      tabVoteCountPill.textContent = `${votedCount}/${allItems.length}`;
+      tabVoteCountPill.classList.toggle("has-votes", votedCount > 0);
+    }
   }
 
   async function handleFeedbackSubmit() {

@@ -17,85 +17,33 @@
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 </head>
 <body>
-  <!-- HEADER TECNICO FISSO -->
+  <!-- HEADER PRINCIPALE EDITORIALE -->
   <header class="site-header" id="siteHeader">
-    <!-- Top Woodland Camo Marquee -->
-    <div class="camo-marquee" aria-hidden="true">
-      <div class="camo-marquee__track">
-        <span class="camo-marquee__chunk">
-          RDP ARCHIVE SYS V3.0 // RAGAZZI DI PROVINCIA // DIGITAL SHOWCASE &amp; RATING PLATFORM // DROP 04 FW26-SS26 // VOTA I CAPI DA 0 A 10 // MILANO NORD - PROVINCIA //
-        </span>
-        <span class="camo-marquee__chunk">
-          RDP ARCHIVE SYS V3.0 // RAGAZZI DI PROVINCIA // DIGITAL SHOWCASE &amp; RATING PLATFORM // DROP 04 FW26-SS26 // VOTA I CAPI DA 0 A 10 // MILANO NORD - PROVINCIA //
-        </span>
-      </div>
-    </div>
+    <!-- Top Subtle Camo Accent -->
+    <div class="camo-accent-strip" aria-hidden="true"></div>
 
-    <!-- System Telemetry Row -->
-    <div class="header-telemetry">
+    <!-- Main Navigation Bar -->
+    <div class="header-main-bar">
+      <!-- Brand Logo & Tag -->
       <div class="brand-block">
         <span class="brand-block__dot" aria-hidden="true"></span>
         <h1 class="brand-block__logo">RDP // RAGAZZI DI PROVINCIA</h1>
-        <span class="brand-block__tag">[SYS:/COMMUNITY_SHOWCASE_&amp;_RATING]</span>
+        <span class="brand-block__tag">SS26 COMMUNITY ARCHIVE</span>
       </div>
 
-      <div class="telemetry-stats">
-        <div class="telemetry-cell">
-          <span class="telemetry-cell__label">CAPI</span>
-          <span class="telemetry-cell__val" id="totalGarmentsVal">11</span>
-        </div>
-        <div class="telemetry-cell">
-          <span class="telemetry-cell__label">PAGINE HD</span>
-          <span class="telemetry-cell__val" id="totalPagesVal">22</span>
-        </div>
-        <div class="telemetry-cell">
-          <span class="telemetry-cell__label">COMMUNITY AVG</span>
-          <span class="telemetry-cell__val" id="globalRatingVal">★ 0.0</span>
-        </div>
-        <div class="telemetry-cell">
-          <span class="telemetry-cell__label">VOTI TOTALI</span>
-          <span class="telemetry-cell__val" id="totalVotesVal">0</span>
-        </div>
-        <div class="telemetry-cell telemetry-cell--camo">
-          <span class="telemetry-cell__label">COLORWAY</span>
-          <span class="telemetry-cell__val">WOODLAND / RAW</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- Navigation Bar: Category Tabs & Actions -->
-    <nav class="site-header__nav" aria-label="Filtri catalogo e azioni">
-            <!-- Navigazione Pagine: Vetrina Principale vs Scheda Feedback Secondaria -->
-      <div class="view-switch-tabs" role="tablist" aria-label="Navigazione pagine">
+      <!-- Main Navigation Tabs: Vetrina vs Scheda Voti & Feedback -->
+      <div class="view-switch-tabs" role="tablist" aria-label="Navigazione sezioni">
         <button class="view-tab-btn is-active" id="tabShowcaseBtn" type="button" role="tab" aria-selected="true">
           [01 // VETRINA ARCHIVIO]
         </button>
         <button class="view-tab-btn" id="tabFeedbackBtn" type="button" role="tab" aria-selected="false">
           [02 // SCHEDA VOTI &amp; FEEDBACK]
+          <span class="tab-vote-count-pill" id="tabVoteCountPill">0/11</span>
         </button>
       </div>
 
-      <div class="filter-group" role="tablist" aria-label="Filtra per categoria">
-        <button class="filter-btn is-active" data-category="ALL" role="tab" aria-selected="true">
-          ALL <span class="filter-btn__count" data-count-for="ALL">11</span>
-        </button>
-        <button class="filter-btn" data-category="HOODIES" role="tab" aria-selected="false">
-          HOODIES <span class="filter-btn__count" data-count-for="HOODIES">02</span>
-        </button>
-        <button class="filter-btn" data-category="TEES" role="tab" aria-selected="false">
-          TEES <span class="filter-btn__count" data-count-for="TEES">04</span>
-        </button>
-        <button class="filter-btn" data-category="PANTS" role="tab" aria-selected="false">
-          PANTS <span class="filter-btn__count" data-count-for="PANTS">05</span>
-        </button>
-      </div>
-
+      <!-- Right Actions: Voter Status, Creator Login & Utility Tools -->
       <div class="header-actions">
-        <div class="rating-legend" title="Vota qualsiasi capo da 0 a 10 registrandoti con nome e cognome">
-          <span class="rating-legend__star">★</span>
-          <span>RATING_SYS: VOTA DA 0 A 10</span>
-        </div>
-
         <!-- Voter Registration / Status Button -->
         <button class="voter-btn" id="openVoterModalBtn" type="button" title="Registra la tua identità per votare i capi dell'archivio">
           <span class="voter-dot" id="voterDot"></span>
@@ -104,7 +52,7 @@
 
         <!-- Creator Account Auth Button & Status Pill -->
         <button class="auth-btn" id="adminAuthBtn" type="button" title="Accedi con il tuo account Creator RDP per sbloccare l'upload dei mockup">
-          [ACCEDI CREATOR // LOGIN]
+          [CREATOR LOGIN]
         </button>
 
         <div class="admin-logged-pill" id="adminLoggedPill" style="display: none;">
@@ -113,66 +61,85 @@
           <button class="auth-logout-btn" id="adminLogoutBtn" type="button" title="Disconnetti account">[LOGOUT]</button>
         </div>
 
-        <!-- Cloud Sync Button (Sincronizzazione Multi-Dispositivo) -->
-        <button class="cloud-btn" id="openCloudModalBtn" type="button" title="Configurazione Sincronizzazione Cloud Firebase (Multi-Dispositivo)">
-          <span class="cloud-dot" id="cloudDot"></span>
-          <span id="cloudBtnLabel">[CLOUD SYNC]</span>
-        </button>
-
-        <!-- Pulsante Upload Mockup: visibile solo ed esclusivamente al Creator autenticato -->
+        <!-- Pulsante Upload Mockup: visibile solo al Creator autenticato -->
         <button class="upload-btn" id="openUploadBtn" type="button" style="display: none;" title="Carica nuovo mockup nell'archivio">
-          + CARICA MOCKUP [CREATOR]
+          + CARICA MOCKUP
         </button>
 
-        <button
-          class="antigravity-btn"
-          id="antigravityToggle"
-          type="button"
-          aria-pressed="false"
-        >
-          <span class="antigravity-btn__led" aria-hidden="true"></span>
-          <span class="antigravity-btn__label">ANTIGRAVITY MODE</span>
-          <span class="antigravity-btn__state" id="antigravityState">[OFF]</span>
-        </button>
+        <!-- Utility Menu Dropdown (Cloud Sync, Antigravity, Reset Voti) -->
+        <div class="utility-dropdown-wrapper">
+          <button class="utility-toggle-btn" id="utilityMenuToggle" type="button" title="Strumenti, Cloud &amp; Opzioni">
+            [⚙ OPZIONI ▾]
+          </button>
+          <div class="utility-menu-popover" id="utilityMenuPopover" hidden>
+            <div class="utility-popover-header">STRUMENTI &amp; SINCRONIZZAZIONE</div>
+            <button class="cloud-btn" id="openCloudModalBtn" type="button" title="Configurazione Sincronizzazione Cloud Firebase">
+              <span class="cloud-dot" id="cloudDot"></span>
+              <span id="cloudBtnLabel">[CLOUD SYNC]</span>
+            </button>
+            <button class="antigravity-btn" id="antigravityToggle" type="button" aria-pressed="false">
+              <span class="antigravity-btn__led" aria-hidden="true"></span>
+              <span class="antigravity-btn__label">ANTIGRAVITY MODE</span>
+              <span class="antigravity-btn__state" id="antigravityState">[OFF]</span>
+            </button>
+            <button class="dir-action-btn dir-action-btn--warn" id="resetVotesBtn" type="button" title="Azzera i voti personali salvati in questo browser">
+              [AZZERA MIEI VOTI]
+            </button>
+            <button class="dir-action-btn" id="exportArchiveBtn" type="button" style="display: none;" title="Esporta catalogo (Riservato Creator)">
+              [ESPORTA CATALOGO]
+            </button>
+            <button class="dir-action-btn dir-action-btn--restore" id="restoreDeletedBtn" type="button" style="display: none;" title="Ripristina tutti i mockup rimossi dall'archivio">
+              [RIPRISTINA ELIMINATI]
+            </button>
+          </div>
+        </div>
       </div>
-    </nav>
+    </div>
   </header>
 
-  <!-- DIRECTORY SUB-HEADER & PAGE/SORT CONTROLS -->
+  <!-- SUB-TOOLBAR & CONTROLLI ARCHIVIO (CATEGORIE, VISTE, ORDINAMENTO) -->
   <main class="archive-main" id="archiveMain">
     <!-- VISTA 01: VETRINA ARCHIVIO MOCKUP (PRINCIPALE E ATTIVA PER DEFAULT) -->
     <div class="main-page-view is-active" id="showcasePageView">
       <div class="directory-bar">
-        <div class="directory-bar__path">
-          <span>ROOT</span>
-          <span>/</span>
-          <span>RDP_LAB</span>
-          <span>/</span>
-          <span id="activeDirLabel">ALL_GARMENTS</span>
+        <!-- Filtri Categoria Principali -->
+        <div class="filter-group" role="tablist" aria-label="Filtra per categoria">
+          <button class="filter-btn is-active" data-category="ALL" role="tab" aria-selected="true">
+            ALL <span class="filter-btn__count" data-count-for="ALL">11</span>
+          </button>
+          <button class="filter-btn" data-category="HOODIES" role="tab" aria-selected="false">
+            HOODIES <span class="filter-btn__count" data-count-for="HOODIES">02</span>
+          </button>
+          <button class="filter-btn" data-category="TEES" role="tab" aria-selected="false">
+            TEES <span class="filter-btn__count" data-count-for="TEES">04</span>
+          </button>
+          <button class="filter-btn" data-category="PANTS" role="tab" aria-selected="false">
+            PANTS <span class="filter-btn__count" data-count-for="PANTS">05</span>
+          </button>
         </div>
 
-        <!-- Controllo Due Pagine (Davanti / Retro) -->
+        <!-- Selettore Viste (Davanti / Retro / Affiancate) -->
         <div class="directory-bar__pages">
-          <span class="directory-bar__pages-label">VISTA_PAGINE:</span>
-          <div class="page-mode-group" role="group" aria-label="Visualizzazione Pagine Davanti e Retro">
-            <button class="page-mode-btn is-active" data-page-mode="interactive" type="button" title="Ogni card ha switch rapido P.01 Davanti / P.02 Retro">
-              [FLIP // SINGOLA]
+          <span class="sub-label">VISTA:</span>
+          <div class="page-mode-group" role="group" aria-label="Visualizzazione Pagine">
+            <button class="page-mode-btn is-active" data-page-mode="interactive" type="button" title="Switch rapido P.01 Davanti / P.02 Retro">
+              [FLIP]
             </button>
-            <button class="page-mode-btn" data-page-mode="front_only" type="button" title="Mostra solo le pagine Davanti per tutti i capi">
-              [P.01 DAVANTI]
+            <button class="page-mode-btn" data-page-mode="front_only" type="button" title="Mostra solo Davanti">
+              [DAVANTI]
             </button>
-            <button class="page-mode-btn" data-page-mode="back_only" type="button" title="Mostra solo le pagine Retro per tutti i capi">
-              [P.02 RETRO]
+            <button class="page-mode-btn" data-page-mode="back_only" type="button" title="Mostra solo Retro">
+              [RETRO]
             </button>
-            <button class="page-mode-btn" data-page-mode="split_dual" type="button" title="Affianca entrambe le pagine (Davanti e Retro) nella griglia per ogni capo">
-              [DOPPIA PAGINA // AFFIANCATE]
+            <button class="page-mode-btn" data-page-mode="split_dual" type="button" title="Mostra entrambe le pagine">
+              [AFFIANCATE]
             </button>
           </div>
         </div>
 
-        <!-- Ordinamento per Voto o Codice -->
+        <!-- Ordinamento Archivio -->
         <div class="directory-bar__sort">
-          <span class="directory-bar__pages-label">ORDINA:</span>
+          <span class="sub-label">ORDINA:</span>
           <div class="sort-mode-group" role="group" aria-label="Ordinamento archivio">
             <button class="sort-btn is-active" data-sort-by="code" type="button">[CODICE]</button>
             <button class="sort-btn" data-sort-by="rating" type="button">[TOP VOTO ★]</button>
@@ -180,23 +147,22 @@
           </div>
         </div>
 
+        <!-- Link Diretto Scheda Feedback & Elementi Telemetria Nascosti per JS Compatibilità -->
         <div class="directory-bar__meta">
-          <button class="dir-action-btn dir-action-btn--feedback" id="goToFeedbackBtn" type="button" title="Apri la pagina secondaria per trasmettere i voti e le proposte">
-            [SCHEDA_VOTI &amp; FEEDBACK ↗]
+          <button class="dir-action-btn dir-action-btn--feedback" id="goToFeedbackBtn" type="button" title="Apri la scheda per trasmettere i voti e le proposte">
+            [SCHEDA VOTI &amp; FEEDBACK ↗]
           </button>
-          <button class="dir-action-btn" id="exportArchiveBtn" type="button" style="display: none;" title="Esporta catalogo (Riservato Creator)">
-            [ESPORTA_CATALOGO]
-          </button>
-          <button class="dir-action-btn dir-action-btn--warn" id="resetVotesBtn" type="button" title="Azzera i voti personali salvati in questo browser">
-            [AZZERA_MIEI_VOTI]
-          </button>
-          <button class="dir-action-btn dir-action-btn--restore" id="restoreDeletedBtn" type="button" style="display: none;" title="Ripristina tutti i mockup rimossi dall'archivio">
-            [RIPRISTINA_ELIMINATI]
-          </button>
+          <span id="activeDirLabel" style="display: none;">ALL_GARMENTS</span>
+          <span id="totalGarmentsVal" style="display: none;">11</span>
+          <span id="totalPagesVal" style="display: none;">22</span>
+          <span id="globalRatingVal" style="display: none;">★ 0.0</span>
+          <span id="totalVotesVal" style="display: none;">0</span>
+          <span id="liveClock" style="display: none;"></span>
+          <span id="sysStatus" style="display: none;"></span>
         </div>
       </div>
 
-      <!-- GRIGLIA MOCKUP STILE PDF CHANNEL CON FOTO AD ALTA RISOLUZIONE -->
+      <!-- GRIGLIA MOCKUP STILE ARCHIVIO MODA DIGITALE -->
       <section class="archive-grid" id="archiveGrid" aria-label="Archivio Capi Ragazzi di Provincia"></section>
     </div>
 
