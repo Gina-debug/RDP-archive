@@ -24,16 +24,19 @@
 
     <!-- Main Navigation Bar -->
     <div class="header-main-bar">
-      <!-- Brand Logo & Tag -->
-      <div class="brand-block">
+      <!-- Brand Logo & Tag (Clickable to return to Intro Landing) -->
+      <div class="brand-block" id="brandHomeLink" role="button" tabindex="0" title="Torna alla pagina iniziale Intro">
         <span class="brand-block__dot" aria-hidden="true"></span>
         <h1 class="brand-block__logo">RDP // RAGAZZI DI PROVINCIA</h1>
         <span class="brand-block__tag">SS26 COMMUNITY ARCHIVE</span>
       </div>
 
-      <!-- Main Navigation Tabs: Vetrina vs Scheda Voti & Feedback -->
+      <!-- Main Navigation Tabs: Intro vs Vetrina vs Scheda Voti & Feedback -->
       <div class="view-switch-tabs" role="tablist" aria-label="Navigazione sezioni">
-        <button class="view-tab-btn is-active" id="tabShowcaseBtn" type="button" role="tab" aria-selected="true">
+        <button class="view-tab-btn is-active" id="tabIntroBtn" type="button" role="tab" aria-selected="true">
+          [00 // INTRO]
+        </button>
+        <button class="view-tab-btn" id="tabShowcaseBtn" type="button" role="tab" aria-selected="false">
           [01 // VETRINA ARCHIVIO]
         </button>
         <button class="view-tab-btn" id="tabFeedbackBtn" type="button" role="tab" aria-selected="false">
@@ -99,8 +102,90 @@
 
   <!-- SUB-TOOLBAR & CONTROLLI ARCHIVIO (CATEGORIE, VISTE, ORDINAMENTO) -->
   <main class="archive-main" id="archiveMain">
-    <!-- VISTA 01: VETRINA ARCHIVIO MOCKUP (PRINCIPALE E ATTIVA PER DEFAULT) -->
-    <div class="main-page-view is-active" id="showcasePageView">
+    <!-- VISTA 00: PAGINA INTRO / LANDING MINIMAL (ATTIVA PER DEFAULT ALL'ENTRATA NEL SITO) -->
+    <div class="main-page-view is-active" id="introPageView">
+      <div class="intro-screen">
+        <!-- Top Metadata Strip -->
+        <div class="intro-screen__meta-top">
+          <div class="intro-meta-item">
+            <span class="intro-meta-label">COLLECTION:</span>
+            <span class="intro-meta-val">SS26 PROTOTYPE SPECIMEN</span>
+          </div>
+          <div class="intro-meta-item intro-meta-item--camo">
+            <span class="camo-dot" aria-hidden="true"></span>
+            <span class="intro-meta-val">PROVINCIA LAB // MILANO - ITALIA</span>
+          </div>
+          <div class="intro-meta-item">
+            <span class="intro-meta-label">SYSTEM:</span>
+            <span class="intro-meta-val">DIGITAL CURATION v2.0</span>
+          </div>
+        </div>
+
+        <!-- Main Minimal Brand Centerpiece -->
+        <div class="intro-screen__center">
+          <div class="intro-eyebrow">
+            <span class="intro-eyebrow__strip"></span>
+            <span>DIGITAL STREETWEAR ARCHIVE &amp; COMMUNITY LAB</span>
+            <span class="intro-eyebrow__strip"></span>
+          </div>
+
+          <h1 class="intro-title">
+            <span class="intro-title__main">RAGAZZI DI PROVINCIA</span>
+            <span class="intro-title__sub">RDP // ARCHIVE SPECIMEN</span>
+          </h1>
+
+          <p class="intro-description">
+            Archivio digitale indipendente per la prototipazione e valutazione di capi streetwear ad alta grammatura. Esplora i campioni, esprimi i tuoi voti e trasmetti le tue proposte all'Atelier.
+          </p>
+
+          <!-- Technical Spec Badges (I piccoli dettagli) -->
+          <div class="intro-specs-grid">
+            <div class="intro-spec-cell">
+              <span class="intro-spec-cell__num">01</span>
+              <span class="intro-spec-cell__label">CATALOGO ATTIVO</span>
+              <span class="intro-spec-cell__val">11 CAPI // 22 PAGINE HD</span>
+            </div>
+            <div class="intro-spec-cell">
+              <span class="intro-spec-cell__num">02</span>
+              <span class="intro-spec-cell__label">GRAMMATURE &amp; FIT</span>
+              <span class="intro-spec-cell__val">450–500 GSM // BOXY FIT</span>
+            </div>
+            <div class="intro-spec-cell">
+              <span class="intro-spec-cell__num">03</span>
+              <span class="intro-spec-cell__label">VALUTAZIONE</span>
+              <span class="intro-spec-cell__val">COMMUNITY VOTING 0..10</span>
+            </div>
+            <div class="intro-spec-cell">
+              <span class="intro-spec-cell__num">04</span>
+              <span class="intro-spec-cell__label">DIREZIONE CREATIVA</span>
+              <span class="intro-spec-cell__val">RICCARDO SOLBIATI</span>
+            </div>
+          </div>
+
+          <!-- Entry Action Triggers -->
+          <div class="intro-actions">
+            <button class="intro-enter-btn" id="enterArchiveBtn" type="button">
+              <span>ENTRA NELL'ARCHIVIO</span>
+              <span class="intro-enter-arrow">→</span>
+            </button>
+            <button class="intro-secondary-btn" id="introDirectFeedbackBtn" type="button">
+              <span>SCHEDA VOTI &amp; FEEDBACK</span>
+              <span>↗</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Bottom Footer Strip -->
+        <div class="intro-screen__meta-bottom">
+          <span>// ALL RIGHTS RESERVED © 2026 RDP // MILANO</span>
+          <span class="intro-click-hint">CLICCA PER ESPLORARE I MOCKUP IN HD</span>
+          <span>EST. 2026 // ITALIA</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- VISTA 01: VETRINA ARCHIVIO MOCKUP (SECONDARIA RISPETTO ALL'INTRO) -->
+    <div class="main-page-view" id="showcasePageView" hidden>
       <div class="directory-bar">
         <!-- Filtri Categoria Principali -->
         <div class="filter-group" role="tablist" aria-label="Filtra per categoria">

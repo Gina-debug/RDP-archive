@@ -73,10 +73,15 @@
 
   // Community Feedback Section Elements
   // Main Page View Switch Elements
+  const tabIntroBtn = document.getElementById("tabIntroBtn");
   const tabShowcaseBtn = document.getElementById("tabShowcaseBtn");
   const tabFeedbackBtn = document.getElementById("tabFeedbackBtn");
+  const introPageView = document.getElementById("introPageView");
   const showcasePageView = document.getElementById("showcasePageView");
   const feedbackPageView = document.getElementById("feedbackPageView");
+  const enterArchiveBtn = document.getElementById("enterArchiveBtn");
+  const introDirectFeedbackBtn = document.getElementById("introDirectFeedbackBtn");
+  const brandHomeLink = document.getElementById("brandHomeLink");
   const goToFeedbackBtn = document.getElementById("goToFeedbackBtn");
   const backToShowcaseBtn = document.getElementById("backToShowcaseBtn");
   const scrollToFeedbackBtn = document.getElementById("scrollToFeedbackBtn");
@@ -1699,11 +1704,30 @@
     if (scrollToFeedbackBtn) scrollToFeedbackBtn.addEventListener("click", () => switchMainView("feedback"));
 
 
-    // Main View Switcher Bindings (Showcase vs Secondary Feedback Page)
+    // Main View Switcher Bindings (Intro vs Showcase vs Secondary Feedback Page)
+    if (tabIntroBtn) tabIntroBtn.addEventListener("click", () => switchMainView("intro"));
     if (tabShowcaseBtn) tabShowcaseBtn.addEventListener("click", () => switchMainView("showcase"));
     if (tabFeedbackBtn) tabFeedbackBtn.addEventListener("click", () => switchMainView("feedback"));
+    if (enterArchiveBtn) enterArchiveBtn.addEventListener("click", () => switchMainView("showcase"));
+    if (introDirectFeedbackBtn) introDirectFeedbackBtn.addEventListener("click", () => switchMainView("feedback"));
+    if (brandHomeLink) {
+      brandHomeLink.addEventListener("click", () => switchMainView("intro"));
+      brandHomeLink.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          switchMainView("intro");
+        }
+      });
+    }
     if (goToFeedbackBtn) goToFeedbackBtn.addEventListener("click", () => switchMainView("feedback"));
     if (backToShowcaseBtn) backToShowcaseBtn.addEventListener("click", () => switchMainView("showcase"));
+
+    // Intro Screen Keyboard Shortcut: Press Enter to Enter Archive
+    document.addEventListener("keydown", (e) => {
+      if (activeMainView === "intro" && e.key === "Enter" && !e.target.closest("input, textarea, button")) {
+        switchMainView("showcase");
+      }
+    });
 
     // Category Filter Buttons
     filterButtons.forEach((btn) => {
@@ -1943,38 +1967,46 @@
 
 
   // ========================================================================
-  // MAIN VIEW SWITCHER: SHOWCASE (DEFAULT) VS FEEDBACK (SECONDARY PAGE)
+  // MAIN VIEW SWITCHER: INTRO (DEFAULT) VS SHOWCASE VS FEEDBACK
   // ========================================================================
-  let activeMainView = "showcase"; // "showcase" | "feedback"
+  let activeMainView = "intro"; // "intro" | "showcase" | "feedback"
 
   function switchMainView(targetView) {
     activeMainView = targetView;
+    const isIntro = targetView === "intro";
     const isShowcase = targetView === "showcase";
+    const isFeedback = targetView === "feedback";
 
+    if (introPageView) {
+      introPageView.hidden = !isIntro;
+      introPageView.classList.toggle("is-active", isIntro);
+    }
     if (showcasePageView) {
       showcasePageView.hidden = !isShowcase;
       showcasePageView.classList.toggle("is-active", isShowcase);
     }
     if (feedbackPageView) {
-      feedbackPageView.hidden = isShowcase;
-      feedbackPageView.classList.toggle("is-active", !isShowcase);
+      feedbackPageView.hidden = !isFeedback;
+      feedbackPageView.classList.toggle("is-active", isFeedback);
     }
 
+    if (tabIntroBtn) {
+      tabIntroBtn.classList.toggle("is-active", isIntro);
+      tabIntroBtn.setAttribute("aria-selected", isIntro ? "true" : "false");
+    }
     if (tabShowcaseBtn) {
       tabShowcaseBtn.classList.toggle("is-active", isShowcase);
       tabShowcaseBtn.setAttribute("aria-selected", isShowcase ? "true" : "false");
     }
     if (tabFeedbackBtn) {
-      tabFeedbackBtn.classList.toggle("is-active", !isShowcase);
-      tabFeedbackBtn.setAttribute("aria-selected", !isShowcase ? "true" : "false");
+      tabFeedbackBtn.classList.toggle("is-active", isFeedback);
+      tabFeedbackBtn.setAttribute("aria-selected", isFeedback ? "true" : "false");
     }
 
-    if (!isShowcase) {
+    if (isFeedback) {
       updateBallotSummary();
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    } else {
-      window.scrollTo({ top: 0, behavior: "smooth" });
     }
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   // ========================================================================
