@@ -211,10 +211,10 @@
       updateCloudUI();
     });
     RDPCloud.onGarmentsUpdated(() => {
-      reloadArchiveData();
+      triggerArchiveReload();
     });
     RDPCloud.onDeletionsUpdated(() => {
-      reloadArchiveData();
+      triggerArchiveReload();
     });
 
     switchMainView("showcase");
@@ -224,6 +224,24 @@
     if (!RDPVoter.isRegistered() && !RDPAuth.isAuthenticated()) {
       openVoterModal();
     }
+  }
+
+  let reloadDebounceTimer = null;
+  function triggerArchiveReload(immediate = false) {
+    if (immediate) {
+      if (reloadDebounceTimer) {
+        clearTimeout(reloadDebounceTimer);
+        reloadDebounceTimer = null;
+      }
+      return reloadArchiveData();
+    }
+    if (reloadDebounceTimer) {
+      clearTimeout(reloadDebounceTimer);
+    }
+    reloadDebounceTimer = setTimeout(() => {
+      reloadDebounceTimer = null;
+      reloadArchiveData();
+    }, 150);
   }
 
   async function reloadArchiveData() {
@@ -469,7 +487,6 @@
     }
 
     const items = getFilteredAndSortedItems();
-    archiveGrid.innerHTML = "";
 
     const dirNames = {
       ALL: "ALL_GARMENTS",
@@ -481,6 +498,7 @@
     activeDirLabel.textContent = dirNames[activeCategory] || activeCategory;
 
     if (items.length === 0) {
+      archiveGrid.innerHTML = "";
       const emptyEl = document.createElement("div");
       emptyEl.style.gridColumn = "1 / -1";
       emptyEl.style.padding = "64px 20px";
@@ -492,11 +510,13 @@
       return;
     }
 
+    // Costruisci l'elenco dei target da visualizzare nella griglia
+    const targets = [];
     if (globalPageMode === "split_dual") {
       items.forEach((item) => {
-        renderSingleCardSlot(item, "front", "P.01 // DAVANTI");
+        targets.push({ item, page: "front", label: "P.01 // DAVANTI" });
         if (item.images && item.images.back) {
-          renderSingleCardSlot(item, "back", "P.02 // RETRO");
+          targets.push({ item, page: "back", label: "P.02 // RETRO" });
         }
       });
     } else {
@@ -509,14 +529,65 @@
         } else {
           page = cardPageStates[item.id] || "front";
         }
-        renderSingleCardSlot(item, page, null);
+        targets.push({ item, page, label: null });
       });
     }
+
+    // Mappa gli slot DOM già presenti per chiave univoca: se esistono già,
+    // riutilizziamo i nodi DOM senza toccare i tag <img> ed evitando qualsiasi sfarfallio
+    const existingSlotsMap = new Map();
+    Array.from(archiveGrid.children).forEach((child) => {
+      const key = child.dataset ? child.dataset.slotKey : null;
+      if (key) {
+        existingSlotsMap.set(key, child);
+      }
+    });
+
+    const activeKeys = new Set();
+    const orderedSlots = [];
+
+    targets.forEach((target) => {
+      const key = `${target.item.id}_${target.page}_${target.label || "single"}`;
+      activeKeys.add(key);
+
+      let slot = existingSlotsMap.get(key);
+      if (slot) {
+        updateExistingCardSlot(slot, target.item, target.page, target.label);
+      } else {
+        slot = createCardSlotElement(target.item, target.page, target.label);
+      }
+      orderedSlots.push(slot);
+    });
+
+    // Rimuovi eventuali slot obsoleti non più presenti
+    existingSlotsMap.forEach((slot, key) => {
+      if (!activeKeys.has(key)) {
+        slot.remove();
+      }
+    });
+
+    // Rimuovi eventuali nodi residui (es. messaggio di archivio vuoto)
+    Array.from(archiveGrid.children).forEach((child) => {
+      if (!child.classList.contains("archive-card-slot")) {
+        child.remove();
+      }
+    });
+
+    // Sincronizza l'ordine visivo senza ricreare il DOM
+    orderedSlots.forEach((slot, index) => {
+      if (archiveGrid.children[index] !== slot) {
+        archiveGrid.insertBefore(slot, archiveGrid.children[index] || null);
+      }
+    });
   }
 
-  function renderSingleCardSlot(item, activePage, fixedPageLabel = null) {
+  // Crea un nuovo slot scheda con tutti i controlli interattivi
+  function createCardSlotElement(item, activePage, fixedPageLabel = null) {
     const slot = document.createElement("div");
     slot.className = "archive-card-slot";
+    const slotKey = `${item.id}_${activePage}_${fixedPageLabel || "single"}`;
+    slot.dataset.slotKey = slotKey;
+
     const slotDisplayCode = fixedPageLabel
       ? `${item.code} [${activePage === "front" ? "01" : "02"}]`
       : item.code;
@@ -534,7 +605,7 @@
     );
 
     const hasBack = Boolean(item.images && item.images.back);
-    const imgSrc = activePage === "back" && hasBack ? item.images.back : item.images.front;
+    const imgSrc = activePage === "back" && hasBack ? item.images.back : (item.images ? item.images.front : "");
 
     let headerPageControls = "";
     if (!fixedPageLabel && hasBack && globalPageMode === "interactive") {
@@ -569,7 +640,7 @@
     const stats = RDPRatings.getItemStats(item);
     const userVote = stats.userVote;
 
-    // Quick vote buttons 0..10
+    // Pulsanti voto rapido 0..10
     let quickVoteButtonsHtml = "";
     for (let i = 0; i <= 10; i++) {
       const isSelected = userVote === i;
@@ -638,7 +709,11 @@
     card.addEventListener("click", async (e) => {
       if (RDPPhysics.getActiveState()) return;
 
-      // Handle Quick Delete button directly on the card
+      const currentItemId = card.dataset.itemId;
+      const currentActivePage = card.dataset.activePage || "front";
+      const currentItem = allItems.find((i) => i.id === currentItemId);
+
+      // Gestione eliminazione rapida da parte del Creator
       const quickDeleteBtn = e.target.closest(".card-delete-quick-btn");
       if (quickDeleteBtn) {
         e.stopPropagation();
@@ -656,28 +731,31 @@
           return;
         }
 
-        await removeItemFromArchive(item.id, item.code);
+        await removeItemFromArchive(currentItemId, currentItem ? currentItem.code : "");
         return;
       }
 
+      // Gestione voto rapido 0-10
       const quickVoteBtn = e.target.closest(".quick-vote-btn");
       if (quickVoteBtn) {
         e.stopPropagation();
         const score = Number(quickVoteBtn.dataset.quickVote);
-        registerVote(item.id, score);
+        registerVote(currentItemId, score);
         return;
       }
 
+      // Gestione cambio pagina davanti / retro
       const switchBtn = e.target.closest(".card-page-btn");
       if (switchBtn) {
         e.stopPropagation();
         const targetPage = switchBtn.dataset.switchTo;
-        cardPageStates[item.id] = targetPage;
+        cardPageStates[currentItemId] = targetPage;
         renderGrid();
         return;
       }
 
-      openInspectionModal(item.id, activePage);
+      // Apertura Lightbox / Ispezione dettagliata capo
+      openInspectionModal(currentItemId, currentActivePage);
     });
 
     card.addEventListener("keydown", (e) => {
@@ -690,12 +768,134 @@
           return;
         }
         e.preventDefault();
-        openInspectionModal(item.id, activePage);
+        const currentItemId = card.dataset.itemId;
+        const currentActivePage = card.dataset.activePage || "front";
+        openInspectionModal(currentItemId, currentActivePage);
       }
     });
 
     slot.appendChild(card);
-    archiveGrid.appendChild(slot);
+    return slot;
+  }
+
+  // Aggiorna uno slot esistente sul posto senza distruggere il tag <img> per azzerare lo sfarfallio
+  function updateExistingCardSlot(slot, item, activePage, fixedPageLabel = null) {
+    const card = slot.querySelector(".archive-card");
+    if (!card) return;
+
+    card.dataset.itemId = item.id;
+    card.dataset.activePage = activePage;
+
+    const slotDisplayCode = fixedPageLabel
+      ? `${item.code} [${activePage === "front" ? "01" : "02"}]`
+      : item.code;
+    slot.dataset.slotCode = slotDisplayCode;
+
+    card.setAttribute(
+      "aria-label",
+      `${item.code} ${item.title} - ${activePage === "front" ? "Pagina Davanti" : "Pagina Retro"}`
+    );
+
+    // Codice capo
+    const codeEl = card.querySelector(".archive-card__code");
+    if (codeEl && codeEl.textContent !== item.code) {
+      codeEl.textContent = item.code;
+    }
+
+    // Badge status
+    const badgeEl = card.querySelector(".camo-badge");
+    const targetBadge = item.statusBadge || "ARCHIVE SPEC";
+    if (badgeEl && badgeEl.textContent !== targetBadge) {
+      badgeEl.textContent = targetBadge;
+    }
+
+    // Titolo
+    const titleEl = card.querySelector(".archive-card__title");
+    if (titleEl && titleEl.textContent !== item.title) {
+      titleEl.textContent = item.title;
+    }
+
+    // Indicatore pagina
+    const pageBadgeText = fixedPageLabel
+      ? fixedPageLabel
+      : activePage === "front"
+      ? "P.01 // DAVANTI"
+      : "P.02 // RETRO";
+
+    const pageInd = card.querySelector(".archive-card__page-indicator");
+    if (pageInd && pageInd.textContent !== pageBadgeText) {
+      pageInd.textContent = pageBadgeText;
+    }
+
+    // Immagine: AGGIORNA SOLO SE CAMBIATA per impedire flicker/ricaricamento browser!
+    const hasBack = Boolean(item.images && item.images.back);
+    const imgSrc = activePage === "back" && hasBack ? item.images.back : (item.images ? item.images.front : "");
+    const imgEl = card.querySelector(".archive-card__img");
+    if (imgEl) {
+      if (imgEl.getAttribute("src") !== imgSrc) {
+        imgEl.src = imgSrc;
+      }
+      imgEl.alt = `${item.title} (${pageBadgeText})`;
+    }
+
+    // Badge Creator Drop
+    let creatorBadge = card.querySelector(".archive-card__creator-badge");
+    if (item.isCreatorUpload) {
+      if (!creatorBadge) {
+        const mediaEl = card.querySelector(".archive-card__media");
+        if (mediaEl) {
+          const badge = document.createElement("span");
+          badge.className = "archive-card__creator-badge";
+          badge.textContent = "[CREATOR_DROP]";
+          mediaEl.prepend(badge);
+        }
+      }
+    } else if (creatorBadge) {
+      creatorBadge.remove();
+    }
+
+    // Pulsante eliminazione rapida per Creator
+    const isCreator = RDPAuth.isAuthenticated();
+    const headRight = card.querySelector(".archive-card__head .flex:last-child");
+    let deleteBtn = card.querySelector(".card-delete-quick-btn");
+    if (isCreator) {
+      if (!deleteBtn && headRight) {
+        deleteBtn = document.createElement("button");
+        deleteBtn.className = "card-delete-quick-btn";
+        deleteBtn.dataset.deleteId = item.id;
+        deleteBtn.type = "button";
+        deleteBtn.title = `Rimuovi ${item.code} dall'archivio`;
+        deleteBtn.textContent = "[✕ ELIMINA]";
+        headRight.prepend(deleteBtn);
+      } else if (deleteBtn) {
+        deleteBtn.dataset.deleteId = item.id;
+      }
+    } else if (deleteBtn) {
+      deleteBtn.remove();
+    }
+
+    // Pulsanti switch davanti/retro
+    const p1Btn = card.querySelector(".card-page-btn[data-switch-to='front']");
+    const p2Btn = card.querySelector(".card-page-btn[data-switch-to='back']");
+    if (p1Btn) p1Btn.classList.toggle("is-active", activePage === "front");
+    if (p2Btn) p2Btn.classList.toggle("is-active", activePage === "back");
+
+    // Voti e statistiche
+    const stats = RDPRatings.getItemStats(item);
+    const ratingBadge = card.querySelector(".archive-card__rating-badge");
+    if (ratingBadge) {
+      const badgeText = `★ ${stats.average} (${stats.totalVotes} VOTI)`;
+      if (ratingBadge.textContent !== badgeText) {
+        ratingBadge.textContent = badgeText;
+      }
+      ratingBadge.classList.toggle("has-user-vote", Boolean(stats.hasVoted));
+    }
+
+    const voteBtns = card.querySelectorAll(".quick-vote-btn");
+    voteBtns.forEach((btn) => {
+      const val = Number(btn.dataset.quickVote);
+      btn.classList.toggle("is-voted", stats.userVote === val);
+    });
   }
 
   // ========================================================================

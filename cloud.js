@@ -18,6 +18,8 @@ const RDPCloud = (() => {
   // Cache in memoria dei documenti Firestore per aggiornamenti istantanei senza ricaricamento
   let latestCloudGarments = null;
   let latestCloudDeletions = null;
+  let lastGarmentsSig = null;
+  let lastDeletionsSig = null;
 
   // Callback registrate per aggiornamenti in tempo reale
   let onGarmentsChangeCallbacks = [];
@@ -85,6 +87,17 @@ const RDPCloud = (() => {
             cloudGarments.push({ ...data, id: doc.id });
           });
 
+          // Verifica se i capi sono effettivamente cambiati prima di inviare notifiche
+          const garmentsSig = cloudGarments
+            .map((g) => `${g.id}:${g.updatedAt || 0}`)
+            .sort()
+            .join("|");
+
+          if (latestCloudGarments !== null && garmentsSig === lastGarmentsSig) {
+            return;
+          }
+
+          lastGarmentsSig = garmentsSig;
           latestCloudGarments = cloudGarments;
 
           onGarmentsChangeCallbacks.forEach((cb) => {
@@ -125,6 +138,13 @@ const RDPCloud = (() => {
             deletedIds.push(doc.id);
           });
 
+          // Verifica se le eliminazioni sono effettivamente cambiate prima di notificare
+          const deletionsSig = deletedIds.slice().sort().join("|");
+          if (latestCloudDeletions !== null && deletionsSig === lastDeletionsSig) {
+            return;
+          }
+
+          lastDeletionsSig = deletionsSig;
           latestCloudDeletions = deletedIds;
 
           // Sincronizza anche la memoria locale con le eliminazioni del cloud
@@ -175,7 +195,7 @@ const RDPCloud = (() => {
     }
   }
 
-  // Carica tutti i capi caricati dal Creator (Cloud e Locale sincronizzati)
+  // Carica tutti i capi caricati dal Creator (Cloud e Locale sincronizzati, sola lettura senza loop di scrittura)
   async function getAllCreatorGarments() {
     let localItems = [];
     try {
@@ -195,6 +215,10 @@ const RDPCloud = (() => {
             cloudGarments.push({ ...doc.data(), id: doc.id });
           });
           latestCloudGarments = cloudGarments;
+          lastGarmentsSig = cloudGarments
+            .map((g) => `${g.id}:${g.updatedAt || 0}`)
+            .sort()
+            .join("|");
         }
 
         isConnected = true;
@@ -208,15 +232,10 @@ const RDPCloud = (() => {
           }
         });
 
-        // Unisci anche eventuali capi locali non ancora presenti sul cloud
-        // e caricali in background su Firestore per sincronizzarli a tutti i dispositivi
+        // Unisci i capi locali in sola lettura (nessun set() automatico durante la lettura)
         localItems.forEach((local) => {
           if (local && local.id && !cloudMap.has(local.id)) {
             cloudMap.set(local.id, local);
-            db.collection("rdp_garments").doc(local.id).set({
-              ...local,
-              updatedAt: Date.now()
-            }).catch(() => {});
           }
         });
 
@@ -233,7 +252,7 @@ const RDPCloud = (() => {
     return localItems;
   }
 
-  // Carica tutti gli ID eliminati (Cloud e Locale sincronizzati)
+  // Carica tutti gli ID eliminati (Cloud e Locale sincronizzati, sola lettura senza loop di scrittura)
   async function getAllDeletedIds() {
     let localIds = [];
     try {
@@ -253,6 +272,7 @@ const RDPCloud = (() => {
             cloudDeletions.push(doc.id);
           });
           latestCloudDeletions = cloudDeletions;
+          lastDeletionsSig = cloudDeletions.slice().sort().join("|");
         }
 
         isConnected = true;
@@ -265,17 +285,6 @@ const RDPCloud = (() => {
           try {
             RDPStorage.addDeletedItemId(id);
           } catch (_e) {}
-        });
-
-        // Se nel dispositivo corrente ci sono eliminazioni non ancora nel cloud, sincronizzale
-        const cloudSet = new Set(cloudDeletions);
-        localIds.forEach((id) => {
-          if (!cloudSet.has(id)) {
-            db.collection("rdp_deletions").doc(id).set({
-              id,
-              deletedAt: Date.now()
-            }).catch(() => {});
-          }
         });
 
         return Array.from(set);
