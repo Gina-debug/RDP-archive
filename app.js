@@ -1948,22 +1948,26 @@
     const feedbackText = feedbackTextInput ? feedbackTextInput.value.trim() : "";
     const votedItemIds = Object.keys(userVotes);
 
-    if (votedItemIds.length === 0 && (!feedbackText || feedbackText.length < 3)) {
+    const hasVotes = votedItemIds.length > 0;
+    const hasText = Boolean(feedbackText && feedbackText.length > 0);
+
+    // Permetti l'invio se il visitatore ha votato ALMENO un capo OPPURE ha scritto un commento/consiglio
+    if (!hasVotes && !hasText) {
       if (feedbackResponseMsg) {
         feedbackResponseMsg.className = "feedback-response-msg is-error";
-        feedbackResponseMsg.textContent = "ATTENZIONE: VOTA ALMENO UN CAPO O SCRIVI UN CONSIGLIO/PROPOSTA PRIMA DI INVIARE.";
+        feedbackResponseMsg.textContent = "ATTENZIONE: ASSEGNA UN VOTO A UN CAPO O SCRIVI UN CONSIGLIO/PROPOSTA PRIMA DI TRASMETTERE.";
         feedbackResponseMsg.hidden = false;
       }
       return;
     }
 
-    // Inizia invio
+    // Inizia trasmissione
     feedbackSubmitBtn.disabled = true;
     feedbackSubmitBtn.textContent = "[TRASMISSIONE SCHEDA IN CORSO...]";
     if (feedbackResponseMsg) feedbackResponseMsg.hidden = true;
 
     try {
-      // 1. Invio Email a rikisolbiati@gmail.com
+      // 1. Invio automatico email a rikisolbiati@gmail.com
       const emailResult = await RDPMailer.sendBallotAndFeedback({
         voter,
         votesMap: userVotes,
@@ -1982,16 +1986,26 @@
         if (feedbackResponseMsg) {
           feedbackResponseMsg.className = "feedback-response-msg is-success";
           feedbackResponseMsg.innerHTML = `
-            ✓ SCHEDA TRASMESSA CON SUCCESSO A <strong>${RDPMailer.CREATOR_EMAIL}</strong>!<br />
-            NOME: <strong>${voter.name}</strong> // CAPI VOTATI: <strong>${votedItemIds.length}</strong>.<br />
-            GRAZIE PER IL TUO CONTRIBUTO ALLA COMMUNITY DI RAGAZZI DI PROVINCIA.
+            <div style="font-weight: 800; font-size: 13px; margin-bottom: 6px; color: #12B76A;">
+              ✓ SCHEDA TRASMESSA CON SUCCESSO A <strong>${RDPMailer.CREATOR_EMAIL}</strong>!
+            </div>
+            <div style="font-size: 11px; margin-bottom: 4px;">
+              VOTANTE: <strong>${escapeHtml(voter.name)}</strong> // CAPI VOTATI: <strong>${votedItemIds.length}</strong>.
+            </div>
+            <div style="font-size: 11px; color: var(--muted); margin-bottom: 10px;">
+              ${escapeHtml(emailResult.message || "GRAZIE PER IL TUO CONTRIBUTO ALLA COMMUNITY DI RAGAZZI DI PROVINCIA.")}
+            </div>
+            <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+              ${emailResult.gmailUrl ? `<a href="${emailResult.gmailUrl}" target="_blank" rel="noopener" class="dir-action-btn" style="text-decoration: none; padding: 6px 12px; font-size: 10px;">[APRI COPIA IN GMAIL ↗]</a>` : ""}
+              ${emailResult.fallbackUrl ? `<a href="${emailResult.fallbackUrl}" class="dir-action-btn" style="text-decoration: none; padding: 6px 12px; font-size: 10px;">[APRI IN APP EMAIL ↗]</a>` : ""}
+            </div>
           `;
           feedbackResponseMsg.hidden = false;
         }
         if (feedbackTextInput) feedbackTextInput.value = "";
         showToast("✓ SCHEDA VOTI E FEEDBACK TRASMESSA A RIKISOLBIATI@GMAIL.COM");
       } else {
-        // Fallback email client
+        // Fallback con pulsanti rapidi Gmail e Mailto
         if (fallbackMailtoLink && emailResult.fallbackUrl) {
           fallbackMailtoLink.href = emailResult.fallbackUrl;
           fallbackMailtoLink.style.display = "inline-flex";
@@ -1999,15 +2013,32 @@
         if (feedbackResponseMsg) {
           feedbackResponseMsg.className = "feedback-response-msg is-error";
           feedbackResponseMsg.innerHTML = `
-            INVIO AUTOMATICO NON COMPLETATO. CLICCA SUL PULSANTE QUI ACCANTO <strong>[INVIA VIA APP EMAIL CLIENT]</strong> PER TRASMETTERE LA SCHEDA DIRETTAMENTE A <strong>${RDPMailer.CREATOR_EMAIL}</strong>.
+            <div style="font-weight: 800; font-size: 12px; margin-bottom: 8px;">
+              ⚠ TRASMISSIONE SCHEDA: PUOI TRASMETTERE SUBITO CON 1 TAP VIA GMAIL WEB O EMAIL CLIENT:
+            </div>
+            <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px;">
+              ${emailResult.gmailUrl ? `<a href="${emailResult.gmailUrl}" target="_blank" rel="noopener" class="dir-action-btn" style="background: var(--ink); color: #fff; padding: 8px 14px; text-decoration: none; font-weight: 800;">[INVIA SUBITO DA GMAIL WEB ↗]</a>` : ""}
+              ${emailResult.fallbackUrl ? `<a href="${emailResult.fallbackUrl}" class="dir-action-btn" style="background: var(--ink); color: #fff; padding: 8px 14px; text-decoration: none; font-weight: 800;">[INVIA DA APP EMAIL ↗]</a>` : ""}
+            </div>
           `;
           feedbackResponseMsg.hidden = false;
         }
       }
     } catch (_err) {
-      if (fallbackMailtoLink) {
-        fallbackMailtoLink.href = RDPMailer.generateMailtoLink(voter, userVotes, allItems, feedbackText);
-        fallbackMailtoLink.style.display = "inline-flex";
+      if (feedbackResponseMsg) {
+        const mailtoUrl = RDPMailer.generateMailtoLink(voter, userVotes, allItems, feedbackText);
+        const gmailUrl = RDPMailer.generateGmailWebLink(voter, userVotes, allItems, feedbackText);
+        feedbackResponseMsg.className = "feedback-response-msg is-error";
+        feedbackResponseMsg.innerHTML = `
+          <div style="font-weight: 800; font-size: 12px; margin-bottom: 8px;">
+            TRASMETTI LA SCHEDA CON 1 TAP A <strong>${RDPMailer.CREATOR_EMAIL}</strong>:
+          </div>
+          <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+            <a href="${gmailUrl}" target="_blank" rel="noopener" class="dir-action-btn" style="background: var(--ink); color: #fff; padding: 8px 14px; text-decoration: none; font-weight: 800;">[APRI GMAIL WEB ↗]</a>
+            <a href="${mailtoUrl}" class="dir-action-btn" style="background: var(--ink); color: #fff; padding: 8px 14px; text-decoration: none; font-weight: 800;">[APRI APP EMAIL ↗]</a>
+          </div>
+        `;
+        feedbackResponseMsg.hidden = false;
       }
     } finally {
       feedbackSubmitBtn.disabled = false;

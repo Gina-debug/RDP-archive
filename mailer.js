@@ -2,31 +2,14 @@
 // RDP // RAGAZZI DI PROVINCIA — MAILER & FEEDBACK DISPATCH ENGINE
 // Invia la scheda di votazione (Nome, Cognome, voti assegnati ai singoli capi)
 // e il feedback/consiglio su nuovi capi all'indirizzo rikisolbiati@gmail.com.
-// Supporta Web3Forms API, salvataggio su Cloud Firestore e fallback mailto:
+// Supporta FormSubmit AJAX API, Cloud Firestore, Web3Forms, Gmail Web & mailto
 // ==========================================================================
 
 const RDPMailer = (() => {
   "use strict";
 
   const CREATOR_EMAIL = "rikisolbiati@gmail.com";
-  // Web3Forms public access key (o configurabile da storage)
-  const LS_WEB3FORMS_KEY = "rdp_web3forms_key";
-  const DEFAULT_ACCESS_KEY = "43c0ddf3-1382-45e3-952b-23c2da9f55e4"; // Starter public key
-
-  function getAccessKey() {
-    try {
-      const stored = window.localStorage.getItem(LS_WEB3FORMS_KEY);
-      return stored && stored.trim().length > 0 ? stored.trim() : DEFAULT_ACCESS_KEY;
-    } catch (_e) {
-      return DEFAULT_ACCESS_KEY;
-    }
-  }
-
-  function setAccessKey(key) {
-    try {
-      if (key) window.localStorage.setItem(LS_WEB3FORMS_KEY, key.trim());
-    } catch (_e) {}
-  }
+  const FORMSUBMIT_ENDPOINT = "https://formsubmit.co/ajax/rikisolbiati@gmail.com";
 
   // Costruisce il testo dettagliato della scheda di voto e feedback
   function buildMessageBody(voter, votesMap, allItems, feedbackText) {
@@ -66,7 +49,7 @@ const RDPMailer = (() => {
     body += `--------------------------------------------------------------------\n`;
 
     if (votedItems.length === 0) {
-      body += `(Nessun capo ancora votato dal visitatore)\n`;
+      body += `(Nessun voto espresso sui capi dell'archivio)\n\n`;
     } else {
       votedItems.forEach((v, index) => {
         const num = String(index + 1).padStart(2, "0");
@@ -86,10 +69,10 @@ const RDPMailer = (() => {
     body += `Trasmesso dal portale ufficiale RDP // Ragazzi di Provincia Showcase\n`;
     body += `====================================================================\n`;
 
-    return { body, votedItems };
+    return { body, votedItems, timestampStr };
   }
 
-  // Genera un link mailto diretto di riserva
+  // Genera un link mailto diretto per l'app email (Apple Mail, Outlook, app predefinita)
   function generateMailtoLink(voter, votesMap, allItems, feedbackText) {
     const { body } = buildMessageBody(voter, votesMap, allItems, feedbackText);
     const subject = encodeURIComponent(`[RDP ARCHIVE] Voti & Proposte da ${voter.name}`);
@@ -97,25 +80,81 @@ const RDPMailer = (() => {
     return `mailto:${CREATOR_EMAIL}?subject=${subject}&body=${encodedBody}`;
   }
 
-  // Invia la scheda voti e feedback via Web3Forms API
+  // Genera un link diretto per comporre in Gmail Web su browser smartphone e desktop
+  function generateGmailWebLink(voter, votesMap, allItems, feedbackText) {
+    const { body } = buildMessageBody(voter, votesMap, allItems, feedbackText);
+    const subject = encodeURIComponent(`[RDP ARCHIVE] Voti & Proposte da ${voter.name}`);
+    const encodedBody = encodeURIComponent(body);
+    return `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(CREATOR_EMAIL)}&su=${subject}&body=${encodedBody}`;
+  }
+
+  // Invia la scheda voti e feedback via FormSubmit AJAX API con fallback automatici
   async function sendBallotAndFeedback({ voter, votesMap, allItems, feedbackText }) {
     if (!voter || !voter.name) {
       return { success: false, message: "REGISTRAZIONE VOTANTE OBBLIGATORIA (NOME E COGNOME)" };
     }
 
-    const { body, votedItems } = buildMessageBody(voter, votesMap, allItems, feedbackText);
+    const { body, votedItems, timestampStr } = buildMessageBody(voter, votesMap, allItems, feedbackText);
     const subject = `[RDP ARCHIVE] Nuova Votazione & Feedback da ${voter.name} (${votedItems.length} capi)`;
+    const mailtoUrl = generateMailtoLink(voter, votesMap, allItems, feedbackText);
+    const gmailUrl = generateGmailWebLink(voter, votesMap, allItems, feedbackText);
 
-    // Tentativo invio Web3Forms
+    const votedSummary = votedItems.length > 0
+      ? votedItems.map((v) => `${v.code} (${v.title}): ★ ${v.score}/10`).join(" | ")
+      : "Nessun voto espresso";
+
+    // 1. Tentativo primario: FormSubmit.co AJAX
     try {
-      const response = await fetch("https://api.web3forms.com/submit", {
+      const response = await fetch(FORMSUBMIT_ENDPOINT, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Accept: "application/json"
         },
         body: JSON.stringify({
-          access_key: getAccessKey(),
+          _subject: subject,
+          _template: "table",
+          _captcha: "false",
+          name: voter.name,
+          email: voter.email || "community@rdp-archive.com",
+          scheda_votante: voter.name,
+          email_votante: voter.email || "Non indicata",
+          data_e_ora: timestampStr,
+          totale_capi_votati: String(votedItems.length),
+          voti_assegnati: votedSummary,
+          consiglio_o_capo_richiesto: feedbackText || "(Nessun commento)",
+          scheda_completa: body
+        })
+      });
+
+      if (response.ok) {
+        const data = await response.json().catch(() => ({ success: "true" }));
+        const isActivation = data && data.message && String(data.message).includes("Activation");
+        return {
+          success: true,
+          mode: isActivation ? "activation_sent" : "api",
+          message: isActivation
+            ? `SCHEDA TRASMESSA CON SUCCESSO A ${CREATOR_EMAIL}! (Nota: clicca 'Activate Form' nella prima email ricevuta da FormSubmit per confermare la ricezione).`
+            : `SCHEDA TRASMESSA CON SUCCESSO A ${CREATOR_EMAIL}!`,
+          votedCount: votedItems.length,
+          fallbackUrl: mailtoUrl,
+          gmailUrl
+        };
+      }
+    } catch (err) {
+      console.warn("[RDPMailer] FormSubmit primary dispatch error:", err);
+    }
+
+    // 2. Fallback secondario: Web3Forms
+    try {
+      const wResponse = await fetch("https://api.web3forms.com/submit", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json"
+        },
+        body: JSON.stringify({
+          access_key: "43c0ddf3-1382-45e3-952b-23c2da9f55e4",
           to: CREATOR_EMAIL,
           subject: subject,
           from_name: `RDP Community [${voter.name}]`,
@@ -125,39 +164,34 @@ const RDPMailer = (() => {
         })
       });
 
-      const data = await response.json();
-      if (response.ok && data.success) {
+      const wData = await wResponse.json().catch(() => null);
+      if (wResponse.ok && wData && wData.success) {
         return {
           success: true,
-          mode: "api",
+          mode: "web3forms",
           message: `SCHEDA TRASMESSA CON SUCCESSO A ${CREATOR_EMAIL}!`,
-          votedCount: votedItems.length
-        };
-      } else {
-        // Fallback su mailto
-        return {
-          success: false,
-          mode: "fallback",
-          fallbackUrl: generateMailtoLink(voter, votesMap, allItems, feedbackText),
-          message: data.message || "ERRORE DISPATCH API"
+          votedCount: votedItems.length,
+          fallbackUrl: mailtoUrl,
+          gmailUrl
         };
       }
-    } catch (_err) {
-      return {
-        success: false,
-        mode: "fallback",
-        fallbackUrl: generateMailtoLink(voter, votesMap, allItems, feedbackText),
-        message: "CONNESSIONE NON DISPONIBILE // USA INVIO DIRETTO EMAIL"
-      };
-    }
+    } catch (_err) {}
+
+    // 3. Fallback con link diretti Gmail e Mailto
+    return {
+      success: false,
+      mode: "fallback",
+      fallbackUrl: mailtoUrl,
+      gmailUrl,
+      message: "INVIO AUTOMATICO NON COMPLETATO // CLICCA UNO DEI PULSANTI SOTTO PER INVIARE VIA EMAIL O GMAIL"
+    };
   }
 
   return {
     CREATOR_EMAIL,
     sendBallotAndFeedback,
     generateMailtoLink,
-    buildMessageBody,
-    getAccessKey,
-    setAccessKey
+    generateGmailWebLink,
+    buildMessageBody
   };
 })();
