@@ -5,7 +5,24 @@
    - Technical Black: #111111
    - Light Grid Divider: #E5E5E5
    - Woodland Camo: #4B5320 (Olive), #5C4033 (Earth), #C2B280 (Sand), #1C1C1C (Black)
+/* ==========================================================================
+   SPARTICAL GRAFFITI LOCAL WEBFONTS (DaFont / Måns Grebäck)
    ========================================================================== */
+@font-face {
+  font-family: 'Spartical Graffiti';
+  src: url('fonts/SparticalGraffiti_PERSONAL_USE_ONLY.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Spartical Graffiti Line';
+  src: url('fonts/SparticalGraffitiLine_PERSONAL_USE_ONLY.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
 
 :root {
   --bg: #FFFFFF;
@@ -2691,12 +2708,149 @@ img {
   background-color: var(--divider);
 }
 
-.intro-title {
+/* ==========================================================================
+   URBAN STREET WALL MURAL (GRAFFITI SU MURO URBANO)
+   ========================================================================== */
+.intro-wall-frame {
+  width: 100%;
+  max-width: 960px;
+  margin: 10px auto 24px;
+  border: 1px solid var(--ink);
+  background-color: #111111;
+  position: relative;
+  box-shadow: 
+    0 18px 45px rgba(0, 0, 0, 0.22),
+    0 4px 12px rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.intro-wall-tag-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  background-color: var(--ink);
+  color: #FFFFFF;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.wall-tag-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.wall-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: var(--camo-olive);
+  box-shadow: 0 0 6px rgba(75, 83, 32, 0.9);
+}
+
+.wall-texture-selector {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.wall-selector-label {
+  color: #888888;
+  font-size: 9px;
+}
+
+.wall-toggle-btn {
+  background: none;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: #CCCCCC;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 3px 8px;
+  cursor: pointer;
+  letter-spacing: 0.08em;
+  transition: all 0.15s ease;
+}
+
+.wall-toggle-btn:hover {
+  background-color: rgba(255, 255, 255, 0.15);
+  color: #FFFFFF;
+}
+
+.wall-toggle-btn.is-active {
+  background-color: #FFFFFF;
+  color: #111111;
+  border-color: #FFFFFF;
+}
+
+.wall-toggle-sep {
+  color: #555555;
+  font-size: 10px;
+}
+
+.intro-wall-surface {
+  position: relative;
+  min-height: 290px;
+  padding: 60px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  background-image: 
+    radial-gradient(ellipse at center, rgba(255, 255, 255, 0.12) 0%, rgba(15, 15, 15, 0.6) 100%),
+    url('assets/street-wall.jpg');
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
+  transition: background-image 0.3s ease;
+  overflow: hidden;
+}
+
+.intro-wall-surface.is-concrete {
+  background-image: 
+    radial-gradient(ellipse at center, rgba(255, 255, 255, 0.15) 0%, rgba(15, 15, 15, 0.65) 100%),
+    url('assets/street-wall-concrete.jpg');
+}
+
+.intro-wall-vignette {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(255, 255, 255, 0.02) 0%,
+    rgba(0, 0, 0, 0.25) 60%,
+    rgba(0, 0, 0, 0.72) 100%
+  );
+  box-shadow: inset 0 0 60px rgba(0, 0, 0, 0.55);
+}
+
+.intro-wall-footer-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 7px 16px;
+  background-color: #0A0A0A;
+  color: #888888;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.intro-title--on-wall {
+  position: relative;
+  z-index: 2;
   margin: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
 }
 
 .intro-graffiti-wrapper {
@@ -2709,52 +2863,77 @@ img {
 }
 
 .intro-title__graffiti {
-  font-family: 'Rubik Spray Paint', 'Sedgwick Ave Display', 'Permanent Marker', cursive, sans-serif;
-  font-size: clamp(38px, 8.5vw, 84px);
+  font-family: 'Spartical Graffiti', 'Spartical Graffiti Line', 'Rubik Spray Paint', 'Sedgwick Ave Display', cursive, sans-serif;
+  font-size: clamp(48px, 9.5vw, 102px);
   font-weight: 400;
-  line-height: 1.08;
-  letter-spacing: 0.03em;
-  color: var(--ink);
+  line-height: 1.05;
+  letter-spacing: 0.02em;
+  color: #0A0A0A;
+  text-transform: none; /* Preserves natural flowing street tag */
   display: inline-block;
-  transform: rotate(-2deg);
+  transform: rotate(-2.5deg);
   transform-origin: center center;
-  text-transform: uppercase;
   word-break: break-word;
   overflow-wrap: break-word;
   max-width: 100%;
+  position: relative;
+  z-index: 2;
+  /* Authentic aerosol spray on brick wall texture with depth, drop shadow & spray feathering */
   text-shadow: 
-    3px 4px 0px rgba(0, 0, 0, 0.12),
-    -2px -2px 0px rgba(75, 83, 32, 0.3),
-    1px 1px 2px rgba(0, 0, 0, 0.5);
-  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.07));
+    1px 1px 1px rgba(255, 255, 255, 0.45),
+    3px 4px 0px rgba(0, 0, 0, 0.95),
+    -1px -1px 2px rgba(75, 83, 32, 0.7),
+    0 0 14px rgba(0, 0, 0, 0.85),
+    0 0 28px rgba(0, 0, 0, 0.5),
+    0 8px 32px rgba(0, 0, 0, 0.65);
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.45));
   user-select: none;
   transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), text-shadow 0.25s ease, filter 0.25s ease;
 }
 
 .intro-title__graffiti:hover {
-  transform: rotate(-0.5deg) scale(1.03);
+  transform: rotate(-1.5deg) scale(1.03);
+  color: #000000;
   text-shadow: 
-    5px 6px 0px rgba(0, 0, 0, 0.18),
-    -3px -3px 0px rgba(75, 83, 32, 0.42),
-    0 0 12px rgba(75, 83, 32, 0.25);
+    2px 2px 1px rgba(255, 255, 255, 0.55),
+    4px 6px 0px rgba(0, 0, 0, 1),
+    -2px -2px 3px rgba(75, 83, 32, 0.9),
+    0 0 20px rgba(75, 83, 32, 0.6),
+    0 0 35px rgba(0, 0, 0, 0.8);
 }
 
 .intro-graffiti-slash {
   width: 90%;
-  max-width: 480px;
-  height: 4px;
-  margin-top: 4px;
+  max-width: 500px;
+  height: 5px;
+  margin-top: 6px;
   background-image: linear-gradient(
     90deg,
     transparent 0%,
-    var(--ink) 12%,
+    #0A0A0A 15%,
     var(--camo-olive) 50%,
-    var(--ink) 88%,
+    #0A0A0A 85%,
     transparent 100%
   );
-  transform: rotate(-1.5deg) skewX(-15deg);
+  box-shadow: 0 0 8px rgba(75, 83, 32, 0.6), 0 2px 4px rgba(0, 0, 0, 0.8);
+  transform: rotate(-2deg) skewX(-15deg);
   border-radius: 4px;
-  opacity: 0.85;
+  opacity: 0.9;
+}
+
+.intro-title__sub--wall {
+  font-size: clamp(10px, 2vw, 13px);
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  color: #FFFFFF;
+  background-color: rgba(17, 17, 17, 0.85);
+  padding: 4px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 2px;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+  display: inline-block;
+  backdrop-filter: blur(4px);
+  margin-top: 6px;
 }
 
 .intro-title__main {
@@ -3213,22 +3392,50 @@ img {
     gap: 18px;
   }
 
+  .intro-wall-frame {
+    margin: 6px 0 16px;
+    border-radius: 2px;
+  }
+
+  .intro-wall-surface {
+    min-height: 220px;
+    padding: 38px 12px;
+  }
+
+  .intro-wall-tag-strip {
+    flex-direction: column;
+    gap: 6px;
+    align-items: flex-start;
+    padding: 6px 10px;
+    font-size: 8px;
+  }
+
+  .intro-wall-footer-strip {
+    flex-direction: column;
+    gap: 4px;
+    align-items: center;
+    padding: 6px 10px;
+    font-size: 8px;
+  }
+
   .intro-graffiti-wrapper {
-    padding: 4px 0 8px;
+    padding: 2px 0 6px;
   }
 
   .intro-title__graffiti {
-    font-size: clamp(26px, 8vw, 42px);
-    line-height: 1.15;
-    letter-spacing: 0.02em;
-    transform: rotate(-1.5deg);
+    font-size: clamp(34px, 8.5vw, 56px);
+    line-height: 1.12;
+    letter-spacing: 0.01em;
+    transform: rotate(-2deg);
     text-shadow: 
-      2px 3px 0px rgba(0, 0, 0, 0.12),
-      -1px -1px 0px rgba(75, 83, 32, 0.3);
+      1px 1px 1px rgba(255, 255, 255, 0.4),
+      2px 3px 0px rgba(0, 0, 0, 0.95),
+      -1px -1px 2px rgba(75, 83, 32, 0.6),
+      0 0 12px rgba(0, 0, 0, 0.8);
   }
 
   .intro-graffiti-slash {
-    height: 3px;
+    height: 4px;
     width: 92%;
   }
 

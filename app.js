@@ -1747,6 +1747,27 @@
       }
     });
 
+    // Intro Urban Wall Mural Texture Switcher (Brick vs Concrete)
+    const wallBrickBtn = document.getElementById("wallTextureBrickBtn");
+    const wallConcreteBtn = document.getElementById("wallTextureConcreteBtn");
+    const wallSurface = document.getElementById("introWallSurface");
+    if (wallBrickBtn && wallConcreteBtn && wallSurface) {
+      wallBrickBtn.addEventListener("click", () => {
+        wallSurface.classList.remove("is-concrete");
+        wallBrickBtn.classList.add("is-active");
+        wallBrickBtn.setAttribute("aria-pressed", "true");
+        wallConcreteBtn.classList.remove("is-active");
+        wallConcreteBtn.setAttribute("aria-pressed", "false");
+      });
+      wallConcreteBtn.addEventListener("click", () => {
+        wallSurface.classList.add("is-concrete");
+        wallConcreteBtn.classList.add("is-active");
+        wallConcreteBtn.setAttribute("aria-pressed", "true");
+        wallBrickBtn.classList.remove("is-active");
+        wallBrickBtn.setAttribute("aria-pressed", "false");
+      });
+    }
+
     // Category Filter Buttons
     filterButtons.forEach((btn) => {
       btn.addEventListener("click", () => {
