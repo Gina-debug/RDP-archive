@@ -164,55 +164,61 @@ img {
 
 .brand-block__logo {
   margin: 0;
-  font-size: 13px;
-  font-weight: 800;
-  letter-spacing: 0.08em;
+  font-family: 'Spartical Graffiti', 'Spartical Graffiti Line', 'Rubik Spray Paint', 'Sedgwick Ave Display', cursive, sans-serif;
+  font-size: 16px;
+  font-weight: 400;
+  letter-spacing: 0.03em;
   white-space: nowrap;
   color: var(--ink);
+  line-height: 1.1;
+  text-transform: none;
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.brand-block:hover .brand-block__logo {
+  transform: scale(1.02);
 }
 
 .brand-block__tag {
-  font-size: 10px;
-  color: var(--muted);
-  letter-spacing: 0.06em;
-  white-space: nowrap;
-  padding-left: 8px;
-  border-left: 1px solid var(--divider);
+  display: none;
 }
 
-/* View Switch Tabs (Vetrina vs Scheda Voti) */
+/* View Switch Tabs (Minimal borderless pill capsule) */
 .view-switch-tabs {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  background-color: var(--surface);
-  padding: 4px;
-  border: 1px solid var(--divider);
-  border-radius: 4px;
+  gap: 2px;
+  background-color: rgba(0, 0, 0, 0.05);
+  padding: 3px;
+  border-radius: 24px;
+  border: none;
 }
 
 .view-tab-btn {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 5px 12px;
+  gap: 6px;
+  padding: 6px 14px;
   font-size: 11px;
   font-weight: 700;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.05em;
   color: var(--muted);
-  border-radius: 3px;
-  transition: all 0.15s ease;
+  border: none;
+  background: transparent;
+  border-radius: 20px;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   cursor: pointer;
 }
 
 .view-tab-btn:hover {
   color: var(--ink);
-  background-color: rgba(0, 0, 0, 0.04);
+  background-color: rgba(0, 0, 0, 0.05);
 }
 
 .view-tab-btn.is-active {
   background-color: var(--ink);
   color: #FFFFFF;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.16);
 }
 
 .tab-vote-count-pill {
@@ -220,16 +226,16 @@ img {
   align-items: center;
   justify-content: center;
   padding: 1px 6px;
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 800;
   border-radius: 10px;
-  background-color: rgba(255, 255, 255, 0.2);
+  background-color: rgba(255, 255, 255, 0.22);
   color: #FFFFFF;
   letter-spacing: 0;
 }
 
 .view-tab-btn:not(.is-active) .tab-vote-count-pill {
-  background-color: var(--divider);
+  background-color: rgba(0, 0, 0, 0.08);
   color: var(--ink);
 }
 
@@ -246,7 +252,7 @@ img {
   flex-shrink: 0;
 }
 
-/* Utility Menu Popover */
+/* Utility Menu Popover (Impostazioni & Gestione) */
 .utility-dropdown-wrapper {
   position: relative;
 }
@@ -256,41 +262,53 @@ img {
   align-items: center;
   gap: 6px;
   height: 32px;
-  padding: 0 10px;
+  padding: 0 14px;
   font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  background-color: var(--surface);
-  border: 1px solid var(--divider);
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  background-color: rgba(0, 0, 0, 0.06);
+  border: none;
   color: var(--ink);
   cursor: pointer;
-  border-radius: 3px;
-  transition: all 0.15s ease;
+  border-radius: 20px;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .utility-toggle-btn:hover {
-  border-color: var(--ink);
-  background-color: #EEEEEE;
+  background-color: rgba(0, 0, 0, 0.12);
+  transform: translateY(-1px);
 }
 
 .utility-toggle-btn.is-active {
   background-color: var(--ink);
   color: #FFFFFF;
-  border-color: var(--ink);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.utility-toggle-icon {
+  font-size: 12px;
+}
+
+.utility-toggle-chevron {
+  font-size: 9px;
+  opacity: 0.7;
 }
 
 .utility-menu-popover {
   position: absolute;
   top: calc(100% + 8px);
   right: 0;
-  width: 250px;
-  background-color: #FFFFFF;
-  border: 1px solid var(--ink);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
-  padding: 8px;
+  width: 270px;
+  background-color: rgba(255, 255, 255, 0.97);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: none;
+  border-radius: 14px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.22);
+  padding: 14px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 10px;
   z-index: 220;
 }
 
@@ -301,78 +319,46 @@ img {
 .utility-popover-header {
   font-size: 9px;
   font-weight: 800;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+  padding: 2px 4px 6px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.popover-block {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.popover-block-label {
+  font-size: 8px;
+  font-weight: 800;
   letter-spacing: 0.08em;
   color: var(--muted);
-  padding: 4px 6px 6px;
-  border-bottom: 1px solid var(--divider);
-  margin-bottom: 2px;
+  padding-left: 4px;
 }
 
 .utility-menu-popover button {
   width: 100%;
   justify-content: flex-start;
-  height: 32px;
-  padding: 0 10px;
-  font-size: 10px;
-  border: 1px solid var(--divider);
-  background-color: var(--surface);
-  border-radius: 2px;
-  transition: all 0.12s ease;
+  height: 36px;
+  padding: 0 12px;
+  font-size: 11px;
+  font-weight: 700;
+  border: none;
+  background-color: rgba(0, 0, 0, 0.04);
+  color: var(--ink);
+  border-radius: 8px;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  cursor: pointer;
 }
 
 .utility-menu-popover button:hover {
-  border-color: var(--ink);
-  background-color: #EEEEEE;
-}
-
-/* Antigravity Button (inside popover or generic) */
-.antigravity-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 12px;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  border: 1px solid var(--divider);
-  background-color: var(--bg);
-  color: var(--ink);
-  transition: all 0.14s ease;
-}
-
-.antigravity-btn:hover {
-  background-color: var(--surface);
-}
-
-.antigravity-btn__led {
-  width: 8px;
-  height: 8px;
-  border: 1px solid var(--ink);
-  background-color: transparent;
-  flex-shrink: 0;
-}
-
-.antigravity-btn__state {
-  color: var(--muted);
-  margin-left: auto;
-}
-
-.antigravity-btn.is-active {
-  color: #FFFFFF !important;
-  border-color: var(--ink) !important;
-  background-image: linear-gradient(rgba(17, 17, 17, 0.32), rgba(17, 17, 17, 0.32)), var(--camo-pattern) !important;
-  background-size: 150px 150px !important;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9);
-}
-
-.antigravity-btn.is-active .antigravity-btn__led {
-  background-color: var(--camo-sand);
-  border-color: #FFFFFF;
-  box-shadow: 0 0 6px var(--camo-sand);
-}
-
-.antigravity-btn.is-active .antigravity-btn__state {
-  color: var(--camo-sand);
+  background-color: rgba(0, 0, 0, 0.08);
 }
 
 /* ==========================================================================
@@ -391,207 +377,79 @@ img {
   position: relative;
   min-height: calc(100vh - var(--header-height));
   width: 100%;
-  /* Murale Teschio Street Graffiti - chiaramente visibile */
+}
+
+#showcasePageView::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: -1;
+  pointer-events: none;
   background-image: 
-    linear-gradient(180deg, rgba(0, 0, 0, 0.22) 0%, rgba(0, 0, 0, 0.12) 35%, rgba(0, 0, 0, 0.30) 100%),
+    linear-gradient(180deg, rgba(0, 0, 0, 0.25) 0%, rgba(0, 0, 0, 0.12) 35%, rgba(0, 0, 0, 0.32) 100%),
     url('assets/skull-wall.jpg');
   background-size: cover;
-  background-position: center top;
+  background-position: 54% 20%;
   background-repeat: no-repeat;
-  background-attachment: fixed;
-  transition: background-image 0.35s ease;
+  transform: translateZ(0);
 }
 
-.provincia-location-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 10px;
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  color: var(--ink);
-  background-color: rgba(255, 255, 255, 0.92);
-  border: 1px solid var(--divider);
-  border-radius: 3px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-}
-
-.provincia-location-badge .camo-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background-color: var(--camo-olive);
-  box-shadow: 0 0 5px rgba(75, 83, 32, 0.8);
-}
-
-/* Sticky Directory Bar with Categories, View Mode & Sorting */
+/* Sticky Directory Bar with Categories (Minimal, borderless, centered) */
 .directory-bar {
   position: sticky;
   top: var(--header-height);
   z-index: 100;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 8px 24px;
-  background-color: rgba(255, 255, 255, 0.96);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border-bottom: 1px solid var(--divider);
+  justify-content: center;
+  padding: 10px 24px;
+  background-color: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
 }
 
-.sub-label {
-  font-size: 9px;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  color: var(--muted);
-  margin-right: 2px;
-}
-
-/* Filter Categories */
+/* Filter Categories (Borderless minimal capsules) */
 .filter-group {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
+  justify-content: center;
+  flex-wrap: wrap;
 }
 
 .filter-btn {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 5px 12px;
+  padding: 6px 16px;
   font-size: 11px;
   font-weight: 700;
-  letter-spacing: 0.06em;
-  border: 1px solid var(--divider);
-  border-radius: 3px;
-  background-color: var(--bg);
-  color: var(--ink);
-  transition: all 0.15s ease;
+  letter-spacing: 0.08em;
+  border: none;
+  border-radius: 20px;
+  background-color: rgba(0, 0, 0, 0.06);
+  color: var(--muted);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   cursor: pointer;
 }
 
 .filter-btn:hover {
-  border-color: var(--ink);
-  background-color: var(--surface);
-}
-
-.filter-btn__count {
-  font-size: 9px;
-  color: var(--muted);
+  background-color: rgba(0, 0, 0, 0.12);
+  color: var(--ink);
 }
 
 .filter-btn.is-active {
-  border-color: var(--ink);
   background-color: var(--ink);
   color: #FFFFFF;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
 }
 
 .filter-btn.is-active .filter-btn__count {
   color: var(--camo-sand);
-}
-
-/* Page Mode (Flip / Davanti / Retro / Affiancate) */
-.directory-bar__pages {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.page-mode-group {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.page-mode-btn {
-  padding: 4px 8px;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  border: 1px solid var(--divider);
-  border-radius: 2px;
-  background-color: var(--bg);
-  color: var(--muted);
-  cursor: pointer;
-  transition: all 0.14s ease;
-}
-
-.page-mode-btn:hover {
-  border-color: var(--ink);
-  color: var(--ink);
-}
-
-.page-mode-btn.is-active {
-  border-color: var(--ink);
-  background-color: var(--ink);
-  color: #FFFFFF;
-}
-
-/* Sort Controls */
-.directory-bar__sort {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.sort-mode-group {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.sort-btn {
-  padding: 4px 8px;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  border: 1px solid var(--divider);
-  border-radius: 2px;
-  background-color: var(--bg);
-  color: var(--muted);
-  cursor: pointer;
-  transition: all 0.14s ease;
-}
-
-.sort-btn:hover {
-  border-color: var(--ink);
-  color: var(--ink);
-}
-
-.sort-btn.is-active {
-  border-color: var(--ink);
-  background-color: var(--ink);
-  color: #FFFFFF;
-}
-
-/* Directory Meta & Feedback Shortcut */
-.directory-bar__meta {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.dir-action-btn--feedback {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 5px 12px;
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.06em;
-  border: 1px solid var(--camo-olive);
-  background-color: rgba(75, 83, 32, 0.06);
-  color: var(--camo-olive);
-  border-radius: 3px;
-  transition: all 0.15s ease;
-  cursor: pointer;
-}
-
-.dir-action-btn--feedback:hover {
-  background-color: var(--camo-olive);
-  color: #FFFFFF;
 }
 
 /* ==========================================================================
@@ -2036,83 +1894,86 @@ img {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 12px;
+  padding: 8px 14px;
   font-size: 11px;
   font-weight: 700;
-  letter-spacing: 0.06em;
-  border: 1px solid var(--ink);
-  background-color: var(--bg);
+  letter-spacing: 0.05em;
+  border: none;
+  border-radius: 8px;
+  background-color: rgba(0, 0, 0, 0.05);
   color: var(--ink);
   cursor: pointer;
   transition: all 0.15s ease;
 }
 
 .auth-btn:hover {
-  background-color: var(--ink);
-  color: #FFFFFF;
+  background-color: rgba(0, 0, 0, 0.1);
+  color: var(--ink);
 }
 
 .admin-logged-pill {
   display: inline-flex;
   align-items: center;
+  justify-content: space-between;
   gap: 8px;
-  padding: 5px 10px;
+  padding: 8px 12px;
   font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  border: 1px solid var(--ink);
-  background-image: linear-gradient(rgba(17, 17, 17, 0.35), rgba(17, 17, 17, 0.35)), var(--camo-pattern);
-  background-size: 130px 130px;
-  color: #FFFFFF;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9);
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  border: none;
+  border-radius: 8px;
+  background-color: rgba(75, 83, 32, 0.14);
+  color: var(--camo-olive);
 }
 
 .admin-status-dot {
   width: 7px;
   height: 7px;
-  background-color: #48BB78;
-  border: 1px solid #FFFFFF;
-  box-shadow: 0 0 5px #48BB78;
+  border-radius: 50%;
+  background-color: #12B76A;
+  box-shadow: 0 0 6px rgba(18, 183, 106, 0.6);
   display: inline-block;
 }
 
 .auth-logout-btn {
-  padding: 2px 6px;
+  padding: 4px 8px;
   font-size: 9px;
-  font-weight: 700;
+  font-weight: 800;
   letter-spacing: 0.06em;
-  border: 1px solid rgba(255, 255, 255, 0.8);
-  background-color: rgba(17, 17, 17, 0.7);
-  color: #FFFFFF;
+  border: none;
+  border-radius: 4px;
+  background-color: rgba(180, 35, 24, 0.12);
+  color: #B42318;
   cursor: pointer;
-  transition: all 0.12s ease;
+  transition: all 0.14s ease;
 }
 
 .auth-logout-btn:hover {
   background-color: #B42318;
-  border-color: #B42318;
+  color: #FFFFFF;
 }
 
 .upload-btn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
-  padding: 6px 14px;
+  padding: 9px 16px;
   font-size: 11px;
   font-weight: 800;
-  letter-spacing: 0.08em;
-  border: 1px solid var(--ink);
+  letter-spacing: 0.06em;
+  border: none;
+  border-radius: 8px;
   color: #FFFFFF;
-  background-image: linear-gradient(rgba(17, 17, 17, 0.25), rgba(17, 17, 17, 0.25)), var(--camo-pattern);
-  background-size: 140px 140px;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9);
+  background-color: var(--ink);
   cursor: pointer;
-  transition: transform 0.12s ease, filter 0.15s ease;
+  transition: all 0.15s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 .upload-btn:hover {
+  background-color: #2b2b2b;
   transform: translateY(-1px);
-  filter: brightness(1.1);
 }
 
 .auth-modal-window {
@@ -2207,14 +2068,15 @@ img {
 .voter-btn {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  height: 32px;
-  padding: 0 12px;
+  gap: 8px;
+  height: 36px;
+  padding: 0 14px;
   font-size: 11px;
   font-weight: 700;
-  letter-spacing: 0.05em;
-  background-color: var(--bg);
-  border: 1px solid var(--ink);
+  letter-spacing: 0.04em;
+  background-color: rgba(0, 0, 0, 0.05);
+  border: none;
+  border-radius: 8px;
   color: var(--ink);
   cursor: pointer;
   transition: all 0.15s ease;
@@ -2222,39 +2084,40 @@ img {
 }
 
 .voter-btn:hover {
-  background-color: var(--ink);
-  color: var(--bg);
+  background-color: rgba(0, 0, 0, 0.09);
 }
 
 .voter-dot {
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background-color: #B42318; /* Rosso se non registrato */
-  box-shadow: 0 0 4px rgba(180, 35, 24, 0.6);
+  background-color: #B42318;
+  box-shadow: 0 0 5px rgba(180, 35, 24, 0.6);
   flex-shrink: 0;
 }
 
 .voter-btn.is-registered .voter-dot {
-  background-color: #12B76A; /* Verde se registrato */
+  background-color: #12B76A;
   box-shadow: 0 0 6px rgba(18, 183, 106, 0.8);
 }
 
 .voter-btn.is-registered {
-  border-color: var(--camo-olive);
+  background-color: rgba(18, 183, 106, 0.1);
+  color: #027A48;
 }
 
 .cloud-btn {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  height: 32px;
-  padding: 0 10px;
+  gap: 8px;
+  height: 36px;
+  padding: 0 14px;
   font-size: 11px;
   font-weight: 700;
-  letter-spacing: 0.05em;
-  background-color: #F4F5F0;
-  border: 1px dashed var(--camo-olive);
+  letter-spacing: 0.04em;
+  background-color: rgba(75, 83, 32, 0.08);
+  border: none;
+  border-radius: 8px;
   color: var(--camo-olive);
   cursor: pointer;
   transition: all 0.15s ease;
@@ -2262,8 +2125,7 @@ img {
 }
 
 .cloud-btn:hover {
-  background-color: var(--camo-olive);
-  color: #FFFFFF;
+  background-color: rgba(75, 83, 32, 0.15);
 }
 
 .cloud-dot {
@@ -2675,15 +2537,25 @@ img {
   width: 100%;
   min-height: calc(100vh - var(--header-height));
   position: relative;
-  /* Murale Urbano EAT THE RICH a tutta schermata */
+  display: flex;
+  flex-direction: column;
+  overflow-x: hidden;
+  background-color: #0C0D0E;
+}
+
+#introPageView::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
   background-image: 
-    radial-gradient(ellipse at center, rgba(0, 0, 0, 0.12) 0%, rgba(0, 0, 0, 0.40) 70%, rgba(0, 0, 0, 0.82) 100%),
+    radial-gradient(ellipse at center, rgba(0, 0, 0, 0.08) 0%, rgba(0, 0, 0, 0.35) 60%, rgba(0, 0, 0, 0.82) 100%),
     url('assets/eat-the-rich.jpg');
   background-size: cover;
-  background-position: center center;
+  background-position: 42% 40%;
   background-repeat: no-repeat;
-  background-attachment: fixed;
-  overflow-x: hidden;
+  transform: translateZ(0);
 }
 
 .intro-screen {
@@ -2706,12 +2578,12 @@ img {
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  padding: 10px 18px;
-  background-color: rgba(14, 14, 14, 0.88);
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  border-radius: 4px;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  padding: 8px 20px;
+  background-color: rgba(14, 14, 14, 0.75);
+  border: none;
+  border-radius: 20px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -2974,25 +2846,24 @@ img {
   display: inline-flex;
   align-items: center;
   gap: 12px;
-  padding: 15px 36px;
+  padding: 16px 42px;
   font-size: 13px;
   font-weight: 800;
   letter-spacing: 0.12em;
   background-color: #FFFFFF;
   color: #111111;
-  border: 2px solid #FFFFFF;
-  border-radius: 4px;
+  border: none;
+  border-radius: 32px;
   cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.55);
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
 }
 
 .intro-enter-btn:hover {
-  background-color: #111111;
+  background-color: #000000;
   color: #FFFFFF;
-  border-color: #FFFFFF;
-  transform: translateY(-2px);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.7);
 }
 
 .intro-enter-arrow {
@@ -3008,26 +2879,26 @@ img {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 15px 28px;
+  padding: 16px 32px;
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.1em;
-  background-color: rgba(14, 14, 14, 0.85);
+  background-color: rgba(255, 255, 255, 0.15);
   color: #FFFFFF;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  border-radius: 4px;
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  border: none;
+  border-radius: 32px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   cursor: pointer;
-  transition: all 0.15s ease;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
 }
 
 .intro-secondary-btn:hover {
-  border-color: #FFFFFF;
   background-color: #FFFFFF;
   color: #111111;
-  transform: translateY(-2px);
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
 }
 
 .intro-screen__meta-bottom {
@@ -3035,12 +2906,12 @@ img {
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  padding: 10px 18px;
-  background-color: rgba(14, 14, 14, 0.88);
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  border-radius: 4px;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  padding: 8px 20px;
+  background-color: rgba(14, 14, 14, 0.75);
+  border: none;
+  border-radius: 20px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   font-size: 9px;
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -3126,26 +2997,37 @@ img {
   position: relative;
   min-height: calc(100vh - var(--header-height));
   width: 100%;
-  /* Murale Teschio Street Graffiti - chiaramente visibile */
+  padding-bottom: 60px;
+}
+
+#feedbackPageView::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: -1;
+  pointer-events: none;
   background-image: 
-    linear-gradient(180deg, rgba(0, 0, 0, 0.22) 0%, rgba(0, 0, 0, 0.12) 35%, rgba(0, 0, 0, 0.30) 100%),
+    linear-gradient(180deg, rgba(0, 0, 0, 0.25) 0%, rgba(0, 0, 0, 0.12) 35%, rgba(0, 0, 0, 0.32) 100%),
     url('assets/skull-wall.jpg');
   background-size: cover;
-  background-position: center top;
+  background-position: 54% 20%;
   background-repeat: no-repeat;
-  background-attachment: fixed;
-  padding-bottom: 60px;
+  transform: translateZ(0);
 }
 
 #feedbackPageView .feedback-page-topbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 14px 24px;
+  padding: 12px 24px;
   background-color: rgba(255, 255, 255, 0.94);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border-bottom: 1px solid var(--ink);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: none;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
   margin-bottom: 24px;
 }
 
@@ -3153,33 +3035,30 @@ img {
   width: calc(100% - 48px);
   max-width: 1360px;
   margin: 0 auto 48px auto;
-  border: 1px solid var(--ink);
-  border-radius: 4px;
-  background-color: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.45);
+  border: none;
+  border-radius: 12px;
+  background-color: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.3);
 }
 
 .back-to-showcase-btn {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  height: 36px;
+  height: 34px;
   padding: 0 18px;
   font-size: 11px;
   font-weight: 800;
   letter-spacing: 0.06em;
   background-color: var(--ink);
   color: #FFFFFF;
-  border: 1px solid var(--ink);
+  border: none;
+  border-radius: 20px;
   cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.back-to-showcase-btn:hover {
-  background-color: var(--camo-olive);
-  border-color: var(--camo-olive);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 .feedback-page-tag {
@@ -3215,39 +3094,29 @@ img {
     width: 100%;
     max-width: 100vw;
     background-color: var(--bg);
-    border-bottom: 1px solid var(--divider);
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
     box-sizing: border-box;
   }
 
-  /* Horizontally Swipeable Top Main Bar on Mobile */
+  /* Compact Non-wrapping Top Main Bar on Mobile */
   .header-main-bar {
     display: flex;
     align-items: center;
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    overflow-y: hidden;
-    -webkit-overflow-scrolling: touch;
-    touch-action: pan-x pan-y;
-    overscroll-behavior-x: contain;
-    scrollbar-width: none;
+    justify-content: space-between;
     width: 100%;
     max-width: 100vw;
-    padding: 0 10px;
+    padding: 0 12px;
     height: 48px;
-    gap: 10px;
+    gap: 8px;
     box-sizing: border-box;
-  }
-
-  .header-main-bar::-webkit-scrollbar {
-    display: none;
   }
 
   .brand-block {
     flex-shrink: 0;
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
   }
 
   .brand-block__tag {
@@ -3255,8 +3124,8 @@ img {
   }
 
   .brand-block__logo {
-    font-size: 11px;
-    letter-spacing: 0.04em;
+    font-size: 13px;
+    letter-spacing: 0.02em;
     white-space: nowrap;
   }
 
@@ -3264,17 +3133,20 @@ img {
     flex-shrink: 0;
     display: inline-flex;
     align-items: center;
-    flex-wrap: nowrap;
     padding: 2px;
     gap: 2px;
+    border-radius: 20px;
+    border: none;
   }
 
   .view-tab-btn {
     flex-shrink: 0;
     white-space: nowrap;
-    padding: 4px 8px;
+    padding: 5px 9px;
     font-size: 9px;
     gap: 4px;
+    border-radius: 16px;
+    border: none;
   }
 
   .tab-vote-count-pill {
@@ -3286,20 +3158,17 @@ img {
     flex-shrink: 0;
     display: flex;
     align-items: center;
-    flex-wrap: nowrap;
     gap: 6px;
   }
 
-  .voter-btn,
-  .auth-btn,
-  .upload-btn,
-  .utility-toggle-btn,
-  .admin-logged-pill {
+  .utility-toggle-btn {
     flex-shrink: 0;
     white-space: nowrap;
     height: 30px;
-    padding: 0 8px;
-    font-size: 9px;
+    padding: 0 10px;
+    font-size: 10px;
+    border-radius: 16px;
+    border: none;
   }
 
   .utility-dropdown-wrapper {
@@ -3307,13 +3176,16 @@ img {
     flex-shrink: 0;
   }
 
-  /* Popover floats as fixed on mobile so it is never clipped by horizontal scroll */
+  /* Popover floats as fixed on mobile so it is never clipped */
   .utility-menu-popover {
     position: fixed;
-    top: 51px;
+    top: 52px;
     right: 8px;
     left: auto;
-    width: min(280px, calc(100vw - 16px));
+    width: min(290px, calc(100vw - 16px));
+    border: none;
+    border-radius: 14px;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.28);
     z-index: 300;
   }
 
@@ -3326,53 +3198,38 @@ img {
     box-sizing: border-box;
   }
 
-  /* Sticky & Horizontally Swipeable Sub-Toolbar on Mobile */
+  /* Centered, Clean Sub-Toolbar on Mobile */
   .directory-bar {
     position: sticky;
     top: 51px;
     z-index: 100;
     display: flex;
     align-items: center;
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    overflow-y: hidden;
-    white-space: nowrap;
-    -webkit-overflow-scrolling: touch;
-    touch-action: pan-x pan-y;
-    overscroll-behavior-x: contain;
-    scrollbar-width: none;
+    justify-content: center;
     width: 100%;
     max-width: 100vw;
-    padding: 6px 10px;
-    gap: 10px;
+    padding: 8px 12px;
     box-sizing: border-box;
-    background-color: rgba(255, 255, 255, 0.98);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    border-bottom: 1px solid var(--divider);
+    background-color: rgba(255, 255, 255, 0.94);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
   }
 
-  .directory-bar::-webkit-scrollbar {
-    display: none;
-  }
-
-  .filter-group,
-  .directory-bar__pages,
-  .directory-bar__sort,
-  .directory-bar__meta,
-  .page-mode-group,
-  .sort-mode-group {
-    flex-shrink: 0;
+  .filter-group {
     display: flex;
     align-items: center;
-    flex-wrap: nowrap;
+    justify-content: center;
+    gap: 6px;
+    width: 100%;
+    flex-wrap: wrap;
   }
 
   .filter-btn {
-    flex-shrink: 0;
-    white-space: nowrap;
-    padding: 4px 8px;
-    font-size: 9px;
+    border: none;
+    border-radius: 20px;
+    padding: 6px 13px;
+    font-size: 10px;
   }
 
   .page-mode-btn,
@@ -3433,14 +3290,15 @@ img {
     font-size: 9px;
   }
 
-  #introPageView,
-  #showcasePageView,
-  #feedbackPageView {
-    background-attachment: scroll;
+  #introPageView::before {
+    background-position: 38% 38%;
+    background-size: cover;
   }
 
-  .provincia-location-badge {
-    display: none;
+  #showcasePageView::before,
+  #feedbackPageView::before {
+    background-position: 56% 15%;
+    background-size: cover;
   }
 
   .intro-title__graffiti {

@@ -329,8 +329,10 @@
       if (adminLoggedName) adminLoggedName.textContent = `CREATOR: ${username}`;
       if (openUploadBtn) {
         openUploadBtn.style.display = "inline-flex";
-        openUploadBtn.textContent = "+ CARICA MOCKUP [CREATOR]";
+        openUploadBtn.textContent = "+ AGGIUNGI MOCKUP";
       }
+      const popoverUploadWrapper = document.getElementById("popoverUploadWrapper");
+      if (popoverUploadWrapper) popoverUploadWrapper.style.display = "block";
       if (openCloudModalBtn) openCloudModalBtn.style.display = "inline-flex";
       if (exportArchiveBtn) exportArchiveBtn.style.display = "inline-flex";
       if (modalDownloadBtn) modalDownloadBtn.style.display = "inline-block";
@@ -344,6 +346,8 @@
       if (openUploadBtn) {
         openUploadBtn.style.display = "none";
       }
+      const popoverUploadWrapper = document.getElementById("popoverUploadWrapper");
+      if (popoverUploadWrapper) popoverUploadWrapper.style.display = "none";
       if (openCloudModalBtn) openCloudModalBtn.style.display = "inline-flex";
       if (exportArchiveBtn) exportArchiveBtn.style.display = "none";
       if (modalDownloadBtn) modalDownloadBtn.style.display = "none";
@@ -1784,19 +1788,17 @@
       });
     });
 
-    // Antigravity Mode
-    antigravityToggle.addEventListener("click", toggleAntigravity);
-    pulseZeroGBtn.addEventListener("click", () => RDPPhysics.shockwave());
-    resetGridBtn.addEventListener("click", () => disableAntigravity(false));
-
-    // Directory Bar Actions
-    exportArchiveBtn.addEventListener("click", handleExportArchive);
-    resetVotesBtn.addEventListener("click", handleResetUserVotes);
+    // Optional / Legacy Action Listeners (safely guarded)
+    if (antigravityToggle) antigravityToggle.addEventListener("click", toggleAntigravity);
+    if (pulseZeroGBtn) pulseZeroGBtn.addEventListener("click", () => RDPPhysics.shockwave());
+    if (resetGridBtn) resetGridBtn.addEventListener("click", () => disableAntigravity(false));
+    if (exportArchiveBtn) exportArchiveBtn.addEventListener("click", handleExportArchive);
+    if (resetVotesBtn) resetVotesBtn.addEventListener("click", handleResetUserVotes);
     if (restoreDeletedBtn) {
       restoreDeletedBtn.addEventListener("click", async () => {
         await RDPCloud.restoreAllDeleted();
         switchMainView("showcase");
-    await reloadArchiveData();
+        await reloadArchiveData();
         showToast("TUTTI I MOCKUP ELIMINATI SONO STATI RIPRISTINATI");
       });
     }
