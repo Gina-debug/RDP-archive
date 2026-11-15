@@ -222,13 +222,9 @@
       triggerArchiveReload();
     });
 
-    switchMainView("showcase");
+    // All'apertura del sito mostra per prima la pagina Intro minimal
+    switchMainView("intro");
     await reloadArchiveData();
-
-    // Registrazione obbligatoria (Nome e Cognome) all'ingresso per i visitatori non ancora registrati
-    if (!RDPVoter.isRegistered() && !RDPAuth.isAuthenticated()) {
-      openVoterModal();
-    }
   }
 
   let reloadDebounceTimer = null;
@@ -469,6 +465,10 @@
     }
     if (totalVotesVal) {
       totalVotesVal.textContent = String(globalStats.totalVotes);
+    }
+    const introGarmentCountVal = document.getElementById("introGarmentCountVal");
+    if (introGarmentCountVal) {
+      introGarmentCountVal.textContent = `${allItems.length} CAPI // ${allItems.length * 2} PAGINE HD`;
     }
 
     const categories = ["ALL", "HOODIES", "TEES", "PANTS", "ACCESSORIES"];
@@ -1708,8 +1708,26 @@
     if (tabIntroBtn) tabIntroBtn.addEventListener("click", () => switchMainView("intro"));
     if (tabShowcaseBtn) tabShowcaseBtn.addEventListener("click", () => switchMainView("showcase"));
     if (tabFeedbackBtn) tabFeedbackBtn.addEventListener("click", () => switchMainView("feedback"));
-    if (enterArchiveBtn) enterArchiveBtn.addEventListener("click", () => switchMainView("showcase"));
-    if (introDirectFeedbackBtn) introDirectFeedbackBtn.addEventListener("click", () => switchMainView("feedback"));
+    const handleEnterArchive = () => {
+      switchMainView("showcase");
+      if (!RDPVoter.isRegistered() && !RDPAuth.isAuthenticated()) {
+        setTimeout(() => {
+          openVoterModal();
+        }, 350);
+      }
+    };
+
+    if (enterArchiveBtn) enterArchiveBtn.addEventListener("click", handleEnterArchive);
+    if (introDirectFeedbackBtn) {
+      introDirectFeedbackBtn.addEventListener("click", () => {
+        switchMainView("feedback");
+        if (!RDPVoter.isRegistered() && !RDPAuth.isAuthenticated()) {
+          setTimeout(() => {
+            openVoterModal();
+          }, 350);
+        }
+      });
+    }
     if (brandHomeLink) {
       brandHomeLink.addEventListener("click", () => switchMainView("intro"));
       brandHomeLink.addEventListener("keydown", (e) => {
@@ -1725,7 +1743,7 @@
     // Intro Screen Keyboard Shortcut: Press Enter to Enter Archive
     document.addEventListener("keydown", (e) => {
       if (activeMainView === "intro" && e.key === "Enter" && !e.target.closest("input, textarea, button")) {
-        switchMainView("showcase");
+        handleEnterArchive();
       }
     });
 
