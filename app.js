@@ -1747,26 +1747,6 @@
       }
     });
 
-    // Intro Urban Wall Mural Texture Switcher (Brick vs Concrete) - Full Screen
-    const wallBrickBtn = document.getElementById("wallTextureBrickBtn");
-    const wallConcreteBtn = document.getElementById("wallTextureConcreteBtn");
-    const introPageView = document.getElementById("introPageView");
-    if (wallBrickBtn && wallConcreteBtn && introPageView) {
-      wallBrickBtn.addEventListener("click", () => {
-        introPageView.classList.remove("is-concrete");
-        wallBrickBtn.classList.add("is-active");
-        wallBrickBtn.setAttribute("aria-pressed", "true");
-        wallConcreteBtn.classList.remove("is-active");
-        wallConcreteBtn.setAttribute("aria-pressed", "false");
-      });
-      wallConcreteBtn.addEventListener("click", () => {
-        introPageView.classList.add("is-concrete");
-        wallConcreteBtn.classList.add("is-active");
-        wallConcreteBtn.setAttribute("aria-pressed", "true");
-        wallBrickBtn.classList.remove("is-active");
-        wallBrickBtn.setAttribute("aria-pressed", "false");
-      });
-    }
 
     // Category Filter Buttons
     filterButtons.forEach((btn) => {
