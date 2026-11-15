@@ -105,7 +105,7 @@
     <!-- VISTA 00: PAGINA INTRO / LANDING MINIMAL (ATTIVA PER DEFAULT ALL'ENTRATA NEL SITO) -->
     <div class="main-page-view is-active" id="introPageView">
       <div class="intro-screen">
-        <!-- Top Metadata Strip -->
+        <!-- Top Metadata Strip with Full-Screen Wall Switcher -->
         <div class="intro-screen__meta-top">
           <div class="intro-meta-item">
             <span class="intro-meta-label">COLLECTION:</span>
@@ -115,13 +115,15 @@
             <span class="camo-dot" aria-hidden="true"></span>
             <span class="intro-meta-val">PROVINCIA LAB // MILANO - ITALIA</span>
           </div>
-          <div class="intro-meta-item">
-            <span class="intro-meta-label">SYSTEM:</span>
-            <span class="intro-meta-val">DIGITAL CURATION v2.0</span>
+          <div class="wall-texture-selector" role="group" aria-label="Selettore superficie muro a tutta schermata">
+            <span class="wall-selector-label">MURO:</span>
+            <button type="button" class="wall-toggle-btn is-active" id="wallTextureBrickBtn" aria-pressed="true">BRICK WALL</button>
+            <span class="wall-toggle-sep">/</span>
+            <button type="button" class="wall-toggle-btn" id="wallTextureConcreteBtn" aria-pressed="false">CONCRETE</button>
           </div>
         </div>
 
-        <!-- Main Minimal Brand Centerpiece -->
+        <!-- Main Minimal Brand Centerpiece directly on the Wall -->
         <div class="intro-screen__center">
           <div class="intro-eyebrow">
             <span class="intro-eyebrow__strip"></span>
@@ -129,39 +131,13 @@
             <span class="intro-eyebrow__strip"></span>
           </div>
 
-          <!-- Wall Mural Piece: Graffiti su Muro Urbano (Font Spartical Graffiti) -->
-          <div class="intro-wall-frame" id="introWallFrame">
-            <!-- Top Tag Strip & Texture Switcher -->
-            <div class="intro-wall-tag-strip">
-              <span class="wall-tag-item"><span class="wall-dot"></span>WALL SPECIMEN // MILANO URBAN CONCRETE</span>
-              <div class="wall-texture-selector" role="group" aria-label="Selettore superficie muro">
-                <span class="wall-selector-label">SUPERFICIE:</span>
-                <button type="button" class="wall-toggle-btn is-active" id="wallTextureBrickBtn" aria-pressed="true">BRICK WALL</button>
-                <span class="wall-toggle-sep">/</span>
-                <button type="button" class="wall-toggle-btn" id="wallTextureConcreteBtn" aria-pressed="false">CONCRETE</button>
-              </div>
+          <h1 class="intro-title intro-title--on-wall">
+            <div class="intro-graffiti-wrapper">
+              <span class="intro-title__graffiti" id="introGraffitiTitle">Ragazzi di Provincia</span>
+              <div class="intro-graffiti-slash" aria-hidden="true"></div>
             </div>
-
-            <!-- Wall Surface with Real Texture & Montana Spray Graffiti -->
-            <div class="intro-wall-surface" id="introWallSurface">
-              <div class="intro-wall-vignette" aria-hidden="true"></div>
-
-              <h1 class="intro-title intro-title--on-wall">
-                <div class="intro-graffiti-wrapper">
-                  <span class="intro-title__graffiti" id="introGraffitiTitle">Ragazzi di Provincia</span>
-                  <div class="intro-graffiti-slash" aria-hidden="true"></div>
-                </div>
-                <span class="intro-title__sub intro-title__sub--wall">RDP // ARCHIVE SPECIMEN</span>
-              </h1>
-            </div>
-
-            <!-- Bottom Street Tag Strip -->
-            <div class="intro-wall-footer-strip">
-              <span>LAT: 45°27'51"N // LON: 9°11'25"E</span>
-              <span class="wall-footer-mid">STREET ART MURAL // SPARTICAL GRAFFITI TAG</span>
-              <span>EST. 2026 // MILANO</span>
-            </div>
-          </div>
+            <span class="intro-title__sub intro-title__sub--wall">RDP // ARCHIVE SPECIMEN</span>
+          </h1>
 
           <p class="intro-description">
             Archivio digitale indipendente per la prototipazione e valutazione di capi streetwear ad alta grammatura. Esplora i campioni, esprimi i tuoi voti e trasmetti le tue proposte all'Atelier.
