@@ -579,7 +579,7 @@
     const activeKeys = new Set();
     const orderedSlots = [];
 
-    targets.forEach((target) => {
+    targets.forEach((target, index) => {
       const key = `${target.item.id}_${target.page}_${target.label || "single"}`;
       activeKeys.add(key);
 
@@ -589,6 +589,7 @@
       } else {
         slot = createCardSlotElement(target.item, target.page, target.label);
       }
+      slot.style.setProperty("--slot-index", Math.min(index, 16));
       orderedSlots.push(slot);
     });
 
@@ -673,12 +674,21 @@
       </div>
     `;
 
-    // Hover desktop da computer: mostra il retro se il capo lo possiede
+    // Hover desktop da computer: mostra il retro se il capo lo possiede con transizione fluida
     card.addEventListener("mouseenter", () => {
       const currentItem = allItems.find((i) => i.id === card.dataset.itemId);
       if (currentItem && currentItem.images && currentItem.images.back) {
         const img = card.querySelector(".archive-card__img");
-        if (img) img.src = currentItem.images.back;
+        if (img && img.dataset.side !== "back") {
+          img.dataset.side = "back";
+          img.style.opacity = "0.35";
+          img.style.transform = "scale(0.98)";
+          setTimeout(() => {
+            img.src = currentItem.images.back;
+            img.style.opacity = "1";
+            img.style.transform = "scale(1.05)";
+          }, 70);
+        }
       }
     });
 
@@ -686,7 +696,16 @@
       const currentItem = allItems.find((i) => i.id === card.dataset.itemId);
       if (currentItem && currentItem.images && currentItem.images.front) {
         const img = card.querySelector(".archive-card__img");
-        if (img) img.src = currentItem.images.front;
+        if (img && img.dataset.side !== "front") {
+          img.dataset.side = "front";
+          img.style.opacity = "0.35";
+          img.style.transform = "scale(0.98)";
+          setTimeout(() => {
+            img.src = currentItem.images.front;
+            img.style.opacity = "1";
+            img.style.transform = "scale(1)";
+          }, 70);
+        }
       }
     });
 
@@ -781,6 +800,14 @@
 
     renderGrid();
     updateBallotSummary();
+    if (pendingBallotBar) {
+      pendingBallotBar.classList.remove("has-new-vote");
+      void pendingBallotBar.offsetWidth;
+      pendingBallotBar.classList.add("has-new-vote");
+      setTimeout(() => {
+        if (pendingBallotBar) pendingBallotBar.classList.remove("has-new-vote");
+      }, 500);
+    }
     showToast(`✓ Voto ${score}/10 registrato! Invia la tua scheda all'Atelier nella sezione Feedback ↗`);
   }
 
@@ -951,6 +978,14 @@
         : (item.images ? item.images.front : "");
 
     if (modalImage) {
+      if (modalImage.src !== src) {
+        modalImage.classList.remove("is-flipping");
+        void modalImage.offsetWidth; // trigger reflow
+        modalImage.classList.add("is-flipping");
+        setTimeout(() => {
+          if (modalImage) modalImage.classList.remove("is-flipping");
+        }, 360);
+      }
       modalImage.src = src;
       modalImage.alt = `${item.title} — ${activeModalView === "front" ? "Pagina 01 Davanti" : "Pagina 02 Retro"}`;
     }
