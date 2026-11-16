@@ -265,6 +265,9 @@
           <span class="modal-cat" id="modalCategory">TEES</span>
         </div>
         <div class="modal-header__right">
+          <button class="modal-util-btn modal-util-btn--edit" id="modalEditBtn" type="button" style="display: none;" title="Modifica immagini, dati e dettagli di questo capo (Solo Creator)">
+            ✎ [MODIFICA_CAPO]
+          </button>
           <button class="modal-util-btn modal-util-btn--danger" id="modalDeleteBtn" type="button" style="display: none;" title="Elimina questo capo dall'archivio (Solo Creator)">
             [ELIMINA_CAPO]
           </button>
@@ -646,6 +649,136 @@
             <div class="upload-submit-bar">
               <button class="modal-util-btn" id="uploadCancelBtn" type="button">[ANNULLA]</button>
               <button class="upload-submit-btn" id="uploadSubmitBtn" type="submit" disabled>[SALVA CAPO IN ARCHIVIO ↗]</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL MODIFICA CAPO ESISTENTE (VISIBILE ESCLUSIVAMENTE AL CREATORE AUTENTICATO) -->
+  <div class="modal-backdrop" id="editGarmentModal" role="dialog" aria-modal="true" aria-labelledby="editGarmentModalTitle" hidden>
+    <div class="modal-window modal-window--upload">
+      <div class="modal-header">
+        <div class="modal-header__left">
+          <span class="modal-code" id="editGarmentCode">RDP-001</span>
+          <span class="camo-badge">CREATOR EDITOR</span>
+          <span class="modal-cat" id="editGarmentModalTitle">MODIFICA SPECIFICHE &amp; IMMAGINI</span>
+        </div>
+        <button class="modal-close-btn" id="editGarmentCloseBtn" type="button" aria-label="Chiudi modifica">[CHIUDI // ESC]</button>
+      </div>
+
+      <div class="upload-body">
+        <!-- Colonna Sinistra: Gestione Immagini Fronte & Retro con Canvas Processor -->
+        <div class="upload-processor-col">
+          <div class="edit-images-overview">
+            <span class="edit-section-label">IMMAGINI DEL CAPO (TOCCA PER SOSTITUIRE O AGGIUNGERE)</span>
+          </div>
+
+          <div class="upload-dropzones">
+            <!-- Front Edit Dropzone -->
+            <div class="dropzone-box dropzone-box--edit has-file" id="editFrontDropzone" role="button" tabindex="0" title="Modifica Pagina 01 (Davanti)">
+              <input type="file" id="editFrontFileInput" accept="image/*,image/png,image/jpeg,image/webp" style="display: none;" />
+              <div class="dropzone-thumb-wrapper">
+                <img id="editFrontThumbPreview" src="" alt="Anteprima Davanti" class="dropzone-thumb-img" />
+              </div>
+              <div class="dropzone-info-block">
+                <span class="dropzone-box__tag">PAGINA 01 [DAVANTI] *</span>
+                <span class="dropzone-box__label" id="editFrontFileName">FOTO ATTUALE (CLICCA PER CAMBIARE)</span>
+              </div>
+            </div>
+
+            <!-- Back Edit Dropzone -->
+            <div class="dropzone-box dropzone-box--edit" id="editBackDropzone" role="button" tabindex="0" title="Aggiungi o modifica Pagina 02 (Retro)">
+              <input type="file" id="editBackFileInput" accept="image/*,image/png,image/jpeg,image/webp" style="display: none;" />
+              <div class="dropzone-thumb-wrapper">
+                <img id="editBackThumbPreview" src="" alt="Anteprima Retro" class="dropzone-thumb-img" style="display: none;" />
+                <span id="editBackThumbPlaceholder" class="dropzone-empty-icon">+ RETRO</span>
+              </div>
+              <div class="dropzone-info-block">
+                <span class="dropzone-box__tag">PAGINA 02 [RETRO]</span>
+                <span class="dropzone-box__label" id="editBackFileName">TOCCA PER AGGIUNGERE RETRO</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Rimuovi immagine retro se presente -->
+          <div class="edit-image-actions" id="editBackRemoveWrapper" style="display: none;">
+            <button type="button" class="btn-remove-back" id="btnRemoveBackImage">✕ RIMUOVI IMMAGINE RETRO</button>
+          </div>
+
+          <!-- Live Preview Canvas Output -->
+          <div class="processor-stage">
+            <div class="processor-stage__header">
+              <span class="processor-stage__title">CANVAS ENGINE PREVIEW</span>
+              <span class="processor-stage__ratio" id="editProcessorRatio">[1400×1400 HD]</span>
+            </div>
+            <div class="processor-stage__viewport">
+              <div class="processor-canvas-wrapper" id="editProcessorCanvasWrapper">
+                <img id="editProcessedPreviewImg" src="" alt="Anteprima modificata" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Colonna Destra: Modifica Dati e Specifiche Tecniche -->
+        <div class="upload-form-col">
+          <form id="editGarmentForm">
+            <div class="upload-fields">
+              <div class="field-group">
+                <label for="inputEditTitle">NOME CAPO / MODELLO *</label>
+                <input type="text" id="inputEditTitle" placeholder="ES. MILANO NORD HOODIE" required />
+              </div>
+
+              <div class="field-row-2">
+                <div class="field-group">
+                  <label for="inputEditCategory">CATEGORIA *</label>
+                  <select id="inputEditCategory" required>
+                    <option value="HOODIES">HOODIES</option>
+                    <option value="TEES">TEES</option>
+                    <option value="PANTS">PANTS</option>
+                    <option value="ACCESSORIES">ACCESSORIES</option>
+                  </select>
+                </div>
+                <div class="field-group">
+                  <label for="inputEditGsm">PESO / GSM *</label>
+                  <input type="text" id="inputEditGsm" placeholder="ES. 450 GSM" required />
+                </div>
+              </div>
+
+              <div class="field-row-2">
+                <div class="field-group">
+                  <label for="inputEditFit">VESTIBILITÀ / FIT *</label>
+                  <input type="text" id="inputEditFit" placeholder="ES. OVERSIZED BOXY" required />
+                </div>
+                <div class="field-group">
+                  <label for="inputEditBadge">BADGE DI STATO</label>
+                  <input type="text" id="inputEditBadge" placeholder="ES. CREATOR ARCHIVE" />
+                </div>
+              </div>
+
+              <div class="field-row-2">
+                <div class="field-group">
+                  <label for="inputEditFabric">TESSUTO / MANIFATTURA</label>
+                  <input type="text" id="inputEditFabric" placeholder="ES. 100% HEAVYWEIGHT COTTON" />
+                </div>
+                <div class="field-group">
+                  <label for="inputEditColorway">COLORWAY / VARIANTE</label>
+                  <input type="text" id="inputEditColorway" placeholder="ES. MILANO BLACK / OLIVE" />
+                </div>
+              </div>
+
+              <div class="field-group">
+                <label for="inputEditNotes">NOTE TECNICHE / CONCEPT ARCHIVIO</label>
+                <textarea id="inputEditNotes" rows="3" placeholder="DETTAGLI GRAFICA, RICAMI E COSTRUZIONE..."></textarea>
+              </div>
+            </div>
+
+            <div class="upload-error-msg" id="editErrorMsg" hidden></div>
+
+            <div class="upload-submit-bar">
+              <button class="modal-util-btn" id="editGarmentCancelBtn" type="button">[ANNULLA]</button>
+              <button class="upload-submit-btn" id="editGarmentSubmitBtn" type="submit">[✓ SALVA MODIFICHE ↗]</button>
             </div>
           </form>
         </div>

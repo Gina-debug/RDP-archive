@@ -1684,6 +1684,21 @@ img {
   color: #FFFFFF;
 }
 
+.modal-util-btn--edit {
+  border-color: rgba(194, 178, 128, 0.45);
+  background-color: rgba(75, 83, 32, 0.25);
+  color: var(--camo-sand);
+  font-weight: 800;
+  border-radius: 14px;
+}
+
+.modal-util-btn--edit:hover {
+  background-color: var(--camo-olive);
+  border-color: #FFFFFF;
+  color: #FFFFFF;
+  box-shadow: 0 0 12px rgba(75, 83, 32, 0.6);
+}
+
 .viewer-toolbar-right {
   display: flex;
   align-items: center;
@@ -2231,6 +2246,118 @@ img {
   background-color: #B42318;
   color: #FFFFFF;
   box-shadow: 0 0 6px rgba(180, 35, 24, 0.4);
+}
+
+/* Quick Card Edit Button (Creator Management) */
+.card-creator-edit-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 10;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: #FFFFFF;
+  background-image: linear-gradient(rgba(17, 17, 17, 0.5), rgba(17, 17, 17, 0.5)), var(--camo-pattern);
+  background-size: 100px 100px;
+  border: 1px solid var(--camo-sand);
+  border-radius: 12px;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  white-space: nowrap;
+}
+
+.card-creator-edit-btn:hover {
+  background-color: var(--camo-olive);
+  border-color: #FFFFFF;
+  transform: scale(1.06);
+  box-shadow: 0 4px 16px rgba(75, 83, 32, 0.7);
+}
+
+/* Edit Modal Dropzones & Thumbnails */
+.edit-images-overview {
+  margin-bottom: 8px;
+}
+
+.edit-section-label {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: var(--camo-sand);
+  display: block;
+}
+
+.dropzone-box--edit {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+}
+
+.dropzone-thumb-wrapper {
+  width: 52px;
+  height: 52px;
+  border-radius: 6px;
+  overflow: hidden;
+  background: radial-gradient(circle, #272832 0%, #121317 100%);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.dropzone-thumb-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.dropzone-empty-icon {
+  font-size: 10px;
+  font-weight: 800;
+  color: var(--muted);
+}
+
+.dropzone-info-block {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  flex: 1;
+}
+
+.edit-image-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+  margin-bottom: 8px;
+}
+
+.btn-remove-back {
+  background: rgba(180, 35, 24, 0.12);
+  border: 1px solid #B42318;
+  color: #F04438;
+  font-size: 10px;
+  font-weight: 800;
+  padding: 5px 12px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-remove-back:hover {
+  background-color: #B42318;
+  color: #FFFFFF;
 }
 
 .dir-action-btn--restore {

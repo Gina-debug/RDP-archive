@@ -208,6 +208,44 @@
   const inputColorway = document.getElementById("inputColorway");
   const inputNotes = document.getElementById("inputNotes");
 
+  // Creator Edit Modal Elements
+  const modalEditBtn = document.getElementById("modalEditBtn");
+  const editGarmentModal = document.getElementById("editGarmentModal");
+  const editGarmentCloseBtn = document.getElementById("editGarmentCloseBtn");
+  const editGarmentCancelBtn = document.getElementById("editGarmentCancelBtn");
+  const editGarmentForm = document.getElementById("editGarmentForm");
+  const editGarmentCode = document.getElementById("editGarmentCode");
+  const editFrontDropzone = document.getElementById("editFrontDropzone");
+  const editBackDropzone = document.getElementById("editBackDropzone");
+  const editFrontFileInput = document.getElementById("editFrontFileInput");
+  const editBackFileInput = document.getElementById("editBackFileInput");
+  const editFrontFileName = document.getElementById("editFrontFileName");
+  const editBackFileName = document.getElementById("editBackFileName");
+  const editFrontThumbPreview = document.getElementById("editFrontThumbPreview");
+  const editBackThumbPreview = document.getElementById("editBackThumbPreview");
+  const editBackThumbPlaceholder = document.getElementById("editBackThumbPlaceholder");
+  const editBackRemoveWrapper = document.getElementById("editBackRemoveWrapper");
+  const btnRemoveBackImage = document.getElementById("btnRemoveBackImage");
+  const editProcessedPreviewImg = document.getElementById("editProcessedPreviewImg");
+  const inputEditTitle = document.getElementById("inputEditTitle");
+  const inputEditCategory = document.getElementById("inputEditCategory");
+  const inputEditGsm = document.getElementById("inputEditGsm");
+  const inputEditFit = document.getElementById("inputEditFit");
+  const inputEditBadge = document.getElementById("inputEditBadge");
+  const inputEditFabric = document.getElementById("inputEditFabric");
+  const inputEditColorway = document.getElementById("inputEditColorway");
+  const inputEditNotes = document.getElementById("inputEditNotes");
+  const editErrorMsg = document.getElementById("editErrorMsg");
+  const editGarmentSubmitBtn = document.getElementById("editGarmentSubmitBtn");
+
+  // Edit Garment State
+  let editingGarmentId = null;
+  let editDraftFrontFile = null;
+  let editDraftBackFile = null;
+  let editDraftFrontDataUrl = null;
+  let editDraftBackDataUrl = null;
+  let isProcessingEditImage = false;
+
   const archiveToast = document.getElementById("archiveToast");
 
   // ========================================================================
@@ -267,9 +305,24 @@
     const deletedIds = new Set(deletedIdsArray);
     const activeSeed = seedItems.filter((item) => !deletedIds.has(item.id));
     const activeUser = userItems.filter((item) => !deletedIds.has(item.id));
+
+    // Supporta la modifica sia dei capi caricati che dei capi di serie:
+    // Se un capo di serie è stato modificato dal Creator, carica la versione modificata
+    const editedSeedMap = new Map();
+    const newUserItems = [];
+    activeUser.forEach((u) => {
+      const isOriginalSeed = seedItems.some((s) => s.id === u.id);
+      if (isOriginalSeed) {
+        editedSeedMap.set(u.id, u);
+      } else {
+        newUserItems.push(u);
+      }
+    });
+
+    const mappedSeed = activeSeed.map((s) => editedSeedMap.get(s.id) || s);
     // I nuovi capi aggiunti dal Creator compaiono per primi (ordine decrescente di caricamento)
-    const sortedUser = [...activeUser].sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
-    const combined = [...sortedUser, ...activeSeed];
+    const sortedUser = [...newUserItems].sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+    const combined = [...sortedUser, ...mappedSeed];
 
     // Assegnazione progressiva automatica dei codici (RDP-001, RDP-002... RDP-012...)
     allItems = combined.map((item, idx) => ({
@@ -360,6 +413,7 @@
       if (openCloudModalBtn) openCloudModalBtn.style.display = "inline-flex";
       if (exportArchiveBtn) exportArchiveBtn.style.display = "inline-flex";
       if (modalDownloadBtn) modalDownloadBtn.style.display = "inline-block";
+      if (modalEditBtn) modalEditBtn.style.display = "inline-block";
       if (sysStatus) {
         sysStatus.textContent = "CREATOR_ONLINE [MANAGEMENT_ON]";
         sysStatus.classList.add("telemetry-cell__value--camo");
@@ -375,9 +429,15 @@
       if (openCloudModalBtn) openCloudModalBtn.style.display = "inline-flex";
       if (exportArchiveBtn) exportArchiveBtn.style.display = "none";
       if (modalDownloadBtn) modalDownloadBtn.style.display = "none";
+      if (modalEditBtn) modalEditBtn.style.display = "none";
       if (sysStatus) {
         sysStatus.textContent = "VOTING_OPEN [0-10]";
       }
+    }
+
+    // Aggiorna i pulsanti di modifica rapida sulle schede della vetrina
+    if (archiveGrid && archiveGrid.children.length > 0) {
+      renderGrid();
     }
 
     if (restoreDeletedBtn) {
@@ -655,8 +715,14 @@
       `;
     }
 
+    const isCreator = RDPAuth.isAuthenticated();
+    const creatorEditBtnHtml = isCreator
+      ? `<button class="card-creator-edit-btn" data-edit-item="${escapeAttr(item.id)}" type="button" title="Modifica ${escapeAttr(item.title)} (Solo Creator)">✎ MODIFICA</button>`
+      : "";
+
     card.innerHTML = `
       <div class="archive-card__media">
+        ${creatorEditBtnHtml}
         <img
           class="archive-card__img"
           src="${escapeAttr(imgSrc)}"
@@ -714,6 +780,14 @@
 
       const currentItemId = card.dataset.itemId;
 
+      // Gestione pulsante Modifica rapida Creator
+      const creatorEditBtn = e.target.closest(".card-creator-edit-btn");
+      if (creatorEditBtn) {
+        e.stopPropagation();
+        openEditGarmentModal(currentItemId);
+        return;
+      }
+
       // Gestione voto rapido 0-10
       const quickVoteBtn = e.target.closest(".quick-vote-btn");
       if (quickVoteBtn) {
@@ -729,7 +803,7 @@
 
     card.addEventListener("keydown", (e) => {
       if (e.key === "Enter" || e.key === " ") {
-        if (e.target.closest(".quick-vote-btn")) {
+        if (e.target.closest(".quick-vote-btn") || e.target.closest(".card-creator-edit-btn")) {
           return;
         }
         e.preventDefault();
@@ -754,6 +828,22 @@
     const titleEl = card.querySelector(".archive-card__title");
     if (titleEl && titleEl.textContent !== item.title) {
       titleEl.textContent = item.title;
+    }
+
+    // Pulsante Modifica Rapida Creator
+    const isCreator = RDPAuth.isAuthenticated();
+    const media = card.querySelector(".archive-card__media");
+    let editBtn = card.querySelector(".card-creator-edit-btn");
+    if (isCreator && !editBtn && media) {
+      const btn = document.createElement("button");
+      btn.className = "card-creator-edit-btn";
+      btn.dataset.editItem = item.id;
+      btn.type = "button";
+      btn.title = `Modifica ${item.title} (Solo Creator)`;
+      btn.textContent = "✎ MODIFICA";
+      media.appendChild(btn);
+    } else if (!isCreator && editBtn) {
+      editBtn.remove();
     }
 
     // Immagine: solo se non attualmente in hover mouse
@@ -922,8 +1012,11 @@
       activeModalView = "front";
     }
 
-    // Delete & Download buttons: visible EXCLUSIVELY to authenticated Creator!
+    // Delete, Edit & Download buttons: visible EXCLUSIVELY to authenticated Creator!
     const isCreator = RDPAuth.isAuthenticated();
+    if (modalEditBtn) {
+      modalEditBtn.style.display = isCreator ? "inline-block" : "none";
+    }
     if (modalDeleteBtn) {
       modalDeleteBtn.style.display = isCreator ? "inline-block" : "none";
       modalDeleteBtn.textContent = "[ELIMINA_CAPO]";
@@ -1388,6 +1481,247 @@
   }
 
   // ========================================================================
+  // CREATOR GARMENT EDITOR (EXCLUSIVE TO AUTHENTICATED CREATOR)
+  // Consente la modifica di foto fronte/retro, titolo, gsm, fit, note e dati
+  // ========================================================================
+  function openEditGarmentModal(itemId) {
+    if (!RDPAuth.isAuthenticated()) {
+      showToast("ACCESSO RICHIESTO: ACCEDI COME CREATOR PER MODIFICARE I CAPI");
+      openAuthModal();
+      return;
+    }
+
+    const item = allItems.find((i) => i.id === itemId);
+    if (!item) return;
+
+    editingGarmentId = item.id;
+    editDraftFrontFile = null;
+    editDraftBackFile = null;
+    editDraftFrontDataUrl = item.images ? item.images.front : null;
+    editDraftBackDataUrl = item.images ? item.images.back : null;
+    isProcessingEditImage = false;
+
+    if (editGarmentCode) {
+      editGarmentCode.textContent = item.code || "RDP-SPEC";
+    }
+    if (editGarmentModalTitle) {
+      editGarmentModalTitle.textContent = `MODIFICA ${item.code} // ${item.title}`;
+    }
+
+    if (inputEditTitle) inputEditTitle.value = item.title || "";
+    if (inputEditCategory) inputEditCategory.value = item.category || "HOODIES";
+    if (inputEditGsm) inputEditGsm.value = item.gsm || "";
+    if (inputEditFit) inputEditFit.value = item.fit || "";
+    if (inputEditBadge) inputEditBadge.value = item.statusBadge || "CREATOR ARCHIVE";
+    if (inputEditFabric) inputEditFabric.value = item.fabric || "";
+    if (inputEditColorway) inputEditColorway.value = item.colorway || "";
+    if (inputEditNotes) inputEditNotes.value = item.notes || item.frontNotes || "";
+
+    // Previews & Dropzone status
+    if (editFrontThumbPreview) {
+      editFrontThumbPreview.src = editDraftFrontDataUrl || "";
+    }
+    if (editFrontFileName) {
+      editFrontFileName.textContent = "FOTO ATTUALE (CLICCA PER CAMBIARE)";
+    }
+    if (editFrontDropzone) {
+      editFrontDropzone.classList.add("has-file");
+    }
+
+    if (editBackThumbPreview && editBackThumbPlaceholder && editBackRemoveWrapper) {
+      if (editDraftBackDataUrl) {
+        editBackThumbPreview.src = editDraftBackDataUrl;
+        editBackThumbPreview.style.display = "block";
+        editBackThumbPlaceholder.style.display = "none";
+        editBackRemoveWrapper.style.display = "flex";
+        if (editBackFileName) editBackFileName.textContent = "FOTO RETRO ATTUALE (CLICCA PER CAMBIARE)";
+        if (editBackDropzone) editBackDropzone.classList.add("has-file");
+      } else {
+        editBackThumbPreview.src = "";
+        editBackThumbPreview.style.display = "none";
+        editBackThumbPlaceholder.style.display = "inline";
+        editBackRemoveWrapper.style.display = "none";
+        if (editBackFileName) editBackFileName.textContent = "TOCCA PER AGGIUNGERE RETRO";
+        if (editBackDropzone) editBackDropzone.classList.remove("has-file");
+      }
+    }
+
+    if (editProcessedPreviewImg) {
+      editProcessedPreviewImg.src = editDraftFrontDataUrl || "";
+      editProcessedPreviewImg.hidden = false;
+    }
+
+    if (editErrorMsg) editErrorMsg.hidden = true;
+    if (editGarmentSubmitBtn) editGarmentSubmitBtn.disabled = false;
+
+    if (editGarmentModal) {
+      editGarmentModal.hidden = false;
+      document.body.style.overflow = "hidden";
+    }
+  }
+
+  function closeEditGarmentModal() {
+    if (editGarmentModal) {
+      editGarmentModal.hidden = true;
+      document.body.style.overflow = "";
+    }
+    editingGarmentId = null;
+    editDraftFrontFile = null;
+    editDraftBackFile = null;
+  }
+
+  function showEditError(msg) {
+    if (!editErrorMsg) return;
+    editErrorMsg.textContent = msg;
+    editErrorMsg.hidden = false;
+  }
+
+  async function handleEditFrontFile(file) {
+    if (!isValidImageFile(file)) {
+      showEditError("FORMATO NON VALIDO. USA IMMAGINI PNG, JPG O WEBP.");
+      return;
+    }
+    editDraftFrontFile = file;
+    if (editFrontFileName) editFrontFileName.textContent = file.name.toUpperCase();
+    if (editFrontDropzone) editFrontDropzone.classList.add("has-file");
+
+    try {
+      isProcessingEditImage = true;
+      if (editGarmentSubmitBtn) editGarmentSubmitBtn.disabled = true;
+      if (editErrorMsg) editErrorMsg.hidden = true;
+
+      const options = {
+        bgNormalize: true,
+        studioEnhance: true,
+        transparentBg: false,
+        bgTolerance: 28,
+        paddingPct: 0.06
+      };
+
+      const result = await RDPImageProcessor.processGarmentFile(file, options);
+      editDraftFrontDataUrl = result.processedDataUrl;
+      if (editFrontThumbPreview) editFrontThumbPreview.src = editDraftFrontDataUrl;
+      if (editProcessedPreviewImg) editProcessedPreviewImg.src = editDraftFrontDataUrl;
+    } catch (err) {
+      showEditError(err.message || "ERRORE ELABORAZIONE FOTO DAVANTI.");
+    } finally {
+      isProcessingEditImage = false;
+      if (editGarmentSubmitBtn) editGarmentSubmitBtn.disabled = false;
+    }
+  }
+
+  async function handleEditBackFile(file) {
+    if (!isValidImageFile(file)) {
+      showEditError("FORMATO NON VALIDO. USA IMMAGINI PNG, JPG O WEBP.");
+      return;
+    }
+    editDraftBackFile = file;
+    if (editBackFileName) editBackFileName.textContent = file.name.toUpperCase();
+    if (editBackDropzone) editBackDropzone.classList.add("has-file");
+
+    try {
+      isProcessingEditImage = true;
+      if (editGarmentSubmitBtn) editGarmentSubmitBtn.disabled = true;
+      if (editErrorMsg) editErrorMsg.hidden = true;
+
+      const options = {
+        bgNormalize: true,
+        studioEnhance: true,
+        transparentBg: false,
+        bgTolerance: 28,
+        paddingPct: 0.06
+      };
+
+      const result = await RDPImageProcessor.processGarmentFile(file, options);
+      editDraftBackDataUrl = result.processedDataUrl;
+      if (editBackThumbPreview) {
+        editBackThumbPreview.src = editDraftBackDataUrl;
+        editBackThumbPreview.style.display = "block";
+      }
+      if (editBackThumbPlaceholder) editBackThumbPlaceholder.style.display = "none";
+      if (editBackRemoveWrapper) editBackRemoveWrapper.style.display = "flex";
+      if (editProcessedPreviewImg) editProcessedPreviewImg.src = editDraftBackDataUrl;
+    } catch (err) {
+      showEditError(err.message || "ERRORE ELABORAZIONE FOTO RETRO.");
+    } finally {
+      isProcessingEditImage = false;
+      if (editGarmentSubmitBtn) editGarmentSubmitBtn.disabled = false;
+    }
+  }
+
+  async function handleEditGarmentSubmit(e) {
+    e.preventDefault();
+    if (!RDPAuth.isAuthenticated()) {
+      showEditError("ACCESSO NON AUTORIZZATO. EFFETTUA IL LOGIN.");
+      return;
+    }
+
+    if (isProcessingEditImage) {
+      showEditError("ATTENDI IL COMPLETAMENTO DELL'ELABORAZIONE IMMAGINE.");
+      return;
+    }
+
+    const currentItem = allItems.find((i) => i.id === editingGarmentId);
+    if (!currentItem) {
+      showEditError("CAPO NON TROVATO.");
+      return;
+    }
+
+    const title = inputEditTitle.value.trim().toUpperCase() || currentItem.title;
+    const category = inputEditCategory.value || currentItem.category;
+    let gsm = inputEditGsm.value.trim().toUpperCase() || currentItem.gsm || "450 GSM";
+    if (/^\d+$/.test(gsm)) {
+      gsm = `${gsm} GSM`;
+    }
+
+    const fit = inputEditFit.value.trim().toUpperCase() || currentItem.fit || "OVERSIZED BOXY";
+    const statusBadge = inputEditBadge.value.trim().toUpperCase() || currentItem.statusBadge || "CREATOR ARCHIVE";
+    const fabric = inputEditFabric.value.trim().toUpperCase() || currentItem.fabric || "100% HEAVYWEIGHT COTTON";
+    const colorway = inputEditColorway.value.trim().toUpperCase() || currentItem.colorway || "STUDIO SPEC";
+    const notes = inputEditNotes.value.trim().toUpperCase() || currentItem.notes || "";
+
+    const updatedItem = {
+      ...currentItem,
+      title,
+      category,
+      gsm,
+      fit,
+      statusBadge,
+      fabric,
+      colorway,
+      notes,
+      frontNotes: `VISTA FRONTALE (PAGINA 01): ${notes}`,
+      backNotes: editDraftBackDataUrl
+        ? `VISTA DORSALE (PAGINA 02): DETTAGLI POSTERIORI E COSTRUZIONE TESSUTO.`
+        : null,
+      images: {
+        front: editDraftFrontDataUrl || (currentItem.images ? currentItem.images.front : ""),
+        back: editDraftBackDataUrl || null
+      },
+      updatedAt: Date.now()
+    };
+
+    try {
+      const res = await RDPCloud.saveGarment(updatedItem);
+      closeEditGarmentModal();
+      await reloadArchiveData();
+
+      // Se il capo modificato è attualmente aperto nel modal a tutto schermo, aggiornalo sul posto
+      if (activeModalItemId === updatedItem.id && inspectionModal && !inspectionModal.hidden) {
+        openInspectionModal(updatedItem.id, activeModalView);
+      }
+
+      if (res && res.syncedToCloud) {
+        showToast(`✓ CAPO ${updatedItem.code} MODIFICATO E SINCRONIZZATO!`);
+      } else {
+        showToast(`✓ CAPO ${updatedItem.code} MODIFICATO IN LOCALE!`);
+      }
+    } catch (_err) {
+      showEditError("ERRORE DURANTE IL SALVATAGGIO DELLE MODIFICHE.");
+    }
+  }
+
+  // ========================================================================
   // ANTIGRAVITY MODE CONTROLS
   // ========================================================================
   function toggleAntigravity() {
@@ -1787,6 +2121,57 @@
     if (modalDeleteBtn) {
       modalDeleteBtn.addEventListener("click", handleDeleteCurrentItem);
     }
+    if (modalEditBtn) {
+      modalEditBtn.addEventListener("click", () => {
+        if (activeModalItemId) openEditGarmentModal(activeModalItemId);
+      });
+    }
+
+    // Edit Garment Modal Bindings
+    if (editGarmentCloseBtn) editGarmentCloseBtn.addEventListener("click", closeEditGarmentModal);
+    if (editGarmentCancelBtn) editGarmentCancelBtn.addEventListener("click", closeEditGarmentModal);
+    if (editGarmentModal) {
+      editGarmentModal.addEventListener("click", (e) => {
+        if (e.target === editGarmentModal) closeEditGarmentModal();
+      });
+    }
+    if (editGarmentForm) editGarmentForm.addEventListener("submit", handleEditGarmentSubmit);
+
+    if (editFrontDropzone && editFrontFileInput) {
+      editFrontDropzone.addEventListener("click", (e) => {
+        if (e.target !== editFrontFileInput) editFrontFileInput.click();
+      });
+      editFrontFileInput.addEventListener("change", async (e) => {
+        if (e.target.files && e.target.files[0]) await handleEditFrontFile(e.target.files[0]);
+      });
+      setupZoneDrag(editFrontDropzone, (files) => handleEditFrontFile(files[0]));
+    }
+
+    if (editBackDropzone && editBackFileInput) {
+      editBackDropzone.addEventListener("click", (e) => {
+        if (e.target !== editBackFileInput) editBackFileInput.click();
+      });
+      editBackFileInput.addEventListener("change", async (e) => {
+        if (e.target.files && e.target.files[0]) await handleEditBackFile(e.target.files[0]);
+      });
+      setupZoneDrag(editBackDropzone, (files) => handleEditBackFile(files[0]));
+    }
+
+    if (btnRemoveBackImage) {
+      btnRemoveBackImage.addEventListener("click", (e) => {
+        e.stopPropagation();
+        editDraftBackFile = null;
+        editDraftBackDataUrl = null;
+        if (editBackThumbPreview) {
+          editBackThumbPreview.src = "";
+          editBackThumbPreview.style.display = "none";
+        }
+        if (editBackThumbPlaceholder) editBackThumbPlaceholder.style.display = "inline";
+        if (editBackRemoveWrapper) editBackRemoveWrapper.style.display = "none";
+        if (editBackFileName) editBackFileName.textContent = "RETRO RIMOSSO (TOCCA PER AGGIUNGERE)";
+        if (editBackDropzone) editBackDropzone.classList.remove("has-file");
+      });
+    }
 
     // Modal 0 to 10 Voting Buttons
     modalVoteButtons.forEach((btn) => {
@@ -1850,6 +2235,8 @@
           closeAuthModal();
         } else if (uploadModal && !uploadModal.hidden) {
           closeUploadModal();
+        } else if (editGarmentModal && !editGarmentModal.hidden) {
+          closeEditGarmentModal();
         } else if (inspectionModal && !inspectionModal.hidden) {
           closeInspectionModal();
         }
