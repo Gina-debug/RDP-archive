@@ -94,6 +94,13 @@
   const feedbackResponseMsg = document.getElementById("feedbackResponseMsg");
   const fallbackMailtoLink = document.getElementById("fallbackMailtoLink");
 
+  // Floating Ballot Bar & Modal Hint Elements
+  const pendingBallotBar = document.getElementById("pendingBallotBar");
+  const pendingBallotMsg = document.getElementById("pendingBallotMsg");
+  const pendingBallotSendBtn = document.getElementById("pendingBallotSendBtn");
+  const modalVoteSendHint = document.getElementById("modalVoteSendHint");
+  const modalVoteSendBtn = document.getElementById("modalVoteSendBtn");
+
   // Telemetry Elements
   const totalGarmentsVal = document.getElementById("totalGarmentsVal");
   const totalPagesVal = document.getElementById("totalPagesVal");
@@ -257,7 +264,9 @@
     const deletedIds = new Set(deletedIdsArray);
     const activeSeed = seedItems.filter((item) => !deletedIds.has(item.id));
     const activeUser = userItems.filter((item) => !deletedIds.has(item.id));
-    const combined = [...activeSeed, ...activeUser];
+    // I nuovi capi aggiunti dal Creator compaiono per primi (ordine decrescente di caricamento)
+    const sortedUser = [...activeUser].sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+    const combined = [...sortedUser, ...activeSeed];
 
     // Assegnazione progressiva automatica dei codici (RDP-001, RDP-002... RDP-012...)
     allItems = combined.map((item, idx) => ({
@@ -764,11 +773,12 @@
 
     if (!inspectionModal.hidden && activeModalItemId === itemId) {
       updateModalVotingTerminal(item);
+      if (modalVoteSendHint) modalVoteSendHint.hidden = false;
     }
 
     renderGrid();
     updateBallotSummary();
-    showToast(`VOTO ${score}/10 REGISTRATO PER ${item.code}`);
+    showToast(`✓ Voto ${score}/10 registrato! Invia la tua scheda all'Atelier nella sezione Feedback ↗`);
   }
 
   function handleResetUserVotes() {
@@ -923,6 +933,10 @@
         const btnScore = Number(btn.dataset.vote);
         btn.classList.toggle("is-active", stats.hasVoted && stats.userVote === btnScore);
       });
+    }
+
+    if (modalVoteSendHint) {
+      modalVoteSendHint.hidden = !stats.hasVoted;
     }
   }
 
@@ -1570,6 +1584,21 @@
     if (goToFeedbackBtn) goToFeedbackBtn.addEventListener("click", () => switchMainView("feedback"));
     if (backToShowcaseBtn) backToShowcaseBtn.addEventListener("click", () => switchMainView("showcase"));
 
+    if (pendingBallotSendBtn) {
+      pendingBallotSendBtn.addEventListener("click", () => {
+        switchMainView("feedback");
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      });
+    }
+
+    if (modalVoteSendBtn) {
+      modalVoteSendBtn.addEventListener("click", () => {
+        closeInspectionModal();
+        switchMainView("feedback");
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      });
+    }
+
     // Intro Screen Keyboard Shortcut: Press Enter to Enter Archive
     document.addEventListener("keydown", (e) => {
       if (activeMainView === "intro" && e.key === "Enter" && !e.target.closest("input, textarea, button")) {
@@ -1858,6 +1887,13 @@
     if (isFeedback) {
       updateBallotSummary();
     }
+
+    if (pendingBallotBar) {
+      const userVotes = RDPRatings.getAllUserVotes();
+      const votedCount = Object.keys(userVotes).length;
+      pendingBallotBar.hidden = !(votedCount > 0 && isShowcase);
+    }
+
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
@@ -2059,10 +2095,15 @@
       chip.className = `ballot-chip ${score !== null ? "is-voted" : ""}`;
       chip.title = `Clicca per aprire la scheda di ${item.code}`;
 
+      const frontImg = item.images ? item.images.front : "";
       chip.innerHTML = `
-        <span class="ballot-chip__code">${item.code}</span>
+        <img class="ballot-chip__thumb" src="${escapeAttr(frontImg)}" alt="${escapeAttr(item.title)}" loading="lazy" />
+        <div class="ballot-chip__info">
+          <span class="ballot-chip__title">${escapeHtml(item.title)}</span>
+          <span class="ballot-chip__code">${escapeHtml(item.code)}</span>
+        </div>
         <span class="ballot-chip__score ${score !== null ? "has-score" : ""}">
-          ${score !== null ? `★ ${score}/10` : "NON VOTATO"}
+          ${score !== null ? `★ ${score}/10` : "Non votato"}
         </span>
       `;
 
@@ -2079,6 +2120,17 @@
     if (tabVoteCountPill) {
       tabVoteCountPill.textContent = `${votedCount}/${allItems.length}`;
       tabVoteCountPill.classList.toggle("has-votes", votedCount > 0);
+    }
+
+    if (pendingBallotBar) {
+      if (votedCount > 0 && activeMainView === "showcase") {
+        pendingBallotBar.hidden = false;
+        if (pendingBallotMsg) {
+          pendingBallotMsg.innerHTML = `Hai espresso <strong>${votedCount} ${votedCount === 1 ? "voto" : "voti"}</strong>. Ricordati di inviare la tua scheda all'Atelier!`;
+        }
+      } else {
+        pendingBallotBar.hidden = true;
+      }
     }
   }
 

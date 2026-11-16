@@ -103,22 +103,6 @@
     <!-- VISTA 00: PAGINA INTRO / LANDING MINIMAL (ATTIVA PER DEFAULT ALL'ENTRATA NEL SITO) -->
     <div class="main-page-view is-active" id="introPageView">
       <div class="intro-screen">
-        <!-- Top Metadata Strip -->
-        <div class="intro-screen__meta-top">
-          <div class="intro-meta-item">
-            <span class="intro-meta-label">COLLECTION:</span>
-            <span class="intro-meta-val">SS26 PROTOTYPE SPECIMEN</span>
-          </div>
-          <div class="intro-meta-item intro-meta-item--camo">
-            <span class="camo-dot" aria-hidden="true"></span>
-            <span class="intro-meta-val">PROVINCIA LAB // MILANO - ITALIA</span>
-          </div>
-          <div class="intro-meta-item">
-            <span class="intro-meta-label">EST:</span>
-            <span class="intro-meta-val">2026</span>
-          </div>
-        </div>
-
         <!-- Main Minimal Brand Centerpiece directly on the Wall -->
         <div class="intro-screen__center">
           <h1 class="intro-title intro-title--hero">
@@ -139,13 +123,6 @@
               <span>↗</span>
             </button>
           </div>
-        </div>
-
-        <!-- Bottom Footer Strip -->
-        <div class="intro-screen__meta-bottom">
-          <span>// ALL RIGHTS RESERVED © 2026 RDP // MILANO</span>
-          <span class="intro-click-hint">CLICCA PER ENTRARE NELL'ARCHIVIO</span>
-          <span>EST. 2026 // ITALIA</span>
         </div>
       </div>
     </div>
@@ -183,23 +160,22 @@
       <section class="archive-grid" id="archiveGrid" aria-label="Archivio Capi Ragazzi di Provincia"></section>
     </div>
 
-    <!-- VISTA 02: PAGINA AGGIUNTIVA SECONDARIA (SCHEDA VOTI & FEEDBACK) - NASCOSTA PER DEFAULT -->
+    <!-- VISTA 02: SCHEDA VOTI & FEEDBACK COMMUNITY -->
     <div class="main-page-view" id="feedbackPageView" hidden>
       <div class="feedback-page-topbar">
         <button class="back-to-showcase-btn" id="backToShowcaseBtn" type="button">
-          ← [TORNA ALLA VETRINA ARCHIVIO]
+          ← Torna all'Archivio
         </button>
-        <span class="feedback-page-tag">// PAGINA SECONDARIA: SCHEDA VOTAZIONE &amp; ATELIER FEEDBACK</span>
+        <span class="feedback-page-tag">Scheda Votazione e Feedback Atelier</span>
       </div>
 
       <section class="community-feedback-section" id="communityFeedbackSection" aria-label="Scheda Votazione e Feedback Community">
         <div class="feedback-container">
           <div class="feedback-header">
-            <div class="feedback-header__eyebrow">// ATELIER DIRECT LINE // RIKISOLBIATI@GMAIL.COM</div>
+            <div class="feedback-header__eyebrow">DIREZIONE CREATIVA — RIKISOLBIATI@GMAIL.COM</div>
             <h2 class="feedback-header__title">TRASMETTI I TUOI VOTI E PROPONI UN NUOVO CAPO</h2>
             <p class="feedback-header__desc">
-              Registrati con Nome e Cognome, esprimi i tuoi voti (da 0 a 10) sui singoli capi dell'archivio e proponi idee, dettagli grafici o capi che vorresti vedere nella prossima release di <strong>Ragazzi di Provincia</strong>.
-              Tutte le schede vengono trasmesse direttamente alla direzione creativa (<span class="email-highlight">rikisolbiati@gmail.com</span>).
+              Esprimi i tuoi voti sui singoli capi e invia la tua scheda con eventuali consigli, proposte o grafiche che vorresti vedere nella prossima release. La tua valutazione viene inviata direttamente all'Atelier di <strong>Ragazzi di Provincia</strong> (<span class="email-highlight">rikisolbiati@gmail.com</span>).
             </p>
           </div>
 
@@ -207,17 +183,17 @@
           <div class="ballot-summary-card">
             <div class="ballot-summary-card__header">
               <div class="ballot-summary-card__title">
-                <span>STATO VOTAZIONE ARCHIVIO</span>
-                <span class="ballot-counter-badge" id="ballotCounterBadge">0 / 11 CAPI VOTATI</span>
+                <span>RIEPILOGO VOTI ARCHIVIO</span>
+                <span class="ballot-counter-badge" id="ballotCounterBadge">0 su 11 Capi Votati</span>
               </div>
               <div class="ballot-summary-card__voter" id="ballotVoterDisplay">
                 <span id="ballotVoterNameLabel">VOTANTE: NON REGISTRATO</span>
-                <button class="ballot-change-voter-btn" id="ballotChangeVoterBtn" type="button">[REGISTRATI ORA]</button>
+                <button class="ballot-change-voter-btn" id="ballotChangeVoterBtn" type="button">Registrati ora</button>
               </div>
             </div>
 
             <div class="ballot-chips-grid" id="ballotChipsGrid">
-              <!-- Generato dinamicamente da app.js -->
+              <!-- Generato dinamicamente con miniature capi e voti -->
             </div>
           </div>
 
@@ -230,22 +206,22 @@
               <textarea
                 id="feedbackTextInput"
                 rows="4"
-                placeholder="Es: Vorrei una felpa zip pesante 480 GSM con maxi grafica gotica sul retro, oppure una t-shirt lavata grigio cenere con fit boxy e colletto rinforzato..."
+                placeholder="Scrivi qui un consiglio, una proposta per un nuovo capo o dettagli che vorresti vedere..."
               ></textarea>
             </div>
 
             <div class="feedback-submit-row">
               <div class="feedback-dest-info">
                 <span class="feedback-dest-icon">✉</span>
-                <span>DESTINATARIO: <strong>rikisolbiati@gmail.com</strong> (CREATOR ATELIER)</span>
+                <span>Destinatario: <strong>rikisolbiati@gmail.com</strong> (Direzione Creativa)</span>
               </div>
 
               <div class="feedback-btn-group">
                 <a class="fallback-mailto-link" id="fallbackMailtoLink" href="#" style="display: none;" target="_blank" rel="noopener">
-                  [INVIA VIA APP EMAIL CLIENT ↗]
+                  Invia via App Email ↗
                 </a>
                 <button class="feedback-submit-btn" id="feedbackSubmitBtn" type="button">
-                  [TRASMETTI SCHEDA VOTI &amp; FEEDBACK ↗]
+                  INVIA SCHEDA VOTI E FEEDBACK →
                 </button>
               </div>
             </div>
@@ -260,7 +236,7 @@
   <!-- ANTIGRAVITY HUD OVERLAY (visibile solo quando attivo) -->
   <div class="physics-hud" id="physicsHud" hidden>
     <div class="physics-hud__info">
-      <span class="physics-hud__badge">PHYSICS // ACTIVE</span>
+      <span class="physics-hud__badge">PHYSICS ACTIVE</span>
       <span>DRAG &amp; THROW CARDS — CLICK TO INSPECT &amp; VOTE</span>
     </div>
     <div class="physics-hud__actions">
@@ -269,13 +245,16 @@
     </div>
   </div>
 
-  <!-- FOOTER TECNICO -->
-  <footer class="site-footer">
-    <div class="site-footer__inner">
-      <span>© 2026 RDP // RAGAZZI DI PROVINCIA — OFFICIAL SHOWCASE // DROP 04</span>
-      <span>1400×1400PX HD RESOLUTION // TWO PAGES PER GARMENT // COMMUNITY RATING 0-10</span>
+  <!-- BARRA FLUTTUANTE: AVVISO SCHEDA VOTI DA INVIARE -->
+  <div class="pending-ballot-bar" id="pendingBallotBar" hidden>
+    <div class="pending-ballot-bar__content">
+      <span class="pending-ballot-pulse" aria-hidden="true"></span>
+      <span class="pending-ballot-msg" id="pendingBallotMsg">Hai espresso <strong>1 voto</strong>. Ricordati di inviare la tua scheda all'Atelier!</span>
     </div>
-  </footer>
+    <button class="pending-ballot-bar__btn" id="pendingBallotSendBtn" type="button">
+      INVIA SCHEDA ADESSO →
+    </button>
+  </div>
 
   <!-- MODAL / LIGHTBOX ISPEZIONE & TERMINALE VOTAZIONE -->
   <div class="modal-backdrop" id="inspectionModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle" hidden>
@@ -336,6 +315,12 @@
               <button class="vote-num-btn" data-vote="8" type="button">8</button>
               <button class="vote-num-btn" data-vote="9" type="button">9</button>
               <button class="vote-num-btn" data-vote="10" type="button">10</button>
+            </div>
+
+            <!-- Avviso chiaro: il voto va inviato nella scheda Feedback -->
+            <div class="modal-vote-send-hint" id="modalVoteSendHint" hidden>
+              <span class="modal-vote-send-hint__txt">✓ Voto salvato nella scheda. Ricordati di inviarla per confermarlo!</span>
+              <button class="modal-vote-send-btn" id="modalVoteSendBtn" type="button">Invia Scheda Voti Ora →</button>
             </div>
 
             <div class="voting-terminal__meta">

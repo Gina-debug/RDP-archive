@@ -54,11 +54,10 @@ html,
 body {
   margin: 0;
   padding: 0;
-  background-color: var(--bg);
+  background-color: #0C0D0E;
   color: var(--ink);
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
-  text-transform: uppercase;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
@@ -722,22 +721,132 @@ img {
 }
 
 /* ==========================================================================
-   FOOTER
+   FOOTER (REMOVED)
    ========================================================================== */
 .site-footer {
-  border-top: 1px solid var(--divider);
-  background-color: var(--bg);
+  display: none !important;
 }
 
-.site-footer__inner {
+/* ==========================================================================
+   FLOATING PENDING BALLOT BAR (CALL TO ACTION PER INVIARE IL VOTO)
+   ========================================================================== */
+.pending-ballot-bar {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 250;
+  background-color: rgba(14, 14, 14, 0.94);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 30px;
+  padding: 8px 10px 8px 18px;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.5);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  padding: 14px 20px;
+  gap: 16px;
+  max-width: 92vw;
+  animation: slideUpBallotBar 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideUpBallotBar {
+  from { transform: translate(-50%, 20px); opacity: 0; }
+  to { transform: translate(-50%, 0); opacity: 1; }
+}
+
+.pending-ballot-bar[hidden] {
+  display: none !important;
+}
+
+.pending-ballot-bar__content {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #FFFFFF;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.pending-ballot-pulse {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #12B76A;
+  box-shadow: 0 0 0 0 rgba(18, 183, 106, 0.7);
+  animation: ballotPulse 2s infinite;
+  flex-shrink: 0;
+}
+
+@keyframes ballotPulse {
+  0% { box-shadow: 0 0 0 0 rgba(18, 183, 106, 0.7); }
+  70% { box-shadow: 0 0 0 8px rgba(18, 183, 106, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(18, 183, 106, 0); }
+}
+
+.pending-ballot-bar__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 16px;
+  background-color: #FFFFFF;
+  color: #0A0A0A;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.pending-ballot-bar__btn:hover {
+  background-color: var(--camo-sand);
+  transform: scale(1.03);
+}
+
+/* Modal Vote Send Hint */
+.modal-vote-send-hint {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 12px;
+  background-color: rgba(18, 183, 106, 0.1);
+  border: 1px solid rgba(18, 183, 106, 0.3);
+  border-radius: 8px;
   font-size: 10px;
-  color: var(--muted);
-  letter-spacing: 0.06em;
+  color: #12B76A;
+  font-weight: 700;
+  margin: 6px 0;
+}
+
+.modal-vote-send-hint[hidden] {
+  display: none !important;
+}
+
+.modal-vote-send-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  background-color: #12B76A;
+  color: #FFFFFF;
+  font-size: 10px;
+  font-weight: 800;
+  border: none;
+  border-radius: 14px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: transform 0.15s ease;
+}
+
+.modal-vote-send-btn:hover {
+  transform: scale(1.04);
 }
 
 /* ==========================================================================
@@ -1888,31 +1997,35 @@ img {
 /* ==========================================================================
    COMMUNITY FEEDBACK & VOTING BALLOT SECTION
    ========================================================================== */
+/* ==========================================================================
+   COMMUNITY FEEDBACK & VOTING BALLOT SECTION
+   ========================================================================== */
 .community-feedback-section {
   width: 100%;
-  margin-top: 48px;
-  border-top: 2px solid var(--ink);
-  background-color: #FFFFFF;
-  padding: 40px 24px 60px 24px;
+  margin-top: 32px;
+  border: none;
+  background-color: transparent;
+  padding: 0;
 }
 
 .feedback-container {
-  max-width: 1360px;
+  max-width: 1280px;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  gap: 28px;
+  gap: 24px;
 }
 
 .feedback-header {
-  border-left: 3px solid var(--ink);
-  padding-left: 16px;
+  border-left: none;
+  padding-left: 0;
+  text-align: left;
 }
 
 .feedback-header__eyebrow {
   font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.1em;
+  font-weight: 800;
+  letter-spacing: 0.08em;
   color: var(--camo-olive);
   margin-bottom: 6px;
 }
@@ -1921,16 +2034,16 @@ img {
   margin: 0 0 10px 0;
   font-size: 24px;
   font-weight: 800;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.01em;
   color: var(--ink);
 }
 
 .feedback-header__desc {
   margin: 0;
-  font-size: 12px;
+  font-size: 13px;
   line-height: 1.6;
-  color: var(--muted);
-  max-width: 900px;
+  color: #4A4A4A;
+  max-width: 860px;
 }
 
 .email-highlight {
@@ -1941,9 +2054,10 @@ img {
 
 /* Ballot Summary Card */
 .ballot-summary-card {
-  border: 1px solid var(--ink);
-  background-color: var(--surface);
-  padding: 20px;
+  border: none;
+  border-radius: 14px;
+  background-color: #F8F8F8;
+  padding: 20px 24px;
 }
 
 .ballot-summary-card__header {
@@ -1953,7 +2067,7 @@ img {
   justify-content: space-between;
   gap: 12px;
   padding-bottom: 14px;
-  border-bottom: 1px solid var(--divider);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
   margin-bottom: 16px;
 }
 
@@ -1962,17 +2076,19 @@ img {
   align-items: center;
   gap: 12px;
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 800;
+  color: var(--ink);
 }
 
 .ballot-counter-badge {
   display: inline-block;
-  padding: 3px 8px;
+  padding: 4px 10px;
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 800;
   background-color: var(--ink);
   color: #FFFFFF;
-  letter-spacing: 0.05em;
+  border-radius: 16px;
+  letter-spacing: 0.04em;
 }
 
 .ballot-summary-card__voter {
@@ -1987,57 +2103,97 @@ img {
   font-size: 11px;
   font-weight: 700;
   color: var(--camo-olive);
+  background: transparent;
+  border: none;
   text-decoration: underline;
   cursor: pointer;
+  padding: 0;
 }
 
 .ballot-chips-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 8px;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 10px;
 }
 
 .ballot-chip {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 12px;
   padding: 8px 12px;
-  font-size: 11px;
-  border: 1px solid var(--divider);
+  border-radius: 10px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
   background-color: #FFFFFF;
   cursor: pointer;
-  transition: all 0.14s ease;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  box-sizing: border-box;
 }
 
 .ballot-chip:hover {
   border-color: var(--ink);
-  transform: translateY(-1px);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1);
 }
 
 .ballot-chip.is-voted {
-  border-color: var(--ink);
+  border-color: rgba(18, 183, 106, 0.4);
   background-color: #FFFFFF;
 }
 
-.ballot-chip__code {
+.ballot-chip__thumb {
+  width: 38px;
+  height: 38px;
+  object-fit: contain;
+  background-color: #F4F4F4;
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+
+.ballot-chip__info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
+.ballot-chip__title {
+  font-size: 11px;
   font-weight: 700;
   color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ballot-chip__code {
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--muted);
 }
 
 .ballot-chip__score {
-  font-weight: 700;
-  color: #B42318;
+  font-size: 10px;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 12px;
+  background-color: rgba(0, 0, 0, 0.05);
+  color: var(--muted);
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .ballot-chip__score.has-score {
-  color: #12B76A;
+  background-color: #12B76A;
+  color: #FFFFFF;
 }
 
 /* Feedback Form Box */
 .feedback-form-box {
-  border: 1px solid var(--ink);
+  border: none;
+  border-radius: 14px;
   padding: 24px;
-  background-color: #FFFFFF;
+  background-color: #F8F8F8;
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -2050,29 +2206,31 @@ img {
 }
 
 .feedback-field-group label {
-  font-size: 12px;
-  font-weight: 700;
+  font-size: 11px;
+  font-weight: 800;
   letter-spacing: 0.05em;
   color: var(--ink);
 }
 
 .feedback-field-group textarea {
   width: 100%;
-  padding: 12px;
-  font-family: var(--font-mono);
-  font-size: 12px;
-  line-height: 1.6;
-  text-transform: uppercase;
+  padding: 14px;
+  font-family: inherit;
+  font-size: 13px;
+  line-height: 1.5;
+  text-transform: none;
   color: var(--ink);
-  background-color: var(--surface);
-  border: 1px solid var(--ink);
+  background-color: #FFFFFF;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 10px;
   outline: none;
   resize: vertical;
+  box-sizing: border-box;
+  transition: border-color 0.2s ease;
 }
 
 .feedback-field-group textarea:focus {
-  border-color: var(--camo-olive);
-  background-color: #FFFFFF;
+  border-color: var(--ink);
 }
 
 .feedback-submit-row {
@@ -2082,7 +2240,7 @@ img {
   justify-content: space-between;
   gap: 16px;
   padding-top: 12px;
-  border-top: 1px solid var(--divider);
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
 }
 
 .feedback-dest-info {
@@ -2108,26 +2266,30 @@ img {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  height: 44px;
-  padding: 0 24px;
+  height: 42px;
+  padding: 0 26px;
   font-size: 12px;
   font-weight: 800;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.05em;
   background-color: var(--ink);
   color: #FFFFFF;
-  border: 1px solid var(--ink);
+  border: none;
+  border-radius: 22px;
   cursor: pointer;
-  transition: all 0.16s ease;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
 }
 
 .feedback-submit-btn:hover {
   background-color: var(--camo-olive);
-  border-color: var(--camo-olive);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
 }
 
 .feedback-submit-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+  transform: none;
 }
 
 .fallback-mailto-link {
