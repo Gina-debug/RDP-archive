@@ -2,7 +2,7 @@
 // RDP // RAGAZZI DI PROVINCIA — MAIN APPLICATION CONTROLLER
 // Showcase & 0-10 Community Voting System for 100% User Garments
 // With Restricted Creator Account Authentication for Mockup Ingestion
-// Two pages per garment: Pagina 01 (Davanti) & Pagina 02 (Retro)
+// Dynamic multi-image per garment & Showcase Cover Photo
 // 1400×1400px HD Resolution // Woodland Camo Brutalist Aesthetic
 // ==========================================================================
 
@@ -199,6 +199,16 @@
   const uploadAddExtraBtn = document.getElementById("uploadAddExtraBtn");
   const uploadExtraFileInput = document.getElementById("uploadExtraFileInput");
   let draftExtraResults = [];
+
+  // Unified Multi-photo Upload Elements & State
+  const uploadPhotosList = document.getElementById("uploadPhotosList");
+  const uploadDropzoneUnified = document.getElementById("uploadDropzoneUnified");
+  const uploadUnifiedFileInput = document.getElementById("uploadUnifiedFileInput");
+  const uploadDropzoneTag = document.getElementById("uploadDropzoneTag");
+  const uploadUnifiedFileName = document.getElementById("uploadUnifiedFileName");
+  let uploadDraftResults = [];
+  let uploadDraftShowcaseIndex = 0;
+
   const optBgClean = document.getElementById("optBgClean");
   const optEnhance = document.getElementById("optEnhance");
   const processorPlaceholder = document.getElementById("processorPlaceholder");
@@ -243,16 +253,17 @@
   const editErrorMsg = document.getElementById("editErrorMsg");
   const editGarmentSubmitBtn = document.getElementById("editGarmentSubmitBtn");
 
-  // Edit Garment State (Supporta più di 2 foto per capo)
+  // Edit Garment State (Supporta più di 2 foto per capo e foto vetrina)
   let editingGarmentId = null;
   let editDraftImages = [];
+  let editDraftShowcaseIndex = 0;
   let replacingPhotoIndex = null;
   let isProcessingEditImage = false;
 
   const archiveToast = document.getElementById("archiveToast");
 
   // ========================================================================
-  // IMAGE HELPERS (MULTI-IMAGE SUPPORT // > 2 FOTO PER CAPO)
+  // IMAGE HELPERS (MULTI-IMAGE SUPPORT & FOTO VETRINA)
   // ========================================================================
   function getItemImages(item) {
     if (!item) return [];
@@ -272,6 +283,20 @@
       return list;
     }
     return [];
+  }
+
+  // Restituisce la Foto Vetrina del capo (impostata dal creator) o la prima foto
+  function getShowcaseImage(item) {
+    if (!item) return "";
+    const imgs = getItemImages(item);
+    if (imgs.length === 0) return "";
+    const idx =
+      typeof item.showcaseImageIndex === "number" &&
+      item.showcaseImageIndex >= 0 &&
+      item.showcaseImageIndex < imgs.length
+        ? item.showcaseImageIndex
+        : 0;
+    return imgs[idx] || imgs[0] || "";
   }
 
   // ========================================================================
@@ -636,10 +661,10 @@
     const targets = [];
     if (globalPageMode === "split_dual") {
       items.forEach((item) => {
-        targets.push({ item, page: "front", label: "P.01 // DAVANTI" });
+        targets.push({ item, page: "front", label: "FOTO 01" });
         const imgs = getItemImages(item);
         if (imgs.length > 1) {
-          targets.push({ item, page: "back", label: "P.02 // RETRO" });
+          targets.push({ item, page: "back", label: "FOTO 02" });
         }
       });
     } else {
@@ -726,7 +751,7 @@
     );
 
     const cardImgs = getItemImages(item);
-    const imgSrc = cardImgs[0] || "";
+    const imgSrc = getShowcaseImage(item);
     const stats = RDPRatings.getItemStats(item);
     const userVote = stats.userVote;
 
@@ -772,18 +797,22 @@
       </div>
     `;
 
-    // Hover desktop da computer: mostra il retro se il capo lo possiede con transizione fluida
+    // Hover desktop: mostra la 1ª foto caricata (o foto successiva se già vetrina)
     card.addEventListener("mouseenter", () => {
       const currentItem = allItems.find((i) => i.id === card.dataset.itemId);
+      if (!currentItem) return;
       const imgs = getItemImages(currentItem);
       if (imgs.length > 1) {
+        const currentShowcase = getShowcaseImage(currentItem);
+        // Mostra la 1ª foto caricata dall'utente su quel capo (imgs[0])
+        const hoverTargetSrc = (currentShowcase !== imgs[0]) ? imgs[0] : (imgs[1] || imgs[0]);
         const img = card.querySelector(".archive-card__img");
-        if (img && img.dataset.side !== "back") {
-          img.dataset.side = "back";
+        if (img && img.dataset.state !== "hover") {
+          img.dataset.state = "hover";
           img.style.opacity = "0.35";
           img.style.transform = "scale(0.98)";
           setTimeout(() => {
-            img.src = imgs[1];
+            img.src = hoverTargetSrc;
             img.style.opacity = "1";
             img.style.transform = "scale(1.05)";
           }, 70);
@@ -793,19 +822,18 @@
 
     card.addEventListener("mouseleave", () => {
       const currentItem = allItems.find((i) => i.id === card.dataset.itemId);
-      const imgs = getItemImages(currentItem);
-      if (imgs.length > 0) {
-        const img = card.querySelector(".archive-card__img");
-        if (img && img.dataset.side !== "front") {
-          img.dataset.side = "front";
-          img.style.opacity = "0.35";
-          img.style.transform = "scale(0.98)";
-          setTimeout(() => {
-            img.src = imgs[0];
-            img.style.opacity = "1";
-            img.style.transform = "scale(1)";
-          }, 70);
-        }
+      if (!currentItem) return;
+      const currentShowcase = getShowcaseImage(currentItem);
+      const img = card.querySelector(".archive-card__img");
+      if (img && img.dataset.state === "hover") {
+        img.dataset.state = "default";
+        img.style.opacity = "0.35";
+        img.style.transform = "scale(0.98)";
+        setTimeout(() => {
+          img.src = currentShowcase;
+          img.style.opacity = "1";
+          img.style.transform = "scale(1)";
+        }, 70);
       }
     });
 
@@ -880,12 +908,12 @@
       editBtn.remove();
     }
 
-    // Immagine: solo se non attualmente in hover mouse
+    // Immagine: mostra la foto vetrina del capo se non in hover
     const imgEl = card.querySelector(".archive-card__img");
-    const frontSrc = getItemImages(item)[0] || "";
+    const showcaseSrc = getShowcaseImage(item);
     if (imgEl && !card.matches(":hover")) {
-      if (imgEl.getAttribute("src") !== frontSrc) {
-        imgEl.src = frontSrc;
+      if (imgEl.getAttribute("src") !== showcaseSrc) {
+        imgEl.src = showcaseSrc;
       }
       imgEl.alt = item.title;
     }
@@ -1038,48 +1066,20 @@
     const totalPhotos = Math.max(1, imgs.length);
 
     if (modalPageIndicator) {
-      if (totalPhotos <= 1) {
-        modalPageIndicator.textContent = "PAGINA 01 DI 01 [DAVANTI]";
-      } else if (totalPhotos === 2) {
-        modalPageIndicator.textContent = activeModalImageIndex === 0
-          ? "PAGINA 01 DI 02 [DAVANTI]"
-          : "PAGINA 02 DI 02 [RETRO]";
-      } else {
-        const sideTag = activeModalImageIndex === 0
-          ? "DAVANTI"
-          : (activeModalImageIndex === 1 ? "RETRO" : `DETTAGLIO ${activeModalImageIndex - 1}`);
-        modalPageIndicator.textContent = `PAGINA ${pad2(activeModalImageIndex + 1)} DI ${pad2(totalPhotos)} [${sideTag}]`;
-      }
+      modalPageIndicator.textContent = `FOTO ${pad2(activeModalImageIndex + 1)} DI ${pad2(totalPhotos)}`;
     }
 
     if (pageNotesTag) {
-      if (activeModalImageIndex === 0) {
-        pageNotesTag.textContent = "PAGINA 01 NOTE (DAVANTI):";
-      } else if (activeModalImageIndex === 1) {
-        pageNotesTag.textContent = "PAGINA 02 NOTE (RETRO):";
-      } else {
-        pageNotesTag.textContent = `PAGINA ${pad2(activeModalImageIndex + 1)} NOTE (DETTAGLIO):`;
-      }
+      pageNotesTag.textContent = `NOTE FOTO ${pad2(activeModalImageIndex + 1)}:`;
     }
 
     if (pageNotesBody) {
-      if (activeModalImageIndex === 0) {
-        pageNotesBody.textContent = item.frontNotes || item.notes || "VISTA FRONTALE STANDARDIZZATA AD ALTA DEFINIZIONE (1400×1400PX // ~94% FILL).";
-      } else if (activeModalImageIndex === 1) {
-        pageNotesBody.textContent = item.backNotes || "VISTA DORSALE STANDARDIZZATA AD ALTA DEFINIZIONE (1400×1400PX // ~94% FILL).";
-      } else {
-        pageNotesBody.textContent = `VISTA DETTAGLIO SPECIFICO FOTO ${activeModalImageIndex + 1} (1400×1400PX // CANVAS STUDIO).`;
-      }
+      pageNotesBody.textContent = (activeModalImageIndex === 0 ? (item.frontNotes || item.notes) : (item.backNotes || item.notes)) ||
+        `FOTO ${pad2(activeModalImageIndex + 1)} STANDARDIZZATA AD ALTA DEFINIZIONE (1400×1400PX // CANVAS STUDIO).`;
     }
 
     if (specNotesHeader) {
-      if (activeModalImageIndex === 0) {
-        specNotesHeader.textContent = "NOTE VISTA DAVANTI // ATELIER_LOG";
-      } else if (activeModalImageIndex === 1) {
-        specNotesHeader.textContent = "NOTE VISTA RETRO // ATELIER_LOG";
-      } else {
-        specNotesHeader.textContent = `NOTE VISTA FOTO ${activeModalImageIndex + 1} // ATELIER_LOG`;
-      }
+      specNotesHeader.textContent = `NOTE FOTO ${pad2(activeModalImageIndex + 1)} // ATELIER_LOG`;
     }
 
     if (specNotes) {
@@ -1165,9 +1165,7 @@
         }, 360);
       }
       modalImage.src = src;
-      const imgLabel = activeModalImageIndex === 0
-        ? "Pagina 01 Davanti"
-        : (activeModalImageIndex === 1 ? "Pagina 02 Retro" : `Pagina ${activeModalImageIndex + 1} Dettaglio`);
+      const imgLabel = `Foto ${pad2(activeModalImageIndex + 1)}`;
       modalImage.alt = `${item.title} — ${imgLabel}`;
     }
 
@@ -1181,47 +1179,22 @@
     if (stageFlipBtn) {
       stageFlipBtn.style.display = hasMultiple ? "inline-flex" : "none";
       if (stageFlipLabel) {
-        if (imgs.length === 2) {
-          stageFlipLabel.textContent = activeModalImageIndex === 0 ? "VEDI RETRO" : "VEDI DAVANTI";
-        } else {
-          stageFlipLabel.textContent = `FOTO ${activeModalImageIndex + 1}/${imgs.length} ⟲`;
-        }
+        stageFlipLabel.textContent = `FOTO ${activeModalImageIndex + 1}/${imgs.length} ⟲`;
       }
     }
 
-    // Modal View Switcher Tabs
+    // Modal View Switcher Tabs (Dinamico per qualsiasi numero di foto)
     if (modalViewSwitcher) {
       if (imgs.length <= 1) {
         modalViewSwitcher.style.display = "none";
         modalViewSwitcher.innerHTML = "";
-      } else if (imgs.length === 2) {
-        modalViewSwitcher.style.display = "inline-flex";
-        modalViewSwitcher.innerHTML = `
-          <button class="modal-view-tab ${activeModalImageIndex === 0 ? "is-active" : ""}" data-tab-idx="0" type="button" aria-pressed="${activeModalImageIndex === 0 ? "true" : "false"}">
-            DAVANTI
-          </button>
-          <button class="modal-view-tab ${activeModalImageIndex === 1 ? "is-active" : ""}" data-tab-idx="1" type="button" aria-pressed="${activeModalImageIndex === 1 ? "true" : "false"}">
-            RETRO ⟲
-          </button>
-        `;
-        modalViewSwitcher.querySelectorAll(".modal-view-tab").forEach((btn) => {
-          btn.addEventListener("click", () => {
-            setActiveModalImage(Number(btn.dataset.tabIdx));
-          });
-        });
       } else {
-        // Più di 2 foto
         modalViewSwitcher.style.display = "inline-flex";
-        modalViewSwitcher.innerHTML = imgs.map((_, idx) => {
-          let label = `0${idx + 1} DETT`;
-          if (idx === 0) label = "01 DAVANTI";
-          else if (idx === 1) label = "02 RETRO";
-          return `
-            <button class="modal-view-tab ${idx === activeModalImageIndex ? "is-active" : ""}" data-tab-idx="${idx}" type="button" aria-pressed="${idx === activeModalImageIndex ? "true" : "false"}">
-              ${label}
-            </button>
-          `;
-        }).join("");
+        modalViewSwitcher.innerHTML = imgs.map((_, idx) => `
+          <button class="modal-view-tab ${idx === activeModalImageIndex ? "is-active" : ""}" data-tab-idx="${idx}" type="button" aria-pressed="${idx === activeModalImageIndex ? "true" : "false"}">
+            FOTO ${pad2(idx + 1)}
+          </button>
+        `).join("");
         modalViewSwitcher.querySelectorAll(".modal-view-tab").forEach((btn) => {
           btn.addEventListener("click", () => {
             setActiveModalImage(Number(btn.dataset.tabIdx));
@@ -1259,14 +1232,7 @@
     }
 
     if (modalViewLabel) {
-      if (imgs.length <= 1) {
-        modalViewLabel.textContent = "PAGINA 01 DI 01: VISTA DAVANTI (FRONT)";
-      } else {
-        const sideDesc = activeModalImageIndex === 0
-          ? "VISTA DAVANTI (FRONT)"
-          : (activeModalImageIndex === 1 ? "VISTA RETRO (BACK)" : `DETTAGLIO ${activeModalImageIndex - 1}`);
-        modalViewLabel.textContent = `PAGINA ${pad2(activeModalImageIndex + 1)} DI ${pad2(imgs.length)}: ${sideDesc}`;
-      }
+      modalViewLabel.textContent = `FOTO ${pad2(activeModalImageIndex + 1)} DI ${pad2(imgs.length)}`;
     }
 
     if (modalAssetPath) {
@@ -1407,48 +1373,22 @@
     document.body.style.overflow = "hidden";
 
     if (preloadedFiles && preloadedFiles.length > 0) {
-      handleDroppedFiles(preloadedFiles);
+      handleAddUploadFiles(preloadedFiles);
     }
   }
 
   function closeUploadModal() {
     uploadModal.hidden = true;
     document.body.style.overflow = "";
+    uploadDraftResults = [];
+    uploadDraftShowcaseIndex = 0;
   }
 
   function resetUploadForm() {
     if (uploadForm) uploadForm.reset();
-    draftFrontFile = null;
-    draftBackFile = null;
-    draftFrontResult = null;
-    draftBackResult = null;
-    draftExtraResults = [];
-    renderUploadExtraThumbs();
-    if (frontFileName) frontFileName.textContent = "TOCCA PER SELEZIONARE O SCATTARE FOTO";
-    if (backFileName) backFileName.textContent = "TOCCA PER SELEZIONARE O SCATTARE FOTO";
-    if (frontDropzone) frontDropzone.classList.remove("has-file");
-    if (backDropzone) backDropzone.classList.remove("has-file");
-
-    if (processedPreviewImg) {
-      processedPreviewImg.hidden = true;
-      processedPreviewImg.src = "";
-    }
-    if (processorCanvasWrapper) {
-      processorCanvasWrapper.hidden = true;
-    }
-    if (processorPlaceholder) {
-      processorPlaceholder.hidden = false;
-    }
-
-    if (processorTelemetry) {
-      processorTelemetry.innerHTML = `
-        <span>ORIG: --</span>
-        <span>CROP: --</span>
-        <span>OUT: 1400×1400 (6% PAD)</span>
-        <span>BG: --</span>
-        <span>TIME: --</span>
-      `;
-    }
+    uploadDraftResults = [];
+    uploadDraftShowcaseIndex = 0;
+    renderUploadPhotosManager();
     if (uploadErrorMsg) uploadErrorMsg.hidden = true;
     if (uploadSubmitBtn) uploadSubmitBtn.disabled = true;
   }
@@ -1459,28 +1399,149 @@
     return /\.(png|jpe?g|webp|heic|heif|avif|bmp)$/i.test(file.name || "");
   }
 
-  function renderUploadExtraThumbs() {
-    if (!uploadExtraThumbs) return;
-    uploadExtraThumbs.innerHTML = draftExtraResults.map((item, idx) => `
-      <div class="upload-extra-thumb-item" title="${escapeAttr(item.fileName || `Foto ${idx + 3}`)}">
-        <img src="${escapeAttr(item.processedDataUrl)}" alt="Extra ${idx + 1}" />
-        <button type="button" class="upload-extra-thumb-del" data-del-idx="${idx}" title="Rimuovi foto">✕</button>
-      </div>
-    `).join("");
+  // Multi-Photo Upload Manager: Gestione foto illimitate e selezione Foto Vetrina
+  function renderUploadPhotosManager() {
+    if (!uploadPhotosList) return;
 
-    uploadExtraThumbs.querySelectorAll(".upload-extra-thumb-del").forEach((btn) => {
+    if (uploadDraftResults.length === 0) {
+      uploadPhotosList.innerHTML = "";
+      if (uploadUnifiedFileName) {
+        uploadUnifiedFileName.textContent = "TOCCA O TRASCINA PER AGGIUNGERE FOTO";
+      }
+      if (uploadDropzoneUnified) {
+        uploadDropzoneUnified.classList.remove("has-file");
+      }
+      if (processedPreviewImg) {
+        processedPreviewImg.hidden = true;
+        processedPreviewImg.src = "";
+      }
+      if (processorCanvasWrapper) {
+        processorCanvasWrapper.hidden = true;
+      }
+      if (processorPlaceholder) {
+        processorPlaceholder.hidden = false;
+      }
+      if (uploadSubmitBtn) {
+        uploadSubmitBtn.disabled = true;
+      }
+      return;
+    }
+
+    if (uploadDraftShowcaseIndex >= uploadDraftResults.length) {
+      uploadDraftShowcaseIndex = Math.max(0, uploadDraftResults.length - 1);
+    }
+
+    uploadPhotosList.innerHTML = uploadDraftResults.map((item, idx) => {
+      const isShowcase = idx === uploadDraftShowcaseIndex;
+      const tag = `FOTO ${pad2(idx + 1)}`;
+      const hint = isShowcase ? "★ FOTO VETRINA (MOSTRATA IN CATALOGO)" : "Foto capo";
+
+      return `
+        <div class="upload-photo-item" data-idx="${idx}">
+          <div class="upload-photo-thumb-wrap">
+            <img src="${escapeAttr(item.processedDataUrl)}" alt="Foto ${idx + 1}" class="upload-photo-thumb-img" />
+            <span class="upload-photo-badge">${pad2(idx + 1)}</span>
+          </div>
+          <div class="upload-photo-details">
+            <span class="upload-photo-label">${tag}</span>
+            <span class="upload-photo-hint">${hint}</span>
+          </div>
+          <div class="upload-photo-btns">
+            <button type="button" class="btn-set-showcase ${isShowcase ? "is-showcase" : ""}" data-upload-action="showcase" data-idx="${idx}" title="Imposta come foto vetrina">
+              ★ ${isShowcase ? "VETRINA ATTIVA" : "FOTO VETRINA"}
+            </button>
+            ${idx > 0 ? `<button type="button" class="btn-edit-action btn-edit-action--move" data-upload-action="up" data-idx="${idx}" title="Sposta prima">▲</button>` : ""}
+            ${idx < uploadDraftResults.length - 1 ? `<button type="button" class="btn-edit-action btn-edit-action--move" data-upload-action="down" data-idx="${idx}" title="Sposta dopo">▼</button>` : ""}
+            ${uploadDraftResults.length > 1 ? `<button type="button" class="btn-edit-action btn-edit-action--delete" data-upload-action="delete" data-idx="${idx}" title="Elimina foto">✕</button>` : ""}
+          </div>
+        </div>
+      `;
+    }).join("");
+
+    uploadPhotosList.querySelectorAll("[data-upload-action]").forEach((btn) => {
       btn.addEventListener("click", (e) => {
         e.stopPropagation();
-        const delIdx = Number(btn.dataset.delIdx);
-        draftExtraResults.splice(delIdx, 1);
-        renderUploadExtraThumbs();
+        const action = btn.dataset.uploadAction;
+        const idx = Number(btn.dataset.idx);
+
+        if (action === "showcase") {
+          uploadDraftShowcaseIndex = idx;
+          renderUploadPhotosManager();
+        } else if (action === "delete") {
+          uploadDraftResults.splice(idx, 1);
+          if (uploadDraftShowcaseIndex === idx) {
+            uploadDraftShowcaseIndex = 0;
+          } else if (uploadDraftShowcaseIndex > idx) {
+            uploadDraftShowcaseIndex--;
+          }
+          renderUploadPhotosManager();
+        } else if (action === "up" && idx > 0) {
+          const tmp = uploadDraftResults[idx];
+          uploadDraftResults[idx] = uploadDraftResults[idx - 1];
+          uploadDraftResults[idx - 1] = tmp;
+          if (uploadDraftShowcaseIndex === idx) {
+            uploadDraftShowcaseIndex = idx - 1;
+          } else if (uploadDraftShowcaseIndex === idx - 1) {
+            uploadDraftShowcaseIndex = idx;
+          }
+          renderUploadPhotosManager();
+        } else if (action === "down" && idx < uploadDraftResults.length - 1) {
+          const tmp = uploadDraftResults[idx];
+          uploadDraftResults[idx] = uploadDraftResults[idx + 1];
+          uploadDraftResults[idx + 1] = tmp;
+          if (uploadDraftShowcaseIndex === idx) {
+            uploadDraftShowcaseIndex = idx + 1;
+          } else if (uploadDraftShowcaseIndex === idx + 1) {
+            uploadDraftShowcaseIndex = idx;
+          }
+          renderUploadPhotosManager();
+        }
       });
     });
+
+    const activeShowcase = uploadDraftResults[uploadDraftShowcaseIndex] || uploadDraftResults[0];
+    if (processedPreviewImg && activeShowcase) {
+      processedPreviewImg.src = activeShowcase.processedDataUrl;
+      processedPreviewImg.hidden = false;
+    }
+    if (processorCanvasWrapper) {
+      processorCanvasWrapper.hidden = false;
+    }
+    if (processorPlaceholder) {
+      processorPlaceholder.hidden = true;
+    }
+    if (uploadUnifiedFileName) {
+      uploadUnifiedFileName.textContent = `+ AGGIUNGI ALTRE FOTO (${uploadDraftResults.length} ATTIVE)`;
+    }
+    if (uploadDropzoneUnified) {
+      uploadDropzoneUnified.classList.add("has-file");
+    }
+    if (uploadSubmitBtn) {
+      uploadSubmitBtn.disabled = false;
+    }
+
+    if (processorTelemetry && activeShowcase && activeShowcase.telemetry) {
+      const t = activeShowcase.telemetry;
+      processorTelemetry.innerHTML = `
+        <span>ORIG: ${t.originalSize}</span>
+        <span>CROP: ${t.cropBox}</span>
+        <span>OUT: ${t.outputSize} (${t.padding} PAD)</span>
+        <span>BG: ${t.bgMode} (${t.bgNormalizedPct})</span>
+        <span>TIME: ${t.processingMs}</span>
+      `;
+    }
   }
 
-  async function addExtraUploadFiles(fileList) {
+  async function handleAddUploadFiles(fileList) {
     const valid = Array.from(fileList).filter(isValidImageFile);
-    if (valid.length === 0) return;
+    if (valid.length === 0) {
+      showUploadError("FORMATO NON SUPPORTATO. USA IMMAGINI PNG, JPG O WEBP.");
+      return;
+    }
+
+    if (uploadErrorMsg) uploadErrorMsg.hidden = true;
+    isProcessingImage = true;
+    if (uploadSubmitBtn) uploadSubmitBtn.disabled = true;
 
     const options = {
       bgNormalize: optBgClean ? optBgClean.checked : true,
@@ -1490,45 +1551,24 @@
       paddingPct: 0.06
     };
 
+    let firstFile = null;
     for (const f of valid) {
+      if (!firstFile) firstFile = f;
       try {
         const res = await RDPImageProcessor.processGarmentFile(f, options);
-        draftExtraResults.push({ processedDataUrl: res.processedDataUrl, fileName: f.name });
-      } catch (e) {
-        console.warn("Errore elaborazione extra file:", e);
+        uploadDraftResults.push({
+          file: f,
+          processedDataUrl: res.processedDataUrl,
+          fileName: f.name,
+          telemetry: res.telemetry
+        });
+      } catch (err) {
+        console.warn("Errore elaborazione foto upload:", err);
       }
     }
-    renderUploadExtraThumbs();
-  }
 
-  async function handleDroppedFiles(fileList) {
-    const validImages = Array.from(fileList).filter(isValidImageFile);
-    if (validImages.length === 0) {
-      showUploadError("FORMATO NON SUPPORTATO. USA IMMAGINI PNG, JPG O WEBP.");
-      return;
-    }
-
-    await setFrontFile(validImages[0]);
-    if (validImages[1]) {
-      await setBackFile(validImages[1]);
-    }
-    if (validImages.length > 2) {
-      await addExtraUploadFiles(validImages.slice(2));
-    }
-  }
-
-  async function setFrontFile(file) {
-    if (!isValidImageFile(file)) {
-      showUploadError("IMMAGINE FRONT NON VALIDA. USA PNG, JPG O WEBP.");
-      return;
-    }
-
-    draftFrontFile = file;
-    frontFileName.textContent = file.name.toUpperCase();
-    frontDropzone.classList.add("has-file");
-
-    if (!inputTitle.value.trim()) {
-      const cleanName = file.name
+    if (inputTitle && !inputTitle.value.trim() && firstFile) {
+      const cleanName = firstFile.name
         .replace(/\.[^/.]+$/, "")
         .replace(/[_-]+/g, " ")
         .trim()
@@ -1536,74 +1576,26 @@
       inputTitle.value = cleanName;
     }
 
-    await runCanvasProcessing();
+    isProcessingImage = false;
+    renderUploadPhotosManager();
   }
 
-  async function setBackFile(file) {
-    if (!isValidImageFile(file)) {
-      showUploadError("IMMAGINE BACK NON VALIDA. USA PNG, JPG O WEBP.");
-      return;
-    }
-    draftBackFile = file;
-    backFileName.textContent = file.name.toUpperCase();
-    backDropzone.classList.add("has-file");
-    await runCanvasProcessing();
+  // Compatibility stubs for any legacy event
+  function handleDroppedFiles(fileList) {
+    handleAddUploadFiles(fileList);
   }
-
-  async function runCanvasProcessing() {
-    if (!draftFrontFile) return;
-
-    isProcessingImage = true;
-    if (uploadSubmitBtn) uploadSubmitBtn.disabled = true;
-    if (uploadErrorMsg) uploadErrorMsg.hidden = true;
-
-    const options = {
-      bgNormalize: optBgClean ? optBgClean.checked : true,
-      studioEnhance: optEnhance ? optEnhance.checked : true,
-      transparentBg: false,
-      bgTolerance: 28,
-      paddingPct: 0.06 // 6% padding for ~94% fill
-    };
-
-    try {
-      draftFrontResult = await RDPImageProcessor.processGarmentFile(draftFrontFile, options);
-
-      if (processedPreviewImg) {
-        processedPreviewImg.src = draftFrontResult.processedDataUrl;
-        processedPreviewImg.hidden = false;
-      }
-      if (processorCanvasWrapper) {
-        processorCanvasWrapper.hidden = false;
-      }
-      if (processorPlaceholder) {
-        processorPlaceholder.hidden = true;
-      }
-
-      if (draftBackFile) {
-        draftBackResult = await RDPImageProcessor.processGarmentFile(draftBackFile, options);
-      } else {
-        draftBackResult = null;
-      }
-
-      const t = draftFrontResult.telemetry;
-      if (processorTelemetry) {
-        processorTelemetry.innerHTML = `
-          <span>ORIG: ${t.originalSize}</span>
-          <span>CROP: ${t.cropBox}</span>
-          <span>OUT: ${t.outputSize} (${t.padding} PAD)</span>
-          <span>BG: ${t.bgMode} (${t.bgNormalizedPct})</span>
-          <span>TIME: ${t.processingMs}</span>
-        `;
-      }
-      if (uploadSubmitBtn) uploadSubmitBtn.disabled = false;
-    } catch (err) {
-      showUploadError(err.message || "ERRORE DURANTE OTTIMIZZAZIONE CANVAS.");
-    } finally {
-      isProcessingImage = false;
-    }
+  function setFrontFile(file) {
+    if (file) handleAddUploadFiles([file]);
+  }
+  function setBackFile(file) {
+    if (file) handleAddUploadFiles([file]);
+  }
+  function addExtraUploadFiles(fileList) {
+    handleAddUploadFiles(fileList);
   }
 
   function showUploadError(msg) {
+    if (!uploadErrorMsg) return;
     uploadErrorMsg.textContent = msg;
     uploadErrorMsg.hidden = false;
   }
@@ -1615,8 +1607,14 @@
       return;
     }
 
-    if (isProcessingImage || !draftFrontResult) {
-      showUploadError("ATTENDI L'ELABORAZIONE O CARICA UN'IMMAGINE VALIDA.");
+    if (isProcessingImage) {
+      showUploadError("ATTENDI L'ELABORAZIONE DELLE IMMAGINI...");
+      return;
+    }
+
+    const allUploaded = uploadDraftResults.map((r) => r.processedDataUrl);
+    if (allUploaded.length === 0) {
+      showUploadError("CARICA ALMENO UNA FOTO DEL CAPO.");
       return;
     }
 
@@ -1636,12 +1634,6 @@
       inputNotes.value.trim().toUpperCase() ||
       "MOCKUP CARICATO DAL CREATORE E STANDARDIZZATO AD ALTA RISOLUZIONE (1400×1400PX // CANVAS ENGINE).";
 
-    const allUploaded = [
-      draftFrontResult.processedDataUrl,
-      draftBackResult ? draftBackResult.processedDataUrl : null,
-      ...draftExtraResults.map((r) => r.processedDataUrl)
-    ].filter(Boolean);
-
     const newItem = {
       id: `rdp-creator-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
       code: formatArchiveCode(allItems.length + 1),
@@ -1659,11 +1651,10 @@
       initialRating: 10.0,
       initialVotes: 1,
       isCreatorUpload: true,
-      frontNotes: `VISTA FRONTALE (PAGINA 01): ${notes}`,
-      backNotes: allUploaded[1]
-        ? `VISTA DORSALE (PAGINA 02): DETTAGLI POSTERIORI E COSTRUZIONE TESSUTO.`
-        : null,
+      frontNotes: notes,
+      backNotes: null,
       notes,
+      showcaseImageIndex: uploadDraftShowcaseIndex,
       createdAt: Date.now(),
       images: {
         front: allUploaded[0] || "",
@@ -1708,16 +1699,14 @@
       return;
     }
 
+    if (editDraftShowcaseIndex >= editDraftImages.length) {
+      editDraftShowcaseIndex = Math.max(0, editDraftImages.length - 1);
+    }
+
     editPhotosList.innerHTML = editDraftImages.map((src, idx) => {
-      let tag = `PAGINA ${pad2(idx + 1)} [DETTAGLIO]`;
-      let hint = "Foto aggiuntiva scheda tecnica";
-      if (idx === 0) {
-        tag = "PAGINA 01 [DAVANTI] *";
-        hint = "Foto principale copertina";
-      } else if (idx === 1) {
-        tag = "PAGINA 02 [RETRO]";
-        hint = "Vista posteriore capo";
-      }
+      const isShowcase = idx === editDraftShowcaseIndex;
+      const tag = `FOTO ${pad2(idx + 1)}`;
+      const hint = isShowcase ? "★ FOTO VETRINA (MOSTRATA IN CATALOGO)" : "Foto capo";
 
       return `
         <div class="edit-photo-item" data-idx="${idx}">
@@ -1730,6 +1719,9 @@
             <span class="edit-photo-hint">${hint}</span>
           </div>
           <div class="edit-photo-btns">
+            <button type="button" class="btn-set-showcase ${isShowcase ? "is-showcase" : ""}" data-action="showcase" data-idx="${idx}" title="Imposta come foto vetrina">
+              ★ ${isShowcase ? "VETRINA ATTIVA" : "FOTO VETRINA"}
+            </button>
             ${idx > 0 ? `<button type="button" class="btn-edit-action btn-edit-action--move" data-action="up" data-idx="${idx}" title="Sposta prima">▲</button>` : ""}
             ${idx < editDraftImages.length - 1 ? `<button type="button" class="btn-edit-action btn-edit-action--move" data-action="down" data-idx="${idx}" title="Sposta dopo">▼</button>` : ""}
             <button type="button" class="btn-edit-action btn-edit-action--replace" data-action="replace" data-idx="${idx}">✎ CAMBIA</button>
@@ -1739,13 +1731,16 @@
       `;
     }).join("");
 
-    editPhotosList.querySelectorAll(".btn-edit-action").forEach((btn) => {
+    editPhotosList.querySelectorAll("[data-action]").forEach((btn) => {
       btn.addEventListener("click", (e) => {
         e.stopPropagation();
         const action = btn.dataset.action;
         const idx = Number(btn.dataset.idx);
 
-        if (action === "replace") {
+        if (action === "showcase") {
+          editDraftShowcaseIndex = idx;
+          renderEditImagesManager();
+        } else if (action === "replace") {
           replacingPhotoIndex = idx;
           if (editReplacePhotoFileInput) {
             editReplacePhotoFileInput.value = "";
@@ -1753,23 +1748,39 @@
           }
         } else if (action === "delete") {
           editDraftImages.splice(idx, 1);
+          if (editDraftShowcaseIndex === idx) {
+            editDraftShowcaseIndex = 0;
+          } else if (editDraftShowcaseIndex > idx) {
+            editDraftShowcaseIndex--;
+          }
           renderEditImagesManager();
         } else if (action === "up" && idx > 0) {
           const tmp = editDraftImages[idx];
           editDraftImages[idx] = editDraftImages[idx - 1];
           editDraftImages[idx - 1] = tmp;
+          if (editDraftShowcaseIndex === idx) {
+            editDraftShowcaseIndex = idx - 1;
+          } else if (editDraftShowcaseIndex === idx - 1) {
+            editDraftShowcaseIndex = idx;
+          }
           renderEditImagesManager();
         } else if (action === "down" && idx < editDraftImages.length - 1) {
           const tmp = editDraftImages[idx];
           editDraftImages[idx] = editDraftImages[idx + 1];
           editDraftImages[idx + 1] = tmp;
+          if (editDraftShowcaseIndex === idx) {
+            editDraftShowcaseIndex = idx + 1;
+          } else if (editDraftShowcaseIndex === idx + 1) {
+            editDraftShowcaseIndex = idx;
+          }
           renderEditImagesManager();
         }
       });
     });
 
     if (editProcessedPreviewImg && editDraftImages[0]) {
-      editProcessedPreviewImg.src = editDraftImages[0];
+      const previewSrc = editDraftImages[editDraftShowcaseIndex] || editDraftImages[0];
+      editProcessedPreviewImg.src = previewSrc;
       editProcessedPreviewImg.hidden = false;
     }
   }
@@ -1786,6 +1797,9 @@
 
     editingGarmentId = item.id;
     editDraftImages = [...getItemImages(item)];
+    editDraftShowcaseIndex = typeof item.showcaseImageIndex === "number" && item.showcaseImageIndex >= 0 && item.showcaseImageIndex < editDraftImages.length
+      ? item.showcaseImageIndex
+      : 0;
     replacingPhotoIndex = null;
     isProcessingEditImage = false;
 
@@ -1951,10 +1965,9 @@
       fabric,
       colorway,
       notes,
-      frontNotes: `VISTA FRONTALE (PAGINA 01): ${notes}`,
-      backNotes: finalImages[1]
-        ? `VISTA DORSALE (PAGINA 02): DETTAGLI POSTERIORI E COSTRUZIONE TESSUTO.`
-        : null,
+      frontNotes: notes,
+      backNotes: null,
+      showcaseImageIndex: editDraftShowcaseIndex,
       images: {
         front: finalImages[0] || "",
         back: finalImages[1] || null,
@@ -2136,15 +2149,37 @@
       });
     }
 
+    if (uploadUnifiedFileInput) {
+      uploadUnifiedFileInput.addEventListener("change", (e) => {
+        if (e.target.files && e.target.files.length > 0) {
+          handleAddUploadFiles(e.target.files);
+        }
+      });
+      uploadUnifiedFileInput.addEventListener("click", (e) => e.stopPropagation());
+    }
+
+    if (uploadDropzoneUnified && uploadUnifiedFileInput) {
+      uploadDropzoneUnified.addEventListener("click", (e) => {
+        if (e.target !== uploadUnifiedFileInput) uploadUnifiedFileInput.click();
+      });
+      uploadDropzoneUnified.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          uploadUnifiedFileInput.click();
+        }
+      });
+      setupZoneDrag(uploadDropzoneUnified, (files) => handleAddUploadFiles(files));
+    }
+
     if (frontFileInput) {
       frontFileInput.addEventListener("change", (e) => {
-        if (e.target.files && e.target.files[0]) setFrontFile(e.target.files[0]);
+        if (e.target.files && e.target.files[0]) handleAddUploadFiles([e.target.files[0]]);
       });
       frontFileInput.addEventListener("click", (e) => e.stopPropagation());
     }
     if (backFileInput) {
       backFileInput.addEventListener("change", (e) => {
-        if (e.target.files && e.target.files[0]) setBackFile(e.target.files[0]);
+        if (e.target.files && e.target.files[0]) handleAddUploadFiles([e.target.files[0]]);
       });
       backFileInput.addEventListener("click", (e) => e.stopPropagation());
     }
@@ -2153,30 +2188,18 @@
       frontDropzone.addEventListener("click", (e) => {
         if (e.target !== frontFileInput) frontFileInput.click();
       });
-      frontDropzone.addEventListener("keydown", (e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          frontFileInput.click();
-        }
-      });
-      setupZoneDrag(frontDropzone, (files) => setFrontFile(files[0]));
+      setupZoneDrag(frontDropzone, (files) => handleAddUploadFiles(files));
     }
 
     if (backDropzone && backFileInput) {
       backDropzone.addEventListener("click", (e) => {
         if (e.target !== backFileInput) backFileInput.click();
       });
-      backDropzone.addEventListener("keydown", (e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          backFileInput.click();
-        }
-      });
-      setupZoneDrag(backDropzone, (files) => setBackFile(files[0]));
+      setupZoneDrag(backDropzone, (files) => handleAddUploadFiles(files));
     }
 
     [optBgClean, optEnhance].forEach((el) => {
-      if (el) el.addEventListener("change", () => runCanvasProcessing());
+      if (el) el.addEventListener("change", () => renderUploadPhotosManager());
     });
 
     if (uploadForm) uploadForm.addEventListener("submit", handleUploadSubmit);
@@ -2282,7 +2305,7 @@
       });
     });
 
-    // Page Mode Buttons (Interactive Flip / Davanti / Retro / Split Dual)
+    // Page Mode Buttons (Interactive Gallery / Grid)
     pageModeButtons.forEach((btn) => {
       btn.addEventListener("click", () => {
         globalPageMode = btn.dataset.pageMode;
@@ -2498,12 +2521,14 @@
       globalDragCounter = 0;
       globalDropOverlay.hidden = true;
 
-      if (e.target.closest("#frontDropzone") || e.target.closest("#backDropzone")) return;
+      if (e.target.closest("#uploadDropzonesContainer") || e.target.closest("#frontDropzone") || e.target.closest("#backDropzone") || e.target.closest("#editAddPhotoZone")) return;
 
-      if (uploadModal.hidden) {
-        openUploadModal(e.dataTransfer.files);
+      if (uploadModal && !uploadModal.hidden) {
+        handleAddUploadFiles(e.dataTransfer.files);
+      } else if (editGarmentModal && !editGarmentModal.hidden) {
+        handleAddEditPhotos(e.dataTransfer.files);
       } else {
-        handleDroppedFiles(e.dataTransfer.files);
+        openUploadModal(e.dataTransfer.files);
       }
     });
 

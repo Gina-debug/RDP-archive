@@ -1,7 +1,6 @@
 // ==========================================================================
 // RDP // RAGAZZI DI PROVINCIA — OFFICIAL ARCHIVE DATASET
-// 100% CAPI UFFICIALI CARICATI DALL'UTENTE (11 CAPI // 22 PAGINE HD 1400x1400)
-// Ogni capo ha due pagine: Pagina 01 (Davanti) & Pagina 02 (Retro)
+// Supporto galleria multi-foto ad alta risoluzione 1400x1400 e Foto Vetrina
 // Sistema di Votazione da 0 a 10 con Media e Conteggio Voti Community
 // ==========================================================================
 

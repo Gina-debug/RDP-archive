@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
-    href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&family=Permanent+Marker&family=Rubik+Spray+Paint&family=Sedgwick+Ave+Display&family=Space+Mono:wght@400;700&display=swap"
+    href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&family=Permanent+Marker&family=Rubik+Spray+Paint&family=Sedgwick+Ave+Display&family=Sedgwick+Ave&family=Space+Mono:wght@400;700&display=swap"
     rel="stylesheet"
   />
   <link rel="stylesheet" href="styles.css" />
@@ -278,7 +278,7 @@
       </div>
 
       <div class="modal-body">
-        <!-- Colonna Sinistra: Viewport Immagine ad Alta Risoluzione con Funzione Vista Retro e Galleria -->
+        <!-- Colonna Sinistra: Viewport Immagine ad Alta Risoluzione con Galleria Foto -->
         <div class="modal-viewer">
           <div class="modal-viewer__stage" id="viewerStage" title="Clicca per passare alla foto successiva">
             <!-- Freccia Navigazione Foto Precedente -->
@@ -297,7 +297,7 @@
             <!-- Badge Fluttuante Rapido: Alterna foto -->
             <button class="stage-flip-pill" id="stageFlipBtn" type="button" title="Passa alla foto successiva">
               <span class="stage-flip-pill__icon" aria-hidden="true">⟲</span>
-              <span class="stage-flip-pill__label" id="stageFlipLabel">VEDI RETRO</span>
+              <span class="stage-flip-pill__label" id="stageFlipLabel">PROSSIMA FOTO ⟲</span>
             </button>
           </div>
 
@@ -309,16 +309,11 @@
         <div class="modal-specs">
           <div class="modal-specs__title-block">
             <h2 class="modal-specs__title" id="modalTitle">RAGAZZI DI PROVINCIA CRUCIFIX HEAVY TEE</h2>
-            <!-- Pulsante / Switcher Front & Back -->
-            <div class="modal-view-switcher" id="modalViewSwitcher" role="group" aria-label="Selettore vista fronte e retro">
-              <button class="modal-view-tab is-active" id="viewFrontBtn" type="button" aria-pressed="true">
-                DAVANTI
-              </button>
-              <button class="modal-view-tab" id="viewBackBtn" type="button" aria-pressed="false">
-                RETRO ⟲
-              </button>
+            <!-- Pulsante / Switcher Foto Dinamico -->
+            <div class="modal-view-switcher" id="modalViewSwitcher" role="group" aria-label="Selettore foto">
+              <!-- Dynamically populated: FOTO 01, FOTO 02, ... -->
             </div>
-            <button class="modal-flip-btn" id="modalFlipPageBtn" type="button" style="display: none;" title="Alterna vista fronte e retro">[MOSTRA RETRO / DAVANTI ⟲]</button>
+            <button class="modal-flip-btn" id="modalFlipPageBtn" type="button" style="display: none;" title="Alterna foto">[PROSSIMA FOTO ⟲]</button>
           </div>
 
           <!-- SEZIONE VOTAZIONE DA 0 A 10 -->
@@ -549,25 +544,15 @@
       <div class="upload-body">
         <!-- Colonna Sinistra: Dropzone & Canvas Engine -->
         <div class="upload-processor-col">
-          <div class="upload-dropzones">
-            <!-- Front Dropzone (Touch & Desktop friendly) -->
-            <div class="dropzone-box" id="frontDropzone" role="button" tabindex="0" title="Carica Pagina 01 (Davanti)">
-              <input type="file" id="frontFileInput" accept="image/*,image/png,image/jpeg,image/webp" style="display: none;" />
-              <span class="dropzone-box__tag">PAGINA 01 [DAVANTI] *</span>
-              <span class="dropzone-box__label" id="frontFileName">TOCCA PER SELEZIONARE O SCATTARE FOTO</span>
-            </div>
-            <!-- Back Dropzone -->
-            <div class="dropzone-box" id="backDropzone" role="button" tabindex="0" title="Carica Pagina 02 (Retro)">
-              <input type="file" id="backFileInput" accept="image/*,image/png,image/jpeg,image/webp" style="display: none;" />
-              <span class="dropzone-box__tag">PAGINA 02 [RETRO] (OPZ.)</span>
-              <span class="dropzone-box__label" id="backFileName">TOCCA PER SELEZIONARE O SCATTARE FOTO</span>
-            </div>
+          <div class="upload-dropzones" id="uploadDropzonesContainer">
+            <!-- Elenco Dinamico Foto Caricate con Selezione Foto Vetrina -->
+            <div class="upload-photos-list" id="uploadPhotosList"></div>
 
-            <!-- Extra Photos (Supporto per Più di 2 Foto) -->
-            <div class="upload-extra-wrap" id="uploadExtraWrap">
-              <div class="upload-extra-thumbs" id="uploadExtraThumbs"></div>
-              <button type="button" class="btn-add-extra-photo" id="uploadAddExtraBtn">＋ AGGIUNGI ALTRE FOTO (DETTAGLI / PARTICOLARI)</button>
-              <input type="file" id="uploadExtraFileInput" multiple accept="image/*,image/png,image/jpeg,image/webp" style="display: none;" />
+            <!-- Dropzone Unificato per Foto Illimitate -->
+            <div class="dropzone-box dropzone-box--unified" id="uploadDropzoneUnified" role="button" tabindex="0" title="Carica foto del capo (quante ne vuoi)">
+              <input type="file" id="uploadUnifiedFileInput" multiple accept="image/*,image/png,image/jpeg,image/webp" style="display: none;" />
+              <span class="dropzone-box__tag" id="uploadDropzoneTag">CARICA FOTO CAPO (QUANTE NE VUOI) *</span>
+              <span class="dropzone-box__label" id="uploadUnifiedFileName">TOCCA O TRASCINA PER AGGIUNGERE FOTO</span>
             </div>
           </div>
 
@@ -686,7 +671,7 @@
       </div>
 
       <div class="upload-body">
-        <!-- Colonna Sinistra: Gestione Immagini Fronte & Retro con Canvas Processor -->
+        <!-- Colonna Sinistra: Gestione Immagini con Canvas Processor -->
         <div class="upload-processor-col">
           <div class="edit-images-overview">
             <span class="edit-section-label" id="editImagesCountLabel">FOTO DEL CAPO (PIÙ DI 2 FOTO SUPPORTATE)</span>
@@ -702,7 +687,7 @@
               <span class="edit-add-photo-icon">＋</span>
               <div class="edit-add-photo-texts">
                 <span class="edit-add-photo-title">AGGIUNGI ALTRE FOTO AL CAPO</span>
-                <span class="edit-add-photo-sub">CLICCA O TRASCINA QUI (DETTAGLI, RETRO, PARTICOLARI)</span>
+                <span class="edit-add-photo-sub">CLICCA O TRASCINA QUI (FOTO ILLIMITATE // DETTAGLI)</span>
               </div>
             </div>
           </div>
@@ -793,7 +778,7 @@
   <div class="global-drop-overlay" id="globalDropOverlay" hidden>
     <div class="global-drop-overlay__box">
       <span class="global-drop-overlay__title">RDP // CREATOR DRAG &amp; DROP INGESTION</span>
-      <span class="global-drop-overlay__sub">RILASCIA I FILE DEL CAPO (DAVANTI E RETRO) PER APRIRE L'ENGINE CANVAS</span>
+      <span class="global-drop-overlay__sub">RILASCIA LE FOTO DEL CAPO PER APRIRE L'ENGINE CANVAS</span>
     </div>
   </div>
 
