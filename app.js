@@ -265,6 +265,8 @@
       code: formatArchiveCode(idx + 1)
     }));
 
+    preloadBackImages();
+
     // Pulsante di ripristino visibile all'admin se ci sono capi eliminati
     if (restoreDeletedBtn) {
       const isCreator = RDPAuth.isAuthenticated();
@@ -279,6 +281,16 @@
     updateCounts();
     renderGrid();
     updateBallotSummary();
+  }
+
+  function preloadBackImages() {
+    if (!Array.isArray(allItems)) return;
+    allItems.forEach((item) => {
+      if (item.images && item.images.back) {
+        const img = new Image();
+        img.src = item.images.back;
+      }
+    });
   }
 
   function formatArchiveCode(num) {
@@ -590,17 +602,13 @@
     });
   }
 
-  // Crea un nuovo slot scheda con tutti i controlli interattivi
+  // Crea un nuovo slot scheda con design minimal: solo foto, nome del capo e schema votazione 0..10
   function createCardSlotElement(item, activePage, fixedPageLabel = null) {
     const slot = document.createElement("div");
     slot.className = "archive-card-slot";
     const slotKey = `${item.id}_${activePage}_${fixedPageLabel || "single"}`;
     slot.dataset.slotKey = slotKey;
-
-    const slotDisplayCode = fixedPageLabel
-      ? `${item.code} [${activePage === "front" ? "01" : "02"}]`
-      : item.code;
-    slot.dataset.slotCode = slotDisplayCode;
+    slot.dataset.slotCode = item.code;
 
     const card = document.createElement("article");
     card.className = "archive-card";
@@ -610,46 +618,14 @@
     card.setAttribute("role", "button");
     card.setAttribute(
       "aria-label",
-      `${item.code} ${item.title} - ${activePage === "front" ? "Pagina Davanti" : "Pagina Retro"}`
+      `${item.title} - Clicca per ispezionare a schermo intero`
     );
 
-    const hasBack = Boolean(item.images && item.images.back);
-    const imgSrc = activePage === "back" && hasBack ? item.images.back : (item.images ? item.images.front : "");
-
-    let headerPageControls = "";
-    if (!fixedPageLabel && hasBack && globalPageMode === "interactive") {
-      headerPageControls = `
-        <div class="archive-card__page-switch" role="group" aria-label="Cambia vista pagina">
-          <button
-            class="card-page-btn ${activePage === "front" ? "is-active" : ""}"
-            data-switch-to="front"
-            type="button"
-            title="Mostra Davanti"
-          >
-            01 FRONTE
-          </button>
-          <button
-            class="card-page-btn ${activePage === "back" ? "is-active" : ""}"
-            data-switch-to="back"
-            type="button"
-            title="Mostra Retro"
-          >
-            02 RETRO
-          </button>
-        </div>
-      `;
-    }
-
-    const pageBadgeText = fixedPageLabel
-      ? fixedPageLabel
-      : activePage === "front"
-      ? "P.01 // DAVANTI"
-      : "P.02 // RETRO";
-
+    const imgSrc = item.images ? item.images.front : "";
     const stats = RDPRatings.getItemStats(item);
     const userVote = stats.userVote;
 
-    // Pulsanti voto rapido 0..10 segmentati
+    // Schema pulsanti voto rapido 0..10
     let quickVoteButtonsHtml = "";
     for (let i = 0; i <= 10; i++) {
       const isSelected = userVote === i;
@@ -658,7 +634,7 @@
           class="quick-vote-btn ${isSelected ? "is-voted" : ""}"
           data-quick-vote="${i}"
           type="button"
-          title="Vota ${i}/10 per ${escapeAttr(item.code)}"
+          title="Vota ${i}/10 per ${escapeAttr(item.title)}"
           aria-label="Vota ${i} su 10"
         >
           ${i}
@@ -666,94 +642,46 @@
       `;
     }
 
-    const isCreator = RDPAuth.isAuthenticated();
-    const quickDeleteHtml = isCreator
-      ? `<button class="card-delete-quick-btn" data-delete-id="${escapeAttr(item.id)}" type="button" title="Rimuovi ${escapeAttr(item.code)} dall'archivio">[✕ ELIMINA]</button>`
-      : "";
-
-    const creatorBadgeHtml = item.isCreatorUpload
-      ? `<span class="archive-card__creator-badge">[CREATOR_DROP]</span>`
-      : "";
-
-    const ratingBadgeText = stats.hasVoted
-      ? `★ ${stats.average} (TUO: ${stats.userVote}★)`
-      : `★ ${stats.average} (${stats.totalVotes} VOTI)`;
-
-    const voteRowLabel = stats.hasVoted
-      ? `TUO VOTO: ★ ${stats.userVote}/10 ✓`
-      : "VOTA QUESTO CAPO (0-10):";
-
     card.innerHTML = `
-      <div class="archive-card__head">
-        <div class="archive-card__head-left">
-          <span class="archive-card__code">${escapeHtml(item.code)}</span>
-          ${creatorBadgeHtml}
-        </div>
-        <div class="archive-card__head-right">
-          ${quickDeleteHtml}
-          ${headerPageControls}
-        </div>
-      </div>
       <div class="archive-card__media">
-        <span class="archive-card__rating-badge ${stats.hasVoted ? "has-user-vote" : ""}">
-          ${escapeHtml(ratingBadgeText)}
-        </span>
         <img
           class="archive-card__img"
           src="${escapeAttr(imgSrc)}"
-          alt="${escapeAttr(item.title)} (${pageBadgeText})"
+          alt="${escapeAttr(item.title)}"
           loading="lazy"
         />
-        <span class="archive-card__inspect-hint">[ISPEZIONA HD ↗]</span>
       </div>
       <div class="archive-card__foot">
         <div class="archive-card__title-row">
           <h2 class="archive-card__title">${escapeHtml(item.title)}</h2>
         </div>
-        <div class="archive-card__meta">
-          <span>${escapeHtml(item.gsm)} // ${escapeHtml(item.fit)}</span>
-          <span class="archive-card__cat-pill">${escapeHtml(item.category)}</span>
-        </div>
-        <div class="archive-card__vote-row" title="Vota da 0 a 10 per ${escapeAttr(item.code)}">
-          <div class="archive-card__vote-head">
-            <span class="archive-card__vote-label">${escapeHtml(voteRowLabel)}</span>
-            <span class="archive-card__inspect-trigger">[SCHEDA TECNICA ↗]</span>
-          </div>
-          <div class="archive-card__vote-btns" role="group" aria-label="Vota ${escapeAttr(item.code)} da 0 a 10">
-            ${quickVoteButtonsHtml}
-          </div>
+        <div class="archive-card__vote-btns" role="group" aria-label="Schema votazione ${escapeAttr(item.title)} da 0 a 10">
+          ${quickVoteButtonsHtml}
         </div>
       </div>
     `;
+
+    // Hover desktop da computer: mostra il retro se il capo lo possiede
+    card.addEventListener("mouseenter", () => {
+      const currentItem = allItems.find((i) => i.id === card.dataset.itemId);
+      if (currentItem && currentItem.images && currentItem.images.back) {
+        const img = card.querySelector(".archive-card__img");
+        if (img) img.src = currentItem.images.back;
+      }
+    });
+
+    card.addEventListener("mouseleave", () => {
+      const currentItem = allItems.find((i) => i.id === card.dataset.itemId);
+      if (currentItem && currentItem.images && currentItem.images.front) {
+        const img = card.querySelector(".archive-card__img");
+        if (img) img.src = currentItem.images.front;
+      }
+    });
 
     card.addEventListener("click", async (e) => {
       if (RDPPhysics.getActiveState()) return;
 
       const currentItemId = card.dataset.itemId;
-      const currentActivePage = card.dataset.activePage || "front";
-      const currentItem = allItems.find((i) => i.id === currentItemId);
-
-      // Gestione eliminazione rapida da parte del Creator
-      const quickDeleteBtn = e.target.closest(".card-delete-quick-btn");
-      if (quickDeleteBtn) {
-        e.stopPropagation();
-        if (!quickDeleteBtn.classList.contains("is-armed")) {
-          document.querySelectorAll(".card-delete-quick-btn.is-armed").forEach((b) => {
-            b.classList.remove("is-armed");
-            b.textContent = "[✕ ELIMINA]";
-          });
-          quickDeleteBtn.classList.add("is-armed");
-          quickDeleteBtn.textContent = "[CONFERMI?]";
-          window.setTimeout(() => {
-            quickDeleteBtn.classList.remove("is-armed");
-            quickDeleteBtn.textContent = "[✕ ELIMINA]";
-          }, 3500);
-          return;
-        }
-
-        await removeItemFromArchive(currentItemId, currentItem ? currentItem.code : "");
-        return;
-      }
 
       // Gestione voto rapido 0-10
       const quickVoteBtn = e.target.closest(".quick-vote-btn");
@@ -764,33 +692,18 @@
         return;
       }
 
-      // Gestione cambio pagina davanti / retro
-      const switchBtn = e.target.closest(".card-page-btn");
-      if (switchBtn) {
-        e.stopPropagation();
-        const targetPage = switchBtn.dataset.switchTo;
-        cardPageStates[currentItemId] = targetPage;
-        renderGrid();
-        return;
-      }
-
-      // Apertura Lightbox / Ispezione dettagliata capo
-      openInspectionModal(currentItemId, currentActivePage);
+      // Apertura Lightbox / Ispezione a tutto schermo
+      openInspectionModal(currentItemId, "front");
     });
 
     card.addEventListener("keydown", (e) => {
       if (e.key === "Enter" || e.key === " ") {
-        if (
-          e.target.closest(".quick-vote-btn") ||
-          e.target.closest(".card-page-btn") ||
-          e.target.closest(".card-delete-quick-btn")
-        ) {
+        if (e.target.closest(".quick-vote-btn")) {
           return;
         }
         e.preventDefault();
         const currentItemId = card.dataset.itemId;
-        const currentActivePage = card.dataset.activePage || "front";
-        openInspectionModal(currentItemId, currentActivePage);
+        openInspectionModal(currentItemId, "front");
       }
     });
 
@@ -806,114 +719,24 @@
     card.dataset.itemId = item.id;
     card.dataset.activePage = activePage;
 
-    const slotDisplayCode = fixedPageLabel
-      ? `${item.code} [${activePage === "front" ? "01" : "02"}]`
-      : item.code;
-    slot.dataset.slotCode = slotDisplayCode;
-
-    card.setAttribute(
-      "aria-label",
-      `${item.code} ${item.title} - ${activePage === "front" ? "Pagina Davanti" : "Pagina Retro"}`
-    );
-
-    // Codice capo
-    const codeEl = card.querySelector(".archive-card__code");
-    if (codeEl && codeEl.textContent !== item.code) {
-      codeEl.textContent = item.code;
-    }
-
     // Titolo
     const titleEl = card.querySelector(".archive-card__title");
     if (titleEl && titleEl.textContent !== item.title) {
       titleEl.textContent = item.title;
     }
 
-    // Meta & category
-    const metaEl = card.querySelector(".archive-card__meta");
-    if (metaEl) {
-      metaEl.innerHTML = `<span>${escapeHtml(item.gsm)} // ${escapeHtml(item.fit)}</span><span class="archive-card__cat-pill">${escapeHtml(item.category)}</span>`;
-    }
-
-    // Indicatore pagina
-    const pageBadgeText = fixedPageLabel
-      ? fixedPageLabel
-      : activePage === "front"
-      ? "P.01 // DAVANTI"
-      : "P.02 // RETRO";
-
-    // Immagine: AGGIORNA SOLO SE CAMBIATA per impedire flicker/ricaricamento browser!
-    const hasBack = Boolean(item.images && item.images.back);
-    const imgSrc = activePage === "back" && hasBack ? item.images.back : (item.images ? item.images.front : "");
+    // Immagine: solo se non attualmente in hover mouse
     const imgEl = card.querySelector(".archive-card__img");
-    if (imgEl) {
-      if (imgEl.getAttribute("src") !== imgSrc) {
-        imgEl.src = imgSrc;
+    const frontSrc = item.images ? item.images.front : "";
+    if (imgEl && !card.matches(":hover")) {
+      if (imgEl.getAttribute("src") !== frontSrc) {
+        imgEl.src = frontSrc;
       }
-      imgEl.alt = `${item.title} (${pageBadgeText})`;
+      imgEl.alt = item.title;
     }
 
-    // Badge Creator Drop
-    let creatorBadge = card.querySelector(".archive-card__creator-badge");
-    if (item.isCreatorUpload) {
-      if (!creatorBadge) {
-        const headLeft = card.querySelector(".archive-card__head-left") || card.querySelector(".archive-card__head");
-        if (headLeft) {
-          const badge = document.createElement("span");
-          badge.className = "archive-card__creator-badge";
-          badge.textContent = "[CREATOR_DROP]";
-          headLeft.appendChild(badge);
-        }
-      }
-    } else if (creatorBadge) {
-      creatorBadge.remove();
-    }
-
-    // Pulsante eliminazione rapida per Creator
-    const isCreator = RDPAuth.isAuthenticated();
-    const headRight = card.querySelector(".archive-card__head-right") || card.querySelector(".archive-card__head");
-    let deleteBtn = card.querySelector(".card-delete-quick-btn");
-    if (isCreator) {
-      if (!deleteBtn && headRight) {
-        deleteBtn = document.createElement("button");
-        deleteBtn.className = "card-delete-quick-btn";
-        deleteBtn.dataset.deleteId = item.id;
-        deleteBtn.type = "button";
-        deleteBtn.title = `Rimuovi ${item.code} dall'archivio`;
-        deleteBtn.textContent = "[✕ ELIMINA]";
-        headRight.prepend(deleteBtn);
-      } else if (deleteBtn) {
-        deleteBtn.dataset.deleteId = item.id;
-      }
-    } else if (deleteBtn) {
-      deleteBtn.remove();
-    }
-
-    // Pulsanti switch davanti/retro
-    const p1Btn = card.querySelector(".card-page-btn[data-switch-to='front']");
-    const p2Btn = card.querySelector(".card-page-btn[data-switch-to='back']");
-    if (p1Btn) p1Btn.classList.toggle("is-active", activePage === "front");
-    if (p2Btn) p2Btn.classList.toggle("is-active", activePage === "back");
-
-    // Voti e statistiche
+    // Schema voti
     const stats = RDPRatings.getItemStats(item);
-    const ratingBadge = card.querySelector(".archive-card__rating-badge");
-    if (ratingBadge) {
-      const badgeText = stats.hasVoted
-        ? `★ ${stats.average} (TUO: ${stats.userVote}★)`
-        : `★ ${stats.average} (${stats.totalVotes} VOTI)`;
-      if (ratingBadge.textContent !== badgeText) {
-        ratingBadge.textContent = badgeText;
-      }
-      ratingBadge.classList.toggle("has-user-vote", Boolean(stats.hasVoted));
-    }
-
-    const voteLabel = card.querySelector(".archive-card__vote-label");
-    if (voteLabel) {
-      voteLabel.textContent = stats.hasVoted
-        ? `TUO VOTO: ★ ${stats.userVote}/10 ✓`
-        : "VOTA QUESTO CAPO (0-10):";
-    }
-
     const voteBtns = card.querySelectorAll(".quick-vote-btn");
     voteBtns.forEach((btn) => {
       const val = Number(btn.dataset.quickVote);
@@ -1050,7 +873,10 @@
 
     const hasBack = Boolean(item.images && item.images.back);
     if (viewBackBtn) viewBackBtn.disabled = !hasBack;
-    if (modalFlipPageBtn) modalFlipPageBtn.disabled = !hasBack;
+    if (modalFlipPageBtn) {
+      modalFlipPageBtn.disabled = !hasBack;
+      modalFlipPageBtn.textContent = isBack ? "[MOSTRA DAVANTI ⟲]" : "[MOSTRA RETRO ⟲]";
+    }
     if (!hasBack && activeModalView === "back") {
       activeModalView = "front";
     }

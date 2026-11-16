@@ -290,9 +290,6 @@
           <button class="modal-util-btn modal-util-btn--danger" id="modalDeleteBtn" type="button" style="display: none;" title="Elimina questo capo dall'archivio (Solo Creator)">
             [ELIMINA_CAPO]
           </button>
-          <button class="modal-util-btn" id="modalDownloadBtn" type="button" style="display: none;" title="Scarica immagine HD 1400x1400 (Riservato Creator)">
-            [SCARICA_HD]
-          </button>
           <button class="modal-close-btn" id="modalCloseBtn" type="button" aria-label="Chiudi scheda tecnica">
             [CHIUDI // ESC]
           </button>
@@ -302,22 +299,7 @@
       <div class="modal-body">
         <!-- Colonna Sinistra: Viewport Immagine ad Alta Risoluzione -->
         <div class="modal-viewer">
-          <div class="modal-viewer__toolbar">
-            <div class="view-switch" role="group" aria-label="Seleziona Pagina 01 Davanti o Pagina 02 Retro">
-              <button class="view-switch__btn is-active" id="viewFrontBtn" type="button">P.01 // DAVANTI</button>
-              <button class="view-switch__btn" id="viewBackBtn" type="button">P.02 // RETRO</button>
-            </div>
-            <div class="viewer-toolbar-right">
-              <span class="modal-view-label" id="modalViewLabel" style="font-size: 10px; color: var(--muted); font-weight: 700;">P.01 DAVANTI</span>
-              <span class="zoom-indicator" id="zoomIndicator">ZOOM: 1.0X</span>
-              <button class="grid-toggle-btn" id="gridOverlayBtn" type="button" aria-pressed="false">
-                [GRID: OFF]
-              </button>
-            </div>
-          </div>
-
-          <div class="modal-viewer__stage" id="viewerStage">
-            <div class="canvas-grid-lines" id="viewerGridLines" hidden></div>
+          <div class="modal-viewer__stage" id="viewerStage" title="Clicca per ingrandire o alternare vista">
             <img
               class="modal-viewer__img"
               id="modalImage"
@@ -325,32 +307,19 @@
               alt="Mockup ad alta risoluzione"
             />
           </div>
-
-          <div class="viewer-instruction">
-            <span id="modalAssetPath" style="display: none;"></span>
-            <span>DRAG PER PAN // DOPPIO CLICK PER ZOOM // ARROWS PER NAVIGARE CAPI // CLICK SUI NUMERI PER VOTARE</span>
-          </div>
         </div>
 
         <!-- Colonna Destra: Scheda Tecnica & Blocco Votazione 0-10 -->
         <div class="modal-specs">
           <div class="modal-specs__title-block">
-            <div class="modal-page-badge-row">
-              <span class="modal-specs__eyebrow">TECHNICAL_SPEC_SHEET // ARCHIVE</span>
-              <span class="modal-page-pill" id="modalPageIndicator">PAGINA 01 DI 02 [DAVANTI]</span>
-            </div>
             <h2 class="modal-specs__title" id="modalTitle">RAGAZZI DI PROVINCIA CRUCIFIX HEAVY TEE</h2>
+            <button class="modal-flip-btn" id="modalFlipPageBtn" type="button" title="Alterna vista fronte e retro">[MOSTRA RETRO / DAVANTI ⟲]</button>
           </div>
 
           <!-- SEZIONE VOTAZIONE DA 0 A 10 -->
           <div class="voting-terminal" id="votingTerminal">
             <div class="voting-terminal__head">
-              <span class="voting-terminal__title">TERMINALE VOTAZIONE // COMMUNITY RATING</span>
               <span class="voting-terminal__score" id="modalRatingScore">★ 0.0 / 10</span>
-            </div>
-
-            <div class="voting-terminal__meta">
-              <span id="modalVoteCount">0 VOTI ESPRESSI</span>
               <span class="voting-user-status" id="modalUserVoteStatus">TUO VOTO: NON ESPRESSO</span>
             </div>
 
@@ -367,6 +336,10 @@
               <button class="vote-num-btn" data-vote="8" type="button">8</button>
               <button class="vote-num-btn" data-vote="9" type="button">9</button>
               <button class="vote-num-btn" data-vote="10" type="button">10</button>
+            </div>
+
+            <div class="voting-terminal__meta">
+              <span id="modalVoteCount">0 VOTI ESPRESSI</span>
             </div>
 
             <!-- Barra Visuale Media Voti -->
@@ -393,42 +366,16 @@
               <dt>COLORWAY</dt>
               <dd id="specColorway">RAW WHITE / BLOOD RED</dd>
             </div>
-            <div class="spec-row">
-              <dt>PATTERN REF</dt>
-              <dd id="specPattern">PAT-RDP-001</dd>
-            </div>
-            <div class="spec-row">
-              <dt>COSTRUZIONE</dt>
-              <dd id="specConstruction">COLLARE A COSTE 3CM // CUCITURE DOPPIE</dd>
-            </div>
-            <div class="spec-row">
-              <dt>ATELIER BATCH</dt>
-              <dd id="specBatch">ATELIER SPEC 01/30</dd>
-            </div>
           </dl>
-
-          <div class="page-specific-notes">
-            <span class="page-specific-notes__tag" id="pageNotesTag">PAGINA 01 NOTE (DAVANTI):</span>
-            <p class="page-specific-notes__body" id="pageNotesBody">
-              VISTA FRONTALE: SCRITTA ICONICA SUL PETTO...
-            </p>
-          </div>
-
-          <div class="spec-notes">
-            <span class="spec-notes__tag">NOTE CONCEPT // RDP ARCHIVE:</span>
-            <p class="spec-notes__body" id="specNotes">
-              TEE ICONICA DELLA PROVINCIA LOMBARDA...
-            </p>
-          </div>
 
           <!-- Paginazione Modale -->
           <div class="modal-pagination">
             <button class="nav-prev-btn" id="modalPrevBtn" type="button" aria-label="Capo precedente">
-              ← PREV [KEY: ←]
+              ← PREV
             </button>
             <span class="modal-pagination__index" id="modalIndexLabel">01 / 11</span>
             <button class="nav-next-btn" id="modalNextBtn" type="button" aria-label="Capo successivo">
-              NEXT [KEY: →] →
+              NEXT →
             </button>
           </div>
         </div>
