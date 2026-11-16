@@ -144,6 +144,9 @@
   const zoomIndicator = document.getElementById("zoomIndicator");
   const viewFrontBtn = document.getElementById("viewFrontBtn");
   const viewBackBtn = document.getElementById("viewBackBtn");
+  const stageFlipBtn = document.getElementById("stageFlipBtn");
+  const stageFlipLabel = document.getElementById("stageFlipLabel");
+  const specCategory = document.getElementById("specCategory");
   const modalViewLabel = document.getElementById("modalViewLabel");
   const modalAssetPath = document.getElementById("modalAssetPath");
   const modalDownloadBtn = document.getElementById("modalDownloadBtn");
@@ -839,12 +842,13 @@
     if (modalCode) modalCode.textContent = item.code;
     if (modalBadge) modalBadge.textContent = item.statusBadge || "ARCHIVE SPEC";
     if (modalCategory) modalCategory.textContent = item.category;
+    if (specCategory) specCategory.textContent = `${item.category || "CORE"} // SS26 ARCHIVE`;
     if (modalTitle) modalTitle.textContent = item.title;
 
-    if (specFit) specFit.textContent = item.fit || "--";
-    if (specGsm) specGsm.textContent = item.gsm || "--";
-    if (specFabric) specFabric.textContent = item.fabric || "100% HEAVYWEIGHT COMBED COTTON";
-    if (specColorway) specColorway.textContent = item.colorway || "ARCHIVE STANDARD";
+    if (specFit) specFit.textContent = item.fit || "OVERSIZED RELAXED";
+    if (specGsm) specGsm.textContent = item.gsm || "450 GSM";
+    if (specFabric) specFabric.textContent = item.fabric || "100% COTONE PETTINATO AD ALTA DENSITÀ";
+    if (specColorway) specColorway.textContent = item.colorway || "ARCHIVE STANDARD // CAMO DETAIL";
     if (specPattern) specPattern.textContent = item.patternRef || `PAT-${item.code}`;
     if (specConstruction) specConstruction.textContent = item.construction || "STANDARD INDUSTRIAL STITCH";
     if (specBatch) specBatch.textContent = item.batch || "OFFICIAL ARCHIVE SPEC";
@@ -951,8 +955,33 @@
       modalImage.alt = `${item.title} — ${activeModalView === "front" ? "Pagina 01 Davanti" : "Pagina 02 Retro"}`;
     }
 
-    if (viewFrontBtn) viewFrontBtn.classList.toggle("is-active", activeModalView === "front");
-    if (viewBackBtn) viewBackBtn.classList.toggle("is-active", activeModalView === "back");
+    const hasBack = Boolean(item.images && item.images.back);
+
+    if (viewFrontBtn) {
+      viewFrontBtn.classList.toggle("is-active", activeModalView === "front");
+      viewFrontBtn.setAttribute("aria-pressed", activeModalView === "front" ? "true" : "false");
+    }
+
+    if (viewBackBtn) {
+      viewBackBtn.disabled = !hasBack;
+      viewBackBtn.classList.toggle("is-active", activeModalView === "back");
+      viewBackBtn.setAttribute("aria-pressed", activeModalView === "back" ? "true" : "false");
+      viewBackBtn.textContent = hasBack ? "RETRO ⟲" : "SOLO FRONTE";
+      viewBackBtn.style.opacity = hasBack ? "1" : "0.35";
+    }
+
+    if (stageFlipBtn) {
+      stageFlipBtn.style.display = hasBack ? "inline-flex" : "none";
+      if (stageFlipLabel) {
+        stageFlipLabel.textContent = activeModalView === "front" ? "VEDI RETRO" : "VEDI DAVANTI";
+      }
+    }
+
+    if (modalFlipPageBtn) {
+      modalFlipPageBtn.disabled = !hasBack;
+      modalFlipPageBtn.textContent = activeModalView === "back" ? "[MOSTRA DAVANTI ⟲]" : "[MOSTRA RETRO ⟲]";
+    }
+
     if (modalViewLabel) {
       modalViewLabel.textContent =
         activeModalView === "front"
@@ -1698,8 +1727,25 @@
       });
     }
 
-    if (modalStage) modalStage.addEventListener("click", toggleZoom);
-    if (modalStage) modalStage.addEventListener("mousemove", updateZoomPan);
+    if (stageFlipBtn) {
+      stageFlipBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        toggleModalPage();
+      });
+    }
+
+    if (modalStage) {
+      modalStage.addEventListener("click", (e) => {
+        if (e.target.closest("#stageFlipBtn")) return;
+        const item = allItems.find((i) => i.id === activeModalItemId);
+        if (item && item.images && item.images.back) {
+          toggleModalPage();
+        } else {
+          toggleZoom();
+        }
+      });
+      modalStage.addEventListener("mousemove", updateZoomPan);
+    }
     if (modalPrevBtn) modalPrevBtn.addEventListener("click", () => navigateModal(-1));
     if (modalNextBtn) modalNextBtn.addEventListener("click", () => navigateModal(1));
     if (modalDownloadBtn) modalDownloadBtn.addEventListener("click", handleDownloadCurrentImage);

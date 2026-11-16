@@ -39,7 +39,7 @@
           VETRINA
         </button>
         <button class="view-tab-btn" id="tabFeedbackBtn" type="button" role="tab" aria-selected="false">
-          VOTI &amp; FEEDBACK
+          <span>VOTI</span><span class="nav-tab-extra">&nbsp;&amp; FEEDBACK</span>
           <span class="tab-vote-count-pill" id="tabVoteCountPill">0/11</span>
         </button>
       </div>
@@ -276,23 +276,37 @@
       </div>
 
       <div class="modal-body">
-        <!-- Colonna Sinistra: Viewport Immagine ad Alta Risoluzione -->
+        <!-- Colonna Sinistra: Viewport Immagine ad Alta Risoluzione con Funzione Vista Retro -->
         <div class="modal-viewer">
-          <div class="modal-viewer__stage" id="viewerStage" title="Clicca per ingrandire o alternare vista">
+          <div class="modal-viewer__stage" id="viewerStage" title="Clicca per alternare vista fronte e retro del capo">
             <img
               class="modal-viewer__img"
               id="modalImage"
               src=""
               alt="Mockup ad alta risoluzione"
             />
+            <!-- Badge Fluttuante Rapido: Clicca per vedere il retro -->
+            <button class="stage-flip-pill" id="stageFlipBtn" type="button" title="Clicca per vedere il retro del capo">
+              <span class="stage-flip-pill__icon" aria-hidden="true">⟲</span>
+              <span class="stage-flip-pill__label" id="stageFlipLabel">VEDI RETRO</span>
+            </button>
           </div>
         </div>
 
-        <!-- Colonna Destra: Scheda Tecnica & Blocco Votazione 0-10 -->
+        <!-- Colonna Destra: Scheda Tecnica & Blocco Votazione Adattati a Tutto lo Spazio -->
         <div class="modal-specs">
           <div class="modal-specs__title-block">
             <h2 class="modal-specs__title" id="modalTitle">RAGAZZI DI PROVINCIA CRUCIFIX HEAVY TEE</h2>
-            <button class="modal-flip-btn" id="modalFlipPageBtn" type="button" title="Alterna vista fronte e retro">[MOSTRA RETRO / DAVANTI ⟲]</button>
+            <!-- Pulsante / Switcher Front & Back -->
+            <div class="modal-view-switcher" id="modalViewSwitcher" role="group" aria-label="Selettore vista fronte e retro">
+              <button class="modal-view-tab is-active" id="viewFrontBtn" type="button" aria-pressed="true">
+                DAVANTI
+              </button>
+              <button class="modal-view-tab" id="viewBackBtn" type="button" aria-pressed="false">
+                RETRO ⟲
+              </button>
+            </div>
+            <button class="modal-flip-btn" id="modalFlipPageBtn" type="button" style="display: none;" title="Alterna vista fronte e retro">[MOSTRA RETRO / DAVANTI ⟲]</button>
           </div>
 
           <!-- SEZIONE VOTAZIONE DA 0 A 10 -->
@@ -333,32 +347,40 @@
             </div>
           </div>
 
-          <!-- Tabella Specifiche Tecniche -->
+          <!-- Tabella Specifiche Tecniche Adattata per Coprire Tutto lo Spazio Verticale -->
           <dl class="spec-table">
             <div class="spec-row">
-              <dt>FIT</dt>
+              <dt>CATEGORIA</dt>
+              <dd id="specCategory">TEES</dd>
+            </div>
+            <div class="spec-row">
+              <dt>FIT &amp; VESTIBILITÀ</dt>
               <dd id="specFit">OVERSIZED RELAXED</dd>
             </div>
             <div class="spec-row">
-              <dt>GSM / PESO</dt>
+              <dt>GRAMMATURA</dt>
               <dd id="specGsm">310 GSM</dd>
             </div>
             <div class="spec-row">
-              <dt>TESSUTO / FABRIC</dt>
+              <dt>TESSUTO</dt>
               <dd id="specFabric">100% COMBED VINTAGE WASH COTTON</dd>
             </div>
             <div class="spec-row">
-              <dt>COLORWAY</dt>
+              <dt>COLORAZIONE</dt>
               <dd id="specColorway">RAW WHITE / BLOOD RED</dd>
+            </div>
+            <div class="spec-row">
+              <dt>COSTRUZIONE</dt>
+              <dd id="specConstruction">STANDARD INDUSTRIAL STITCH</dd>
             </div>
           </dl>
 
-          <!-- Paginazione Modale -->
+          <!-- Paginazione Modale in Basso -->
           <div class="modal-pagination">
             <button class="nav-prev-btn" id="modalPrevBtn" type="button" aria-label="Capo precedente">
               ← PREV
             </button>
-            <span class="modal-pagination__index" id="modalIndexLabel">01 / 11</span>
+            <span class="modal-pagination__index" id="modalIndexLabel">01 / 11 CAPI</span>
             <button class="nav-next-btn" id="modalNextBtn" type="button" aria-label="Capo successivo">
               NEXT →
             </button>
