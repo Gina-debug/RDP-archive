@@ -278,21 +278,31 @@
       </div>
 
       <div class="modal-body">
-        <!-- Colonna Sinistra: Viewport Immagine ad Alta Risoluzione con Funzione Vista Retro -->
+        <!-- Colonna Sinistra: Viewport Immagine ad Alta Risoluzione con Funzione Vista Retro e Galleria -->
         <div class="modal-viewer">
-          <div class="modal-viewer__stage" id="viewerStage" title="Clicca per alternare vista fronte e retro del capo">
+          <div class="modal-viewer__stage" id="viewerStage" title="Clicca per passare alla foto successiva">
+            <!-- Freccia Navigazione Foto Precedente -->
+            <button class="stage-nav-arrow stage-nav-arrow--prev" id="modalImgPrevBtn" type="button" aria-label="Foto precedente" style="display: none;">‹</button>
+
             <img
               class="modal-viewer__img"
               id="modalImage"
               src=""
               alt="Mockup ad alta risoluzione"
             />
-            <!-- Badge Fluttuante Rapido: Clicca per vedere il retro -->
-            <button class="stage-flip-pill" id="stageFlipBtn" type="button" title="Clicca per vedere il retro del capo">
+
+            <!-- Freccia Navigazione Foto Successiva -->
+            <button class="stage-nav-arrow stage-nav-arrow--next" id="modalImgNextBtn" type="button" aria-label="Foto successiva" style="display: none;">›</button>
+
+            <!-- Badge Fluttuante Rapido: Alterna foto -->
+            <button class="stage-flip-pill" id="stageFlipBtn" type="button" title="Passa alla foto successiva">
               <span class="stage-flip-pill__icon" aria-hidden="true">⟲</span>
               <span class="stage-flip-pill__label" id="stageFlipLabel">VEDI RETRO</span>
             </button>
           </div>
+
+          <!-- Striscia Miniature Galleria per Più Foto -->
+          <div class="modal-gallery-thumbs" id="modalGalleryThumbs" role="tablist" aria-label="Galleria foto capo" style="display: none;"></div>
         </div>
 
         <!-- Colonna Destra: Scheda Tecnica & Blocco Votazione Adattati a Tutto lo Spazio -->
@@ -552,6 +562,13 @@
               <span class="dropzone-box__tag">PAGINA 02 [RETRO] (OPZ.)</span>
               <span class="dropzone-box__label" id="backFileName">TOCCA PER SELEZIONARE O SCATTARE FOTO</span>
             </div>
+
+            <!-- Extra Photos (Supporto per Più di 2 Foto) -->
+            <div class="upload-extra-wrap" id="uploadExtraWrap">
+              <div class="upload-extra-thumbs" id="uploadExtraThumbs"></div>
+              <button type="button" class="btn-add-extra-photo" id="uploadAddExtraBtn">＋ AGGIUNGI ALTRE FOTO (DETTAGLI / PARTICOLARI)</button>
+              <input type="file" id="uploadExtraFileInput" multiple accept="image/*,image/png,image/jpeg,image/webp" style="display: none;" />
+            </div>
           </div>
 
           <!-- Controlli Canvas Processing -->
@@ -672,40 +689,26 @@
         <!-- Colonna Sinistra: Gestione Immagini Fronte & Retro con Canvas Processor -->
         <div class="upload-processor-col">
           <div class="edit-images-overview">
-            <span class="edit-section-label">IMMAGINI DEL CAPO (TOCCA PER SOSTITUIRE O AGGIUNGERE)</span>
+            <span class="edit-section-label" id="editImagesCountLabel">FOTO DEL CAPO (PIÙ DI 2 FOTO SUPPORTATE)</span>
           </div>
 
-          <div class="upload-dropzones">
-            <!-- Front Edit Dropzone -->
-            <div class="dropzone-box dropzone-box--edit has-file" id="editFrontDropzone" role="button" tabindex="0" title="Modifica Pagina 01 (Davanti)">
-              <input type="file" id="editFrontFileInput" accept="image/*,image/png,image/jpeg,image/webp" style="display: none;" />
-              <div class="dropzone-thumb-wrapper">
-                <img id="editFrontThumbPreview" src="" alt="Anteprima Davanti" class="dropzone-thumb-img" />
-              </div>
-              <div class="dropzone-info-block">
-                <span class="dropzone-box__tag">PAGINA 01 [DAVANTI] *</span>
-                <span class="dropzone-box__label" id="editFrontFileName">FOTO ATTUALE (CLICCA PER CAMBIARE)</span>
-              </div>
-            </div>
+          <!-- Dynamic container for all garment photos -->
+          <div class="edit-photos-list" id="editPhotosList"></div>
 
-            <!-- Back Edit Dropzone -->
-            <div class="dropzone-box dropzone-box--edit" id="editBackDropzone" role="button" tabindex="0" title="Aggiungi o modifica Pagina 02 (Retro)">
-              <input type="file" id="editBackFileInput" accept="image/*,image/png,image/jpeg,image/webp" style="display: none;" />
-              <div class="dropzone-thumb-wrapper">
-                <img id="editBackThumbPreview" src="" alt="Anteprima Retro" class="dropzone-thumb-img" style="display: none;" />
-                <span id="editBackThumbPlaceholder" class="dropzone-empty-icon">+ RETRO</span>
-              </div>
-              <div class="dropzone-info-block">
-                <span class="dropzone-box__tag">PAGINA 02 [RETRO]</span>
-                <span class="dropzone-box__label" id="editBackFileName">TOCCA PER AGGIUNGERE RETRO</span>
+          <!-- Add photo zone (Click or Drag one or more photos) -->
+          <div class="edit-add-photo-zone" id="editAddPhotoZone" role="button" tabindex="0" title="Aggiungi una o più foto al capo">
+            <input type="file" id="editAddPhotoFileInput" multiple accept="image/*,image/png,image/jpeg,image/webp" style="display: none;" />
+            <div class="edit-add-photo-zone__content">
+              <span class="edit-add-photo-icon">＋</span>
+              <div class="edit-add-photo-texts">
+                <span class="edit-add-photo-title">AGGIUNGI ALTRE FOTO AL CAPO</span>
+                <span class="edit-add-photo-sub">CLICCA O TRASCINA QUI (DETTAGLI, RETRO, PARTICOLARI)</span>
               </div>
             </div>
           </div>
 
-          <!-- Rimuovi immagine retro se presente -->
-          <div class="edit-image-actions" id="editBackRemoveWrapper" style="display: none;">
-            <button type="button" class="btn-remove-back" id="btnRemoveBackImage">✕ RIMUOVI IMMAGINE RETRO</button>
-          </div>
+          <!-- Hidden Input for Replacing an existing photo slot -->
+          <input type="file" id="editReplacePhotoFileInput" accept="image/*,image/png,image/jpeg,image/webp" style="display: none;" />
 
           <!-- Live Preview Canvas Output -->
           <div class="processor-stage">

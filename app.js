@@ -19,6 +19,7 @@
   let allItems = [];
   let activeModalItemId = null;
   let activeModalView = "front"; // "front" | "back"
+  let activeModalImageIndex = 0; // 0, 1, 2, ...
   let isZoomed = false;
   let isCadGridOn = false;
   let toastTimer = null;
@@ -146,6 +147,10 @@
   const viewBackBtn = document.getElementById("viewBackBtn");
   const stageFlipBtn = document.getElementById("stageFlipBtn");
   const stageFlipLabel = document.getElementById("stageFlipLabel");
+  const modalImgPrevBtn = document.getElementById("modalImgPrevBtn");
+  const modalImgNextBtn = document.getElementById("modalImgNextBtn");
+  const modalGalleryThumbs = document.getElementById("modalGalleryThumbs");
+  const modalViewSwitcher = document.getElementById("modalViewSwitcher");
   const specCategory = document.getElementById("specCategory");
   const modalViewLabel = document.getElementById("modalViewLabel");
   const modalAssetPath = document.getElementById("modalAssetPath");
@@ -189,6 +194,11 @@
   const backFileInput = document.getElementById("backFileInput");
   const frontFileName = document.getElementById("frontFileName");
   const backFileName = document.getElementById("backFileName");
+  const uploadExtraWrap = document.getElementById("uploadExtraWrap");
+  const uploadExtraThumbs = document.getElementById("uploadExtraThumbs");
+  const uploadAddExtraBtn = document.getElementById("uploadAddExtraBtn");
+  const uploadExtraFileInput = document.getElementById("uploadExtraFileInput");
+  let draftExtraResults = [];
   const optBgClean = document.getElementById("optBgClean");
   const optEnhance = document.getElementById("optEnhance");
   const processorPlaceholder = document.getElementById("processorPlaceholder");
@@ -215,17 +225,12 @@
   const editGarmentCancelBtn = document.getElementById("editGarmentCancelBtn");
   const editGarmentForm = document.getElementById("editGarmentForm");
   const editGarmentCode = document.getElementById("editGarmentCode");
-  const editFrontDropzone = document.getElementById("editFrontDropzone");
-  const editBackDropzone = document.getElementById("editBackDropzone");
-  const editFrontFileInput = document.getElementById("editFrontFileInput");
-  const editBackFileInput = document.getElementById("editBackFileInput");
-  const editFrontFileName = document.getElementById("editFrontFileName");
-  const editBackFileName = document.getElementById("editBackFileName");
-  const editFrontThumbPreview = document.getElementById("editFrontThumbPreview");
-  const editBackThumbPreview = document.getElementById("editBackThumbPreview");
-  const editBackThumbPlaceholder = document.getElementById("editBackThumbPlaceholder");
-  const editBackRemoveWrapper = document.getElementById("editBackRemoveWrapper");
-  const btnRemoveBackImage = document.getElementById("btnRemoveBackImage");
+  const editGarmentModalTitle = document.getElementById("editGarmentModalTitle");
+  const editImagesCountLabel = document.getElementById("editImagesCountLabel");
+  const editPhotosList = document.getElementById("editPhotosList");
+  const editAddPhotoZone = document.getElementById("editAddPhotoZone");
+  const editAddPhotoFileInput = document.getElementById("editAddPhotoFileInput");
+  const editReplacePhotoFileInput = document.getElementById("editReplacePhotoFileInput");
   const editProcessedPreviewImg = document.getElementById("editProcessedPreviewImg");
   const inputEditTitle = document.getElementById("inputEditTitle");
   const inputEditCategory = document.getElementById("inputEditCategory");
@@ -238,15 +243,36 @@
   const editErrorMsg = document.getElementById("editErrorMsg");
   const editGarmentSubmitBtn = document.getElementById("editGarmentSubmitBtn");
 
-  // Edit Garment State
+  // Edit Garment State (Supporta più di 2 foto per capo)
   let editingGarmentId = null;
-  let editDraftFrontFile = null;
-  let editDraftBackFile = null;
-  let editDraftFrontDataUrl = null;
-  let editDraftBackDataUrl = null;
+  let editDraftImages = [];
+  let replacingPhotoIndex = null;
   let isProcessingEditImage = false;
 
   const archiveToast = document.getElementById("archiveToast");
+
+  // ========================================================================
+  // IMAGE HELPERS (MULTI-IMAGE SUPPORT // > 2 FOTO PER CAPO)
+  // ========================================================================
+  function getItemImages(item) {
+    if (!item) return [];
+    if (Array.isArray(item.images)) {
+      return item.images.filter(Boolean);
+    }
+    if (item.images && typeof item.images === "object") {
+      if (Array.isArray(item.images.gallery) && item.images.gallery.length > 0) {
+        return item.images.gallery.filter(Boolean);
+      }
+      const list = [];
+      if (item.images.front) list.push(item.images.front);
+      if (item.images.back) list.push(item.images.back);
+      if (Array.isArray(item.images.extra)) {
+        list.push(...item.images.extra.filter(Boolean));
+      }
+      return list;
+    }
+    return [];
+  }
 
   // ========================================================================
   // INITIALIZATION
@@ -351,9 +377,12 @@
   function preloadBackImages() {
     if (!Array.isArray(allItems)) return;
     allItems.forEach((item) => {
-      if (item.images && item.images.back) {
-        const img = new Image();
-        img.src = item.images.back;
+      const imgs = getItemImages(item);
+      for (let i = 1; i < imgs.length; i++) {
+        if (imgs[i]) {
+          const img = new Image();
+          img.src = imgs[i];
+        }
       }
     });
   }
@@ -608,14 +637,16 @@
     if (globalPageMode === "split_dual") {
       items.forEach((item) => {
         targets.push({ item, page: "front", label: "P.01 // DAVANTI" });
-        if (item.images && item.images.back) {
+        const imgs = getItemImages(item);
+        if (imgs.length > 1) {
           targets.push({ item, page: "back", label: "P.02 // RETRO" });
         }
       });
     } else {
       items.forEach((item) => {
         let page = "front";
-        if (globalPageMode === "back_only" && item.images && item.images.back) {
+        const imgs = getItemImages(item);
+        if (globalPageMode === "back_only" && imgs.length > 1) {
           page = "back";
         } else if (globalPageMode === "front_only") {
           page = "front";
@@ -694,7 +725,8 @@
       `${item.title} - Clicca per ispezionare a schermo intero`
     );
 
-    const imgSrc = item.images ? item.images.front : "";
+    const cardImgs = getItemImages(item);
+    const imgSrc = cardImgs[0] || "";
     const stats = RDPRatings.getItemStats(item);
     const userVote = stats.userVote;
 
@@ -743,14 +775,15 @@
     // Hover desktop da computer: mostra il retro se il capo lo possiede con transizione fluida
     card.addEventListener("mouseenter", () => {
       const currentItem = allItems.find((i) => i.id === card.dataset.itemId);
-      if (currentItem && currentItem.images && currentItem.images.back) {
+      const imgs = getItemImages(currentItem);
+      if (imgs.length > 1) {
         const img = card.querySelector(".archive-card__img");
         if (img && img.dataset.side !== "back") {
           img.dataset.side = "back";
           img.style.opacity = "0.35";
           img.style.transform = "scale(0.98)";
           setTimeout(() => {
-            img.src = currentItem.images.back;
+            img.src = imgs[1];
             img.style.opacity = "1";
             img.style.transform = "scale(1.05)";
           }, 70);
@@ -760,14 +793,15 @@
 
     card.addEventListener("mouseleave", () => {
       const currentItem = allItems.find((i) => i.id === card.dataset.itemId);
-      if (currentItem && currentItem.images && currentItem.images.front) {
+      const imgs = getItemImages(currentItem);
+      if (imgs.length > 0) {
         const img = card.querySelector(".archive-card__img");
         if (img && img.dataset.side !== "front") {
           img.dataset.side = "front";
           img.style.opacity = "0.35";
           img.style.transform = "scale(0.98)";
           setTimeout(() => {
-            img.src = currentItem.images.front;
+            img.src = imgs[0];
             img.style.opacity = "1";
             img.style.transform = "scale(1)";
           }, 70);
@@ -848,7 +882,7 @@
 
     // Immagine: solo se non attualmente in hover mouse
     const imgEl = card.querySelector(".archive-card__img");
-    const frontSrc = item.images ? item.images.front : "";
+    const frontSrc = getItemImages(item)[0] || "";
     if (imgEl && !card.matches(":hover")) {
       if (imgEl.getAttribute("src") !== frontSrc) {
         imgEl.src = frontSrc;
@@ -916,12 +950,21 @@
   // ========================================================================
   // LIGHTBOX / TECHNICAL SPEC MODAL & MODAL VOTING TERMINAL
   // ========================================================================
-  function openInspectionModal(itemId, initialPage = "front") {
+  function openInspectionModal(itemId, initialPage = 0) {
     const item = allItems.find((i) => i.id === itemId);
     if (!item) return;
 
     activeModalItemId = itemId;
-    activeModalView = initialPage === "back" && item.images && item.images.back ? "back" : "front";
+    const imgs = getItemImages(item);
+    if (initialPage === "back" || initialPage === 1) {
+      activeModalImageIndex = imgs.length > 1 ? 1 : 0;
+    } else if (typeof initialPage === "number") {
+      activeModalImageIndex = Math.max(0, Math.min(imgs.length - 1, initialPage));
+    } else {
+      activeModalImageIndex = 0;
+    }
+    activeModalView = activeModalImageIndex === 1 ? "back" : (activeModalImageIndex === 0 ? "front" : `img_${activeModalImageIndex}`);
+
     resetDeleteArmed();
     resetZoom();
     renderInspectionModal(item);
@@ -941,12 +984,30 @@
     resetZoom();
   }
 
-  function toggleModalPage() {
+  function navigateModalImage(direction = 1) {
     const item = allItems.find((i) => i.id === activeModalItemId);
-    if (!item || !item.images || !item.images.back) return;
-    activeModalView = activeModalView === "front" ? "back" : "front";
+    if (!item) return;
+    const imgs = getItemImages(item);
+    if (imgs.length <= 1) return;
+    activeModalImageIndex = (activeModalImageIndex + direction + imgs.length) % imgs.length;
+    activeModalView = activeModalImageIndex === 1 ? "back" : (activeModalImageIndex === 0 ? "front" : `img_${activeModalImageIndex}`);
     resetZoom();
     renderInspectionModal(item);
+  }
+
+  function setActiveModalImage(index) {
+    const item = allItems.find((i) => i.id === activeModalItemId);
+    if (!item) return;
+    const imgs = getItemImages(item);
+    if (index < 0 || index >= imgs.length) return;
+    activeModalImageIndex = index;
+    activeModalView = activeModalImageIndex === 1 ? "back" : (activeModalImageIndex === 0 ? "front" : `img_${activeModalImageIndex}`);
+    resetZoom();
+    renderInspectionModal(item);
+  }
+
+  function toggleModalPage() {
+    navigateModalImage(1);
   }
 
   function renderInspectionModal(item) {
@@ -970,29 +1031,55 @@
     if (specConstruction) specConstruction.textContent = item.construction || "STANDARD INDUSTRIAL STITCH";
     if (specBatch) specBatch.textContent = item.batch || "OFFICIAL ARCHIVE SPEC";
 
-    const isBack = activeModalView === "back";
+    const imgs = getItemImages(item);
+    if (activeModalImageIndex >= imgs.length) {
+      activeModalImageIndex = 0;
+    }
+    const totalPhotos = Math.max(1, imgs.length);
+
     if (modalPageIndicator) {
-      modalPageIndicator.textContent = isBack
-        ? "PAGINA 02 DI 02 [RETRO]"
-        : "PAGINA 01 DI 02 [DAVANTI]";
+      if (totalPhotos <= 1) {
+        modalPageIndicator.textContent = "PAGINA 01 DI 01 [DAVANTI]";
+      } else if (totalPhotos === 2) {
+        modalPageIndicator.textContent = activeModalImageIndex === 0
+          ? "PAGINA 01 DI 02 [DAVANTI]"
+          : "PAGINA 02 DI 02 [RETRO]";
+      } else {
+        const sideTag = activeModalImageIndex === 0
+          ? "DAVANTI"
+          : (activeModalImageIndex === 1 ? "RETRO" : `DETTAGLIO ${activeModalImageIndex - 1}`);
+        modalPageIndicator.textContent = `PAGINA ${pad2(activeModalImageIndex + 1)} DI ${pad2(totalPhotos)} [${sideTag}]`;
+      }
     }
 
     if (pageNotesTag) {
-      pageNotesTag.textContent = isBack
-        ? "PAGINA 02 NOTE (RETRO):"
-        : "PAGINA 01 NOTE (DAVANTI):";
+      if (activeModalImageIndex === 0) {
+        pageNotesTag.textContent = "PAGINA 01 NOTE (DAVANTI):";
+      } else if (activeModalImageIndex === 1) {
+        pageNotesTag.textContent = "PAGINA 02 NOTE (RETRO):";
+      } else {
+        pageNotesTag.textContent = `PAGINA ${pad2(activeModalImageIndex + 1)} NOTE (DETTAGLIO):`;
+      }
     }
 
     if (pageNotesBody) {
-      pageNotesBody.textContent = isBack
-        ? (item.backNotes || "VISTA DORSALE STANDARDIZZATA AD ALTA DEFINIZIONE (1400×1400PX // ~94% FILL).")
-        : (item.frontNotes || "VISTA FRONTALE STANDARDIZZATA AD ALTA DEFINIZIONE (1400×1400PX // ~94% FILL).");
+      if (activeModalImageIndex === 0) {
+        pageNotesBody.textContent = item.frontNotes || item.notes || "VISTA FRONTALE STANDARDIZZATA AD ALTA DEFINIZIONE (1400×1400PX // ~94% FILL).";
+      } else if (activeModalImageIndex === 1) {
+        pageNotesBody.textContent = item.backNotes || "VISTA DORSALE STANDARDIZZATA AD ALTA DEFINIZIONE (1400×1400PX // ~94% FILL).";
+      } else {
+        pageNotesBody.textContent = `VISTA DETTAGLIO SPECIFICO FOTO ${activeModalImageIndex + 1} (1400×1400PX // CANVAS STUDIO).`;
+      }
     }
 
     if (specNotesHeader) {
-      specNotesHeader.textContent = isBack
-        ? "NOTE VISTA RETRO // ATELIER_LOG"
-        : "NOTE VISTA DAVANTI // ATELIER_LOG";
+      if (activeModalImageIndex === 0) {
+        specNotesHeader.textContent = "NOTE VISTA DAVANTI // ATELIER_LOG";
+      } else if (activeModalImageIndex === 1) {
+        specNotesHeader.textContent = "NOTE VISTA RETRO // ATELIER_LOG";
+      } else {
+        specNotesHeader.textContent = `NOTE VISTA FOTO ${activeModalImageIndex + 1} // ATELIER_LOG`;
+      }
     }
 
     if (specNotes) {
@@ -1002,14 +1089,11 @@
         "CAPO UFFICIALE ARCHIVIO RAGAZZI DI PROVINCIA // STANDARDIZZATO AD ALTA RISOLUZIONE.";
     }
 
-    const hasBack = Boolean(item.images && item.images.back);
-    if (viewBackBtn) viewBackBtn.disabled = !hasBack;
+    const hasMultiple = imgs.length > 1;
+    if (viewBackBtn) viewBackBtn.disabled = imgs.length < 2;
     if (modalFlipPageBtn) {
-      modalFlipPageBtn.disabled = !hasBack;
-      modalFlipPageBtn.textContent = isBack ? "[MOSTRA DAVANTI ⟲]" : "[MOSTRA RETRO ⟲]";
-    }
-    if (!hasBack && activeModalView === "back") {
-      activeModalView = "front";
+      modalFlipPageBtn.disabled = !hasMultiple;
+      modalFlipPageBtn.textContent = "[PROSSIMA FOTO ⟲]";
     }
 
     // Delete, Edit & Download buttons: visible EXCLUSIVELY to authenticated Creator!
@@ -1065,10 +1149,11 @@
   }
 
   function updateModalViewImage(item) {
-    const src =
-      activeModalView === "back" && item.images && item.images.back
-        ? item.images.back
-        : (item.images ? item.images.front : "");
+    const imgs = getItemImages(item);
+    if (activeModalImageIndex >= imgs.length) {
+      activeModalImageIndex = 0;
+    }
+    const src = imgs[activeModalImageIndex] || "";
 
     if (modalImage) {
       if (modalImage.src !== src) {
@@ -1080,47 +1165,114 @@
         }, 360);
       }
       modalImage.src = src;
-      modalImage.alt = `${item.title} — ${activeModalView === "front" ? "Pagina 01 Davanti" : "Pagina 02 Retro"}`;
+      const imgLabel = activeModalImageIndex === 0
+        ? "Pagina 01 Davanti"
+        : (activeModalImageIndex === 1 ? "Pagina 02 Retro" : `Pagina ${activeModalImageIndex + 1} Dettaglio`);
+      modalImage.alt = `${item.title} — ${imgLabel}`;
     }
 
-    const hasBack = Boolean(item.images && item.images.back);
+    const hasMultiple = imgs.length > 1;
 
-    if (viewFrontBtn) {
-      viewFrontBtn.classList.toggle("is-active", activeModalView === "front");
-      viewFrontBtn.setAttribute("aria-pressed", activeModalView === "front" ? "true" : "false");
-    }
+    // Freccia Avanti / Indietro sul visualizzatore
+    if (modalImgPrevBtn) modalImgPrevBtn.style.display = hasMultiple ? "flex" : "none";
+    if (modalImgNextBtn) modalImgNextBtn.style.display = hasMultiple ? "flex" : "none";
 
-    if (viewBackBtn) {
-      viewBackBtn.disabled = !hasBack;
-      viewBackBtn.classList.toggle("is-active", activeModalView === "back");
-      viewBackBtn.setAttribute("aria-pressed", activeModalView === "back" ? "true" : "false");
-      viewBackBtn.textContent = hasBack ? "RETRO ⟲" : "SOLO FRONTE";
-      viewBackBtn.style.opacity = hasBack ? "1" : "0.35";
-    }
-
+    // Pulsante pill fluttuante
     if (stageFlipBtn) {
-      stageFlipBtn.style.display = hasBack ? "inline-flex" : "none";
+      stageFlipBtn.style.display = hasMultiple ? "inline-flex" : "none";
       if (stageFlipLabel) {
-        stageFlipLabel.textContent = activeModalView === "front" ? "VEDI RETRO" : "VEDI DAVANTI";
+        if (imgs.length === 2) {
+          stageFlipLabel.textContent = activeModalImageIndex === 0 ? "VEDI RETRO" : "VEDI DAVANTI";
+        } else {
+          stageFlipLabel.textContent = `FOTO ${activeModalImageIndex + 1}/${imgs.length} ⟲`;
+        }
       }
     }
 
-    if (modalFlipPageBtn) {
-      modalFlipPageBtn.disabled = !hasBack;
-      modalFlipPageBtn.textContent = activeModalView === "back" ? "[MOSTRA DAVANTI ⟲]" : "[MOSTRA RETRO ⟲]";
+    // Modal View Switcher Tabs
+    if (modalViewSwitcher) {
+      if (imgs.length <= 1) {
+        modalViewSwitcher.style.display = "none";
+        modalViewSwitcher.innerHTML = "";
+      } else if (imgs.length === 2) {
+        modalViewSwitcher.style.display = "inline-flex";
+        modalViewSwitcher.innerHTML = `
+          <button class="modal-view-tab ${activeModalImageIndex === 0 ? "is-active" : ""}" data-tab-idx="0" type="button" aria-pressed="${activeModalImageIndex === 0 ? "true" : "false"}">
+            DAVANTI
+          </button>
+          <button class="modal-view-tab ${activeModalImageIndex === 1 ? "is-active" : ""}" data-tab-idx="1" type="button" aria-pressed="${activeModalImageIndex === 1 ? "true" : "false"}">
+            RETRO ⟲
+          </button>
+        `;
+        modalViewSwitcher.querySelectorAll(".modal-view-tab").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            setActiveModalImage(Number(btn.dataset.tabIdx));
+          });
+        });
+      } else {
+        // Più di 2 foto
+        modalViewSwitcher.style.display = "inline-flex";
+        modalViewSwitcher.innerHTML = imgs.map((_, idx) => {
+          let label = `0${idx + 1} DETT`;
+          if (idx === 0) label = "01 DAVANTI";
+          else if (idx === 1) label = "02 RETRO";
+          return `
+            <button class="modal-view-tab ${idx === activeModalImageIndex ? "is-active" : ""}" data-tab-idx="${idx}" type="button" aria-pressed="${idx === activeModalImageIndex ? "true" : "false"}">
+              ${label}
+            </button>
+          `;
+        }).join("");
+        modalViewSwitcher.querySelectorAll(".modal-view-tab").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            setActiveModalImage(Number(btn.dataset.tabIdx));
+          });
+        });
+      }
+    }
+
+    // Striscia Miniature Galleria
+    if (modalGalleryThumbs) {
+      if (hasMultiple) {
+        modalGalleryThumbs.style.display = "flex";
+        modalGalleryThumbs.innerHTML = imgs.map((imgSrc, idx) => `
+          <button
+            type="button"
+            class="modal-gallery-thumb-btn ${idx === activeModalImageIndex ? "is-active" : ""}"
+            data-thumb-idx="${idx}"
+            title="Mostra foto ${idx + 1}"
+            aria-label="Foto ${idx + 1}"
+          >
+            <img src="${escapeAttr(imgSrc)}" alt="Miniatura foto ${idx + 1}" class="modal-gallery-thumb-img" />
+            <span class="modal-gallery-thumb-idx">${pad2(idx + 1)}</span>
+          </button>
+        `).join("");
+
+        modalGalleryThumbs.querySelectorAll(".modal-gallery-thumb-btn").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            setActiveModalImage(Number(btn.dataset.thumbIdx));
+          });
+        });
+      } else {
+        modalGalleryThumbs.style.display = "none";
+        modalGalleryThumbs.innerHTML = "";
+      }
     }
 
     if (modalViewLabel) {
-      modalViewLabel.textContent =
-        activeModalView === "front"
-          ? "PAGINA 01 DI 02: VISTA DAVANTI (FRONT)"
-          : "PAGINA 02 DI 02: VISTA RETRO (BACK)";
+      if (imgs.length <= 1) {
+        modalViewLabel.textContent = "PAGINA 01 DI 01: VISTA DAVANTI (FRONT)";
+      } else {
+        const sideDesc = activeModalImageIndex === 0
+          ? "VISTA DAVANTI (FRONT)"
+          : (activeModalImageIndex === 1 ? "VISTA RETRO (BACK)" : `DETTAGLIO ${activeModalImageIndex - 1}`);
+        modalViewLabel.textContent = `PAGINA ${pad2(activeModalImageIndex + 1)} DI ${pad2(imgs.length)}: ${sideDesc}`;
+      }
     }
 
     if (modalAssetPath) {
       const isDataUrl = src && src.startsWith("data:");
       modalAssetPath.textContent = isDataUrl
-        ? `SRC: CREATOR_INGESTION://${item.code}_${activeModalView.toUpperCase()} [1400×1400 HD]`
+        ? `SRC: CREATOR_INGESTION://${item.code}_IMG${activeModalImageIndex + 1} [1400×1400 HD]`
         : `SRC: /${src ? src.toUpperCase() : "IMG"} [1400×1400 HD]`;
     }
   }
@@ -1160,9 +1312,11 @@
     activeModalItemId = visible[nextIdx].id;
 
     const nextItem = visible[nextIdx];
-    if (activeModalView === "back" && (!nextItem.images || !nextItem.images.back)) {
-      activeModalView = "front";
+    const nextImgs = getItemImages(nextItem);
+    if (activeModalImageIndex >= nextImgs.length) {
+      activeModalImageIndex = 0;
     }
+    activeModalView = activeModalImageIndex === 1 ? "back" : (activeModalImageIndex === 0 ? "front" : `img_${activeModalImageIndex}`);
     resetDeleteArmed();
     resetZoom();
     renderInspectionModal(nextItem);
@@ -1176,19 +1330,18 @@
     }
     const item = allItems.find((i) => i.id === activeModalItemId);
     if (!item) return;
-    const src =
-      activeModalView === "back" && item.images.back
-        ? item.images.back
-        : item.images.front;
+    const imgs = getItemImages(item);
+    const src = imgs[activeModalImageIndex] || imgs[0] || "";
+    if (!src) return;
 
     const ext = src.endsWith(".png") ? "png" : src.includes("image/png") ? "png" : "jpg";
     const link = document.createElement("a");
     link.href = src;
-    link.download = `${item.code.toLowerCase()}-${activeModalView === "front" ? "davanti" : "retro"}-hd.${ext}`;
+    link.download = `${item.code.toLowerCase()}-foto-${pad2(activeModalImageIndex + 1)}-hd.${ext}`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    showToast(`DOWNLOAD AVVIATO // ${item.code}`);
+    showToast(`DOWNLOAD AVVIATO // ${item.code} [FOTO ${activeModalImageIndex + 1}]`);
   }
 
   function resetDeleteArmed() {
@@ -1269,6 +1422,8 @@
     draftBackFile = null;
     draftFrontResult = null;
     draftBackResult = null;
+    draftExtraResults = [];
+    renderUploadExtraThumbs();
     if (frontFileName) frontFileName.textContent = "TOCCA PER SELEZIONARE O SCATTARE FOTO";
     if (backFileName) backFileName.textContent = "TOCCA PER SELEZIONARE O SCATTARE FOTO";
     if (frontDropzone) frontDropzone.classList.remove("has-file");
@@ -1304,6 +1459,48 @@
     return /\.(png|jpe?g|webp|heic|heif|avif|bmp)$/i.test(file.name || "");
   }
 
+  function renderUploadExtraThumbs() {
+    if (!uploadExtraThumbs) return;
+    uploadExtraThumbs.innerHTML = draftExtraResults.map((item, idx) => `
+      <div class="upload-extra-thumb-item" title="${escapeAttr(item.fileName || `Foto ${idx + 3}`)}">
+        <img src="${escapeAttr(item.processedDataUrl)}" alt="Extra ${idx + 1}" />
+        <button type="button" class="upload-extra-thumb-del" data-del-idx="${idx}" title="Rimuovi foto">✕</button>
+      </div>
+    `).join("");
+
+    uploadExtraThumbs.querySelectorAll(".upload-extra-thumb-del").forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const delIdx = Number(btn.dataset.delIdx);
+        draftExtraResults.splice(delIdx, 1);
+        renderUploadExtraThumbs();
+      });
+    });
+  }
+
+  async function addExtraUploadFiles(fileList) {
+    const valid = Array.from(fileList).filter(isValidImageFile);
+    if (valid.length === 0) return;
+
+    const options = {
+      bgNormalize: optBgClean ? optBgClean.checked : true,
+      studioEnhance: optEnhance ? optEnhance.checked : true,
+      transparentBg: false,
+      bgTolerance: 28,
+      paddingPct: 0.06
+    };
+
+    for (const f of valid) {
+      try {
+        const res = await RDPImageProcessor.processGarmentFile(f, options);
+        draftExtraResults.push({ processedDataUrl: res.processedDataUrl, fileName: f.name });
+      } catch (e) {
+        console.warn("Errore elaborazione extra file:", e);
+      }
+    }
+    renderUploadExtraThumbs();
+  }
+
   async function handleDroppedFiles(fileList) {
     const validImages = Array.from(fileList).filter(isValidImageFile);
     if (validImages.length === 0) {
@@ -1314,6 +1511,9 @@
     await setFrontFile(validImages[0]);
     if (validImages[1]) {
       await setBackFile(validImages[1]);
+    }
+    if (validImages.length > 2) {
+      await addExtraUploadFiles(validImages.slice(2));
     }
   }
 
@@ -1436,6 +1636,12 @@
       inputNotes.value.trim().toUpperCase() ||
       "MOCKUP CARICATO DAL CREATORE E STANDARDIZZATO AD ALTA RISOLUZIONE (1400×1400PX // CANVAS ENGINE).";
 
+    const allUploaded = [
+      draftFrontResult.processedDataUrl,
+      draftBackResult ? draftBackResult.processedDataUrl : null,
+      ...draftExtraResults.map((r) => r.processedDataUrl)
+    ].filter(Boolean);
+
     const newItem = {
       id: `rdp-creator-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
       code: formatArchiveCode(allItems.length + 1),
@@ -1454,14 +1660,16 @@
       initialVotes: 1,
       isCreatorUpload: true,
       frontNotes: `VISTA FRONTALE (PAGINA 01): ${notes}`,
-      backNotes: draftBackResult
+      backNotes: allUploaded[1]
         ? `VISTA DORSALE (PAGINA 02): DETTAGLI POSTERIORI E COSTRUZIONE TESSUTO.`
         : null,
       notes,
       createdAt: Date.now(),
       images: {
-        front: draftFrontResult.processedDataUrl,
-        back: draftBackResult ? draftBackResult.processedDataUrl : null
+        front: allUploaded[0] || "",
+        back: allUploaded[1] || null,
+        extra: allUploaded.slice(2),
+        gallery: allUploaded
       }
     };
 
@@ -1471,9 +1679,9 @@
       switchMainView("showcase");
       await reloadArchiveData();
       if (res && res.syncedToCloud) {
-        showToast(`✓ CAPO ${newItem.code} AGGIUNTO E SINCRONIZZATO NEL CLOUD!`);
+        showToast(`✓ CAPO ${newItem.code} AGGIUNTO E SINCRONIZZATO! (${allUploaded.length} FOTO)`);
       } else {
-        showToast(`⚠ CAPO ${newItem.code} SALVATO IN LOCALE MA NON NEL CLOUD (${res && res.error ? res.error : "DATABASE NON CREATO"}). APRI [CLOUD SYNC]!`);
+        showToast(`⚠ CAPO ${newItem.code} SALVATO IN LOCALE (${res && res.error ? res.error : "DATABASE NON CREATO"}).`);
       }
     } catch (_err) {
       showUploadError("ERRORE SALVATAGGIO CAPO.");
@@ -1482,8 +1690,90 @@
 
   // ========================================================================
   // CREATOR GARMENT EDITOR (EXCLUSIVE TO AUTHENTICATED CREATOR)
-  // Consente la modifica di foto fronte/retro, titolo, gsm, fit, note e dati
+  // Gestione dinamica multi-immagine (> 2 foto) e specifiche tecniche
   // ========================================================================
+  function renderEditImagesManager() {
+    if (!editPhotosList) return;
+    if (editImagesCountLabel) {
+      editImagesCountLabel.textContent = `FOTO DEL CAPO (${editDraftImages.length} FOTO ATTIVE) // TOCCA PER CAMBIARE O AGGIUNGERE`;
+    }
+
+    if (editDraftImages.length === 0) {
+      editPhotosList.innerHTML = `
+        <div style="font-size: 11px; color: var(--muted); padding: 14px; text-align: center; border: 1px dashed rgba(255,255,255,0.12); border-radius: 8px;">
+          NESSUNA FOTO PRESENTE. AGGIUNGI ALMENO UNA FOTO QUI SOTTO.
+        </div>
+      `;
+      if (editProcessedPreviewImg) editProcessedPreviewImg.src = "";
+      return;
+    }
+
+    editPhotosList.innerHTML = editDraftImages.map((src, idx) => {
+      let tag = `PAGINA ${pad2(idx + 1)} [DETTAGLIO]`;
+      let hint = "Foto aggiuntiva scheda tecnica";
+      if (idx === 0) {
+        tag = "PAGINA 01 [DAVANTI] *";
+        hint = "Foto principale copertina";
+      } else if (idx === 1) {
+        tag = "PAGINA 02 [RETRO]";
+        hint = "Vista posteriore capo";
+      }
+
+      return `
+        <div class="edit-photo-item" data-idx="${idx}">
+          <div class="edit-photo-thumb-wrap">
+            <img src="${escapeAttr(src)}" alt="Foto ${idx + 1}" class="edit-photo-thumb-img" />
+            <span class="edit-photo-badge">${pad2(idx + 1)}</span>
+          </div>
+          <div class="edit-photo-details">
+            <span class="edit-photo-label">${tag}</span>
+            <span class="edit-photo-hint">${hint}</span>
+          </div>
+          <div class="edit-photo-btns">
+            ${idx > 0 ? `<button type="button" class="btn-edit-action btn-edit-action--move" data-action="up" data-idx="${idx}" title="Sposta prima">▲</button>` : ""}
+            ${idx < editDraftImages.length - 1 ? `<button type="button" class="btn-edit-action btn-edit-action--move" data-action="down" data-idx="${idx}" title="Sposta dopo">▼</button>` : ""}
+            <button type="button" class="btn-edit-action btn-edit-action--replace" data-action="replace" data-idx="${idx}">✎ CAMBIA</button>
+            ${editDraftImages.length > 1 ? `<button type="button" class="btn-edit-action btn-edit-action--delete" data-action="delete" data-idx="${idx}" title="Elimina foto">✕</button>` : ""}
+          </div>
+        </div>
+      `;
+    }).join("");
+
+    editPhotosList.querySelectorAll(".btn-edit-action").forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const action = btn.dataset.action;
+        const idx = Number(btn.dataset.idx);
+
+        if (action === "replace") {
+          replacingPhotoIndex = idx;
+          if (editReplacePhotoFileInput) {
+            editReplacePhotoFileInput.value = "";
+            editReplacePhotoFileInput.click();
+          }
+        } else if (action === "delete") {
+          editDraftImages.splice(idx, 1);
+          renderEditImagesManager();
+        } else if (action === "up" && idx > 0) {
+          const tmp = editDraftImages[idx];
+          editDraftImages[idx] = editDraftImages[idx - 1];
+          editDraftImages[idx - 1] = tmp;
+          renderEditImagesManager();
+        } else if (action === "down" && idx < editDraftImages.length - 1) {
+          const tmp = editDraftImages[idx];
+          editDraftImages[idx] = editDraftImages[idx + 1];
+          editDraftImages[idx + 1] = tmp;
+          renderEditImagesManager();
+        }
+      });
+    });
+
+    if (editProcessedPreviewImg && editDraftImages[0]) {
+      editProcessedPreviewImg.src = editDraftImages[0];
+      editProcessedPreviewImg.hidden = false;
+    }
+  }
+
   function openEditGarmentModal(itemId) {
     if (!RDPAuth.isAuthenticated()) {
       showToast("ACCESSO RICHIESTO: ACCEDI COME CREATOR PER MODIFICARE I CAPI");
@@ -1495,10 +1785,8 @@
     if (!item) return;
 
     editingGarmentId = item.id;
-    editDraftFrontFile = null;
-    editDraftBackFile = null;
-    editDraftFrontDataUrl = item.images ? item.images.front : null;
-    editDraftBackDataUrl = item.images ? item.images.back : null;
+    editDraftImages = [...getItemImages(item)];
+    replacingPhotoIndex = null;
     isProcessingEditImage = false;
 
     if (editGarmentCode) {
@@ -1517,39 +1805,7 @@
     if (inputEditColorway) inputEditColorway.value = item.colorway || "";
     if (inputEditNotes) inputEditNotes.value = item.notes || item.frontNotes || "";
 
-    // Previews & Dropzone status
-    if (editFrontThumbPreview) {
-      editFrontThumbPreview.src = editDraftFrontDataUrl || "";
-    }
-    if (editFrontFileName) {
-      editFrontFileName.textContent = "FOTO ATTUALE (CLICCA PER CAMBIARE)";
-    }
-    if (editFrontDropzone) {
-      editFrontDropzone.classList.add("has-file");
-    }
-
-    if (editBackThumbPreview && editBackThumbPlaceholder && editBackRemoveWrapper) {
-      if (editDraftBackDataUrl) {
-        editBackThumbPreview.src = editDraftBackDataUrl;
-        editBackThumbPreview.style.display = "block";
-        editBackThumbPlaceholder.style.display = "none";
-        editBackRemoveWrapper.style.display = "flex";
-        if (editBackFileName) editBackFileName.textContent = "FOTO RETRO ATTUALE (CLICCA PER CAMBIARE)";
-        if (editBackDropzone) editBackDropzone.classList.add("has-file");
-      } else {
-        editBackThumbPreview.src = "";
-        editBackThumbPreview.style.display = "none";
-        editBackThumbPlaceholder.style.display = "inline";
-        editBackRemoveWrapper.style.display = "none";
-        if (editBackFileName) editBackFileName.textContent = "TOCCA PER AGGIUNGERE RETRO";
-        if (editBackDropzone) editBackDropzone.classList.remove("has-file");
-      }
-    }
-
-    if (editProcessedPreviewImg) {
-      editProcessedPreviewImg.src = editDraftFrontDataUrl || "";
-      editProcessedPreviewImg.hidden = false;
-    }
+    renderEditImagesManager();
 
     if (editErrorMsg) editErrorMsg.hidden = true;
     if (editGarmentSubmitBtn) editGarmentSubmitBtn.disabled = false;
@@ -1566,8 +1822,8 @@
       document.body.style.overflow = "";
     }
     editingGarmentId = null;
-    editDraftFrontFile = null;
-    editDraftBackFile = null;
+    editDraftImages = [];
+    replacingPhotoIndex = null;
   }
 
   function showEditError(msg) {
@@ -1576,14 +1832,12 @@
     editErrorMsg.hidden = false;
   }
 
-  async function handleEditFrontFile(file) {
-    if (!isValidImageFile(file)) {
+  async function handleAddEditPhotos(fileList) {
+    const valid = Array.from(fileList).filter(isValidImageFile);
+    if (valid.length === 0) {
       showEditError("FORMATO NON VALIDO. USA IMMAGINI PNG, JPG O WEBP.");
       return;
     }
-    editDraftFrontFile = file;
-    if (editFrontFileName) editFrontFileName.textContent = file.name.toUpperCase();
-    if (editFrontDropzone) editFrontDropzone.classList.add("has-file");
 
     try {
       isProcessingEditImage = true;
@@ -1598,26 +1852,29 @@
         paddingPct: 0.06
       };
 
-      const result = await RDPImageProcessor.processGarmentFile(file, options);
-      editDraftFrontDataUrl = result.processedDataUrl;
-      if (editFrontThumbPreview) editFrontThumbPreview.src = editDraftFrontDataUrl;
-      if (editProcessedPreviewImg) editProcessedPreviewImg.src = editDraftFrontDataUrl;
+      for (const file of valid) {
+        const result = await RDPImageProcessor.processGarmentFile(file, options);
+        editDraftImages.push(result.processedDataUrl);
+        if (editProcessedPreviewImg) {
+          editProcessedPreviewImg.src = result.processedDataUrl;
+        }
+      }
+
+      renderEditImagesManager();
     } catch (err) {
-      showEditError(err.message || "ERRORE ELABORAZIONE FOTO DAVANTI.");
+      showEditError(err.message || "ERRORE ELABORAZIONE FOTO.");
     } finally {
       isProcessingEditImage = false;
       if (editGarmentSubmitBtn) editGarmentSubmitBtn.disabled = false;
     }
   }
 
-  async function handleEditBackFile(file) {
+  async function handleReplaceEditPhoto(file) {
+    if (replacingPhotoIndex === null || replacingPhotoIndex < 0) return;
     if (!isValidImageFile(file)) {
-      showEditError("FORMATO NON VALIDO. USA IMMAGINI PNG, JPG O WEBP.");
+      showEditError("FORMATO NON VALIDO. USA PNG, JPG O WEBP.");
       return;
     }
-    editDraftBackFile = file;
-    if (editBackFileName) editBackFileName.textContent = file.name.toUpperCase();
-    if (editBackDropzone) editBackDropzone.classList.add("has-file");
 
     try {
       isProcessingEditImage = true;
@@ -1633,18 +1890,16 @@
       };
 
       const result = await RDPImageProcessor.processGarmentFile(file, options);
-      editDraftBackDataUrl = result.processedDataUrl;
-      if (editBackThumbPreview) {
-        editBackThumbPreview.src = editDraftBackDataUrl;
-        editBackThumbPreview.style.display = "block";
+      editDraftImages[replacingPhotoIndex] = result.processedDataUrl;
+      if (editProcessedPreviewImg) {
+        editProcessedPreviewImg.src = result.processedDataUrl;
       }
-      if (editBackThumbPlaceholder) editBackThumbPlaceholder.style.display = "none";
-      if (editBackRemoveWrapper) editBackRemoveWrapper.style.display = "flex";
-      if (editProcessedPreviewImg) editProcessedPreviewImg.src = editDraftBackDataUrl;
+      renderEditImagesManager();
     } catch (err) {
-      showEditError(err.message || "ERRORE ELABORAZIONE FOTO RETRO.");
+      showEditError(err.message || "ERRORE SOSTITUZIONE FOTO.");
     } finally {
       isProcessingEditImage = false;
+      replacingPhotoIndex = null;
       if (editGarmentSubmitBtn) editGarmentSubmitBtn.disabled = false;
     }
   }
@@ -1664,6 +1919,12 @@
     const currentItem = allItems.find((i) => i.id === editingGarmentId);
     if (!currentItem) {
       showEditError("CAPO NON TROVATO.");
+      return;
+    }
+
+    const finalImages = editDraftImages.filter(Boolean);
+    if (finalImages.length === 0) {
+      showEditError("IL CAPO DEVE AVERE ALMENO UNA FOTO CARICATA.");
       return;
     }
 
@@ -1691,12 +1952,14 @@
       colorway,
       notes,
       frontNotes: `VISTA FRONTALE (PAGINA 01): ${notes}`,
-      backNotes: editDraftBackDataUrl
+      backNotes: finalImages[1]
         ? `VISTA DORSALE (PAGINA 02): DETTAGLI POSTERIORI E COSTRUZIONE TESSUTO.`
         : null,
       images: {
-        front: editDraftFrontDataUrl || (currentItem.images ? currentItem.images.front : ""),
-        back: editDraftBackDataUrl || null
+        front: finalImages[0] || "",
+        back: finalImages[1] || null,
+        extra: finalImages.slice(2),
+        gallery: finalImages
       },
       updatedAt: Date.now()
     };
@@ -1708,13 +1971,13 @@
 
       // Se il capo modificato è attualmente aperto nel modal a tutto schermo, aggiornalo sul posto
       if (activeModalItemId === updatedItem.id && inspectionModal && !inspectionModal.hidden) {
-        openInspectionModal(updatedItem.id, activeModalView);
+        openInspectionModal(updatedItem.id, activeModalImageIndex);
       }
 
       if (res && res.syncedToCloud) {
-        showToast(`✓ CAPO ${updatedItem.code} MODIFICATO E SINCRONIZZATO!`);
+        showToast(`✓ CAPO ${updatedItem.code} MODIFICATO E SINCRONIZZATO! (${finalImages.length} FOTO)`);
       } else {
-        showToast(`✓ CAPO ${updatedItem.code} MODIFICATO IN LOCALE!`);
+        showToast(`✓ CAPO ${updatedItem.code} MODIFICATO IN LOCALE! (${finalImages.length} FOTO)`);
       }
     } catch (_err) {
       showEditError("ERRORE DURANTE IL SALVATAGGIO DELLE MODIFICHE.");
@@ -2099,18 +2362,35 @@
     if (stageFlipBtn) {
       stageFlipBtn.addEventListener("click", (e) => {
         e.stopPropagation();
-        toggleModalPage();
+        navigateModalImage(1);
+      });
+    }
+
+    if (modalImgPrevBtn) {
+      modalImgPrevBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        navigateModalImage(-1);
+      });
+    }
+
+    if (modalImgNextBtn) {
+      modalImgNextBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        navigateModalImage(1);
       });
     }
 
     if (modalStage) {
       modalStage.addEventListener("click", (e) => {
-        if (e.target.closest("#stageFlipBtn")) return;
+        if (e.target.closest("#stageFlipBtn") || e.target.closest(".stage-nav-arrow")) return;
         const item = allItems.find((i) => i.id === activeModalItemId);
-        if (item && item.images && item.images.back) {
-          toggleModalPage();
-        } else {
-          toggleZoom();
+        if (item) {
+          const imgs = getItemImages(item);
+          if (imgs.length > 1) {
+            navigateModalImage(1);
+          } else {
+            toggleZoom(e);
+          }
         }
       });
       modalStage.addEventListener("mousemove", updateZoomPan);
@@ -2127,7 +2407,21 @@
       });
     }
 
-    // Edit Garment Modal Bindings
+    // Upload Extra Photos Bindings
+    if (uploadAddExtraBtn && uploadExtraFileInput) {
+      uploadAddExtraBtn.addEventListener("click", () => {
+        uploadExtraFileInput.value = "";
+        uploadExtraFileInput.click();
+      });
+      uploadExtraFileInput.addEventListener("change", async (e) => {
+        if (e.target.files && e.target.files.length > 0) {
+          await addExtraUploadFiles(e.target.files);
+          uploadExtraFileInput.value = "";
+        }
+      });
+    }
+
+    // Edit Garment Modal Bindings (Dynamic Multi-Photo Manager)
     if (editGarmentCloseBtn) editGarmentCloseBtn.addEventListener("click", closeEditGarmentModal);
     if (editGarmentCancelBtn) editGarmentCancelBtn.addEventListener("click", closeEditGarmentModal);
     if (editGarmentModal) {
@@ -2137,39 +2431,28 @@
     }
     if (editGarmentForm) editGarmentForm.addEventListener("submit", handleEditGarmentSubmit);
 
-    if (editFrontDropzone && editFrontFileInput) {
-      editFrontDropzone.addEventListener("click", (e) => {
-        if (e.target !== editFrontFileInput) editFrontFileInput.click();
-      });
-      editFrontFileInput.addEventListener("change", async (e) => {
-        if (e.target.files && e.target.files[0]) await handleEditFrontFile(e.target.files[0]);
-      });
-      setupZoneDrag(editFrontDropzone, (files) => handleEditFrontFile(files[0]));
-    }
-
-    if (editBackDropzone && editBackFileInput) {
-      editBackDropzone.addEventListener("click", (e) => {
-        if (e.target !== editBackFileInput) editBackFileInput.click();
-      });
-      editBackFileInput.addEventListener("change", async (e) => {
-        if (e.target.files && e.target.files[0]) await handleEditBackFile(e.target.files[0]);
-      });
-      setupZoneDrag(editBackDropzone, (files) => handleEditBackFile(files[0]));
-    }
-
-    if (btnRemoveBackImage) {
-      btnRemoveBackImage.addEventListener("click", (e) => {
-        e.stopPropagation();
-        editDraftBackFile = null;
-        editDraftBackDataUrl = null;
-        if (editBackThumbPreview) {
-          editBackThumbPreview.src = "";
-          editBackThumbPreview.style.display = "none";
+    if (editAddPhotoZone && editAddPhotoFileInput) {
+      editAddPhotoZone.addEventListener("click", (e) => {
+        if (e.target !== editAddPhotoFileInput) {
+          editAddPhotoFileInput.value = "";
+          editAddPhotoFileInput.click();
         }
-        if (editBackThumbPlaceholder) editBackThumbPlaceholder.style.display = "inline";
-        if (editBackRemoveWrapper) editBackRemoveWrapper.style.display = "none";
-        if (editBackFileName) editBackFileName.textContent = "RETRO RIMOSSO (TOCCA PER AGGIUNGERE)";
-        if (editBackDropzone) editBackDropzone.classList.remove("has-file");
+      });
+      editAddPhotoFileInput.addEventListener("change", async (e) => {
+        if (e.target.files && e.target.files.length > 0) {
+          await handleAddEditPhotos(e.target.files);
+          editAddPhotoFileInput.value = "";
+        }
+      });
+      setupZoneDrag(editAddPhotoZone, (files) => handleAddEditPhotos(files));
+    }
+
+    if (editReplacePhotoFileInput) {
+      editReplacePhotoFileInput.addEventListener("change", async (e) => {
+        if (e.target.files && e.target.files[0]) {
+          await handleReplaceEditPhoto(e.target.files[0]);
+          editReplacePhotoFileInput.value = "";
+        }
       });
     }
 
@@ -2249,23 +2532,13 @@
           navigateModal(1);
         } else if (e.key === " " || e.key === "Tab") {
           e.preventDefault();
-          toggleModalPage();
-        } else if (e.key === "1" || e.key.toLowerCase() === "f") {
+          navigateModalImage(1);
+        } else if (e.key.toLowerCase() === "f") {
           e.preventDefault();
-          activeModalView = "front";
-          const item = allItems.find((i) => i.id === activeModalItemId);
-          if (item) {
-            resetZoom();
-            renderInspectionModal(item);
-          }
-        } else if (e.key === "2" || e.key.toLowerCase() === "b") {
+          setActiveModalImage(0);
+        } else if (e.key.toLowerCase() === "b") {
           e.preventDefault();
-          const item = allItems.find((i) => i.id === activeModalItemId);
-          if (item && item.images && item.images.back) {
-            activeModalView = "back";
-            resetZoom();
-            renderInspectionModal(item);
-          }
+          setActiveModalImage(1);
         } else if (/^[0-9]$/.test(e.key) && activeModalItemId) {
           registerVote(activeModalItemId, Number(e.key));
         }
