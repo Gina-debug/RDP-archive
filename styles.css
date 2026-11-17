@@ -24,6 +24,17 @@
   font-display: swap;
 }
 
+/* ==========================================================================
+   DARK GRAFFITI LOCAL WEBFONT (Nomi dei capi / Garment titles)
+   ========================================================================== */
+@font-face {
+  font-family: 'Dark Graffiti';
+  src: url('fonts/DarkGraffitiDemo.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   --bg: #0C0D10;
   --bg-card: rgba(18, 19, 24, 0.92);
@@ -764,14 +775,14 @@ img {
   padding: 0 4px;
 }
 
-/* Graffiti Font different from intro page ('Permanent Marker' vs 'Spartical Graffiti') */
+/* Dark Graffiti Font for garment names */
 .archive-card__title {
   margin: 0;
-  font-family: 'Permanent Marker', 'Sedgwick Ave', 'Sedgwick Ave Display', cursive, sans-serif;
-  font-size: clamp(14px, 1.25vw, 17px);
+  font-family: 'Dark Graffiti', 'Permanent Marker', cursive, sans-serif;
+  font-size: clamp(14px, 1.25vw, 18px);
   font-weight: 400;
   letter-spacing: 0.04em;
-  line-height: 1.22;
+  line-height: 1.25;
   color: #FFFFFF;
   text-align: center;
   text-transform: uppercase;
@@ -1326,11 +1337,14 @@ img {
 
 .modal-specs__title {
   margin: 0;
-  font-size: 20px;
-  font-weight: 800;
+  font-family: 'Dark Graffiti', 'Permanent Marker', cursive, sans-serif;
+  font-size: clamp(18px, 2vw, 24px);
+  font-weight: 400;
   line-height: 1.25;
   letter-spacing: 0.04em;
   color: #FFFFFF;
+  text-transform: uppercase;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.95);
 }
 
 /* Modal Front / Back View Switcher Capsule */
@@ -5042,6 +5056,7 @@ img {
   }
 
   #inspectionModal .modal-specs__title {
+    font-family: 'Dark Graffiti', 'Permanent Marker', cursive, sans-serif !important;
     font-size: 15px !important;
     line-height: 1.2 !important;
     margin-bottom: 6px !important;
