@@ -200,12 +200,14 @@
   const uploadExtraFileInput = document.getElementById("uploadExtraFileInput");
   let draftExtraResults = [];
 
-  // Dedicated Foto Vetrina Upload Elements
+  // Dedicated Foto Vetrina Upload Elements (Auto-Adattamento 3:4)
   const uploadShowcaseCard = document.getElementById("uploadShowcaseCard");
   const uploadShowcaseFileInput = document.getElementById("uploadShowcaseFileInput");
   const uploadShowcaseDropzone = document.getElementById("uploadShowcaseDropzone");
-  const uploadShowcasePreviewWrap = document.getElementById("uploadShowcasePreviewWrap");
+  const uploadShowcasePreviewCard = document.getElementById("uploadShowcasePreviewCard");
   const uploadShowcasePreviewImg = document.getElementById("uploadShowcasePreviewImg");
+  const uploadShowcaseChangeBtn = document.getElementById("uploadShowcaseChangeBtn");
+  const uploadShowcaseUsePhoto1Btn = document.getElementById("uploadShowcaseUsePhoto1Btn");
   const uploadShowcaseRemoveBtn = document.getElementById("uploadShowcaseRemoveBtn");
   const uploadShowcasePlaceholder = document.getElementById("uploadShowcasePlaceholder");
   let uploadShowcaseDataUrl = null;
@@ -247,71 +249,17 @@
   const editGarmentCode = document.getElementById("editGarmentCode");
   const editGarmentModalTitle = document.getElementById("editGarmentModalTitle");
 
-  // Dedicated Foto Vetrina in Creator Edit Modal
+  // Dedicated Foto Vetrina in Creator Edit Modal (Auto-Adattamento 3:4)
   const editShowcaseCard = document.getElementById("editShowcaseCard");
   const editShowcaseFileInput = document.getElementById("editShowcaseFileInput");
   const editShowcaseDropzone = document.getElementById("editShowcaseDropzone");
-  const editShowcasePreviewWrap = document.getElementById("editShowcasePreviewWrap");
+  const editShowcasePreviewCard = document.getElementById("editShowcasePreviewCard");
   const editShowcasePreviewImg = document.getElementById("editShowcasePreviewImg");
+  const editShowcaseChangeBtn = document.getElementById("editShowcaseChangeBtn");
+  const editShowcaseUsePhoto1Btn = document.getElementById("editShowcaseUsePhoto1Btn");
   const editShowcaseRemoveBtn = document.getElementById("editShowcaseRemoveBtn");
   const editShowcasePlaceholder = document.getElementById("editShowcasePlaceholder");
   let editDraftShowcaseImage = null;
-
-  // Showcase 3:4 Rectangle Framer & Calibrator Elements (Edit Modal)
-  const editShowcaseFramer = document.getElementById("editShowcaseFramer");
-  const editShowcaseViewport = document.getElementById("editShowcaseViewport");
-  const editShowcaseFramerImg = document.getElementById("editShowcaseFramerImg");
-  const editShowcaseChangeBtn = document.getElementById("editShowcaseChangeBtn");
-  const editShowcaseFramerRemoveBtn = document.getElementById("editShowcaseFramerRemoveBtn");
-  const editFramerPosY = document.getElementById("editFramerPosY");
-  const editFramerPosYVal = document.getElementById("editFramerPosYVal");
-  const editFramerPosX = document.getElementById("editFramerPosX");
-  const editFramerPosXVal = document.getElementById("editFramerPosXVal");
-  const editFramerZoom = document.getElementById("editFramerZoom");
-  const editFramerZoomVal = document.getElementById("editFramerZoomVal");
-  const editFramerPresetTop = document.getElementById("editFramerPresetTop");
-  const editFramerPresetCenter = document.getElementById("editFramerPresetCenter");
-  const editFramerPresetBottom = document.getElementById("editFramerPresetBottom");
-  const editFramerPresetFit = document.getElementById("editFramerPresetFit");
-  const editFramerPresetCover = document.getElementById("editFramerPresetCover");
-  const editFramerApplyBtn = document.getElementById("editFramerApplyBtn");
-  const editFramerUsePhoto1Btn = document.getElementById("editFramerUsePhoto1Btn");
-
-  let editFramerState = {
-    posX: 50,
-    posY: 50,
-    zoom: 100,
-    fitMode: "cover",
-    baseImageSrc: null
-  };
-
-  // Showcase 3:4 Rectangle Framer & Calibrator Elements (Upload Modal)
-  const uploadShowcaseFramer = document.getElementById("uploadShowcaseFramer");
-  const uploadShowcaseViewport = document.getElementById("uploadShowcaseViewport");
-  const uploadShowcaseFramerImg = document.getElementById("uploadShowcaseFramerImg");
-  const uploadShowcaseChangeBtn = document.getElementById("uploadShowcaseChangeBtn");
-  const uploadShowcaseFramerRemoveBtn = document.getElementById("uploadShowcaseFramerRemoveBtn");
-  const uploadFramerPosY = document.getElementById("uploadFramerPosY");
-  const uploadFramerPosYVal = document.getElementById("uploadFramerPosYVal");
-  const uploadFramerPosX = document.getElementById("uploadFramerPosX");
-  const uploadFramerPosXVal = document.getElementById("uploadFramerPosXVal");
-  const uploadFramerZoom = document.getElementById("uploadFramerZoom");
-  const uploadFramerZoomVal = document.getElementById("uploadFramerZoomVal");
-  const uploadFramerPresetTop = document.getElementById("uploadFramerPresetTop");
-  const uploadFramerPresetCenter = document.getElementById("uploadFramerPresetCenter");
-  const uploadFramerPresetBottom = document.getElementById("uploadFramerPresetBottom");
-  const uploadFramerPresetFit = document.getElementById("uploadFramerPresetFit");
-  const uploadFramerPresetCover = document.getElementById("uploadFramerPresetCover");
-  const uploadFramerApplyBtn = document.getElementById("uploadFramerApplyBtn");
-  const uploadFramerUsePhoto1Btn = document.getElementById("uploadFramerUsePhoto1Btn");
-
-  let uploadFramerState = {
-    posX: 50,
-    posY: 50,
-    zoom: 100,
-    fitMode: "cover",
-    baseImageSrc: null
-  };
 
   const editImagesCountLabel = document.getElementById("editImagesCountLabel");
   const editPhotosList = document.getElementById("editPhotosList");
@@ -1493,117 +1441,198 @@
   }
 
   // ========================================================================
-  // FOTO VETRINA MANAGEMENT & MANUAL RECTANGULAR FRAMER (3:4 RATIO)
-  // Permette al Creator di calibrare, inquadrare e adattare manualmente
-  // l'immagine per il rettangolo delle card catalogo (3:4) e salvarla nel Cloud e Locale.
+  // FOTO VETRINA MANAGEMENT & AUTOMATIC 3:4 RECTANGULAR ADAPTATION
+  // Adatta automaticamente le foto vetrina per riempire al massimo tutto lo
+  // spazio possibile del rettangolo catalogo (rapporto 3:4, 900×1200px)
+  // con ritaglio intelligente dei margini vuoti e salvataggio nel Cloud.
   // ========================================================================
 
-  // Disegna l'immagine su un Canvas HD 3:4 (900×1200px) con zoom, panX e panY manuali
-  async function bakeShowcaseFraming(baseSrc, state) {
+  async function autoAdaptShowcaseImage(baseSrc) {
     if (!baseSrc) return null;
     return new Promise((resolve) => {
       const img = new Image();
       img.crossOrigin = "anonymous";
       img.onload = () => {
-        const cw = 900;
-        const ch = 1200; // Esatto rapporto 3:4 delle schede catalogo
-        const canvas = document.createElement("canvas");
-        canvas.width = cw;
-        canvas.height = ch;
-        const ctx = canvas.getContext("2d");
+        try {
+          const cw = 900;
+          const ch = 1200; // Esatto rapporto 3:4 delle schede catalogo
+          const iw = img.naturalWidth || img.width;
+          const ih = img.naturalHeight || img.height;
 
-        // Sfondo scuro ossidiana matching con l'archivio
-        ctx.fillStyle = "#0A0B0E";
-        ctx.fillRect(0, 0, cw, ch);
+          if (iw <= 0 || ih <= 0) {
+            resolve(baseSrc);
+            return;
+          }
 
-        const iw = img.naturalWidth || img.width;
-        const ih = img.naturalHeight || img.height;
-        const zoom = Math.max(0.5, ((state && state.zoom) || 100) / 100);
-        const posX = Math.max(0, Math.min(100, (state && state.posX !== undefined) ? state.posX : 50)) / 100;
-        const posY = Math.max(0, Math.min(100, (state && state.posY !== undefined) ? state.posY : 50)) / 100;
-        const isFit = state && state.fitMode === "contain";
+          // 1. Campionamento per bounding box detection del capo
+          const sampleDim = Math.min(600, Math.max(iw, ih));
+          const sampleW = Math.round(iw * (sampleDim / Math.max(iw, ih)));
+          const sampleH = Math.round(ih * (sampleDim / Math.max(iw, ih)));
 
-        let baseScale;
-        if (isFit) {
-          baseScale = Math.min(cw / iw, ch / ih) * zoom;
-        } else {
-          baseScale = Math.max(cw / iw, ch / ih) * zoom;
+          const sCanvas = document.createElement("canvas");
+          sCanvas.width = sampleW;
+          sCanvas.height = sampleH;
+          const sCtx = sCanvas.getContext("2d", { willReadFrequently: true });
+          sCtx.drawImage(img, 0, 0, sampleW, sampleH);
+
+          const imgData = sCtx.getImageData(0, 0, sampleW, sampleH);
+          const data = imgData.data;
+
+          // Rilevamento colore dello sfondo dai 4 angoli
+          const cornerIndices = [
+            0,
+            (sampleW - 1) * 4,
+            ((sampleH - 1) * sampleW) * 4,
+            ((sampleH - 1) * sampleW + sampleW - 1) * 4
+          ];
+
+          let bgR = 0, bgG = 0, bgB = 0, bgAlpha = 0;
+          cornerIndices.forEach((idx) => {
+            bgR += data[idx];
+            bgG += data[idx + 1];
+            bgB += data[idx + 2];
+            bgAlpha += data[idx + 3];
+          });
+          bgR = Math.round(bgR / 4);
+          bgG = Math.round(bgG / 4);
+          bgB = Math.round(bgB / 4);
+          bgAlpha = Math.round(bgAlpha / 4);
+
+          const isTransparentBg = bgAlpha < 30;
+          const isLightStudio = bgAlpha >= 200 && bgR >= 220 && bgG >= 220 && bgB >= 220;
+          const isDarkStudio = bgAlpha >= 200 && bgR <= 35 && bgG <= 35 && bgB <= 35;
+
+          function isBg(r, g, b, a) {
+            if (isTransparentBg) return a < 25;
+            if (isLightStudio) {
+              return a < 25 || (r >= 210 && g >= 210 && b >= 210 && Math.abs(r - g) < 25 && Math.abs(g - b) < 25);
+            }
+            if (isDarkStudio) {
+              return a < 25 || (r <= 40 && g <= 40 && b <= 40 && Math.abs(r - g) < 20 && Math.abs(g - b) < 20);
+            }
+            const dist = Math.abs(r - bgR) + Math.abs(g - bgG) + Math.abs(b - bgB);
+            return a < 25 || dist < 35;
+          }
+
+          let minX = sampleW, minY = sampleH, maxX = 0, maxY = 0;
+          let nonBgCount = 0;
+          const step = 2;
+
+          for (let y = 0; y < sampleH; y += step) {
+            for (let x = 0; x < sampleW; x += step) {
+              const idx = (y * sampleW + x) * 4;
+              if (!isBg(data[idx], data[idx + 1], data[idx + 2], data[idx + 3])) {
+                if (x < minX) minX = x;
+                if (x > maxX) maxX = x;
+                if (y < minY) minY = y;
+                if (y > maxY) maxY = y;
+                nonBgCount++;
+              }
+            }
+          }
+
+          const totalSampled = (sampleW * sampleH) / (step * step);
+          const nonBgRatio = nonBgCount / totalSampled;
+          const isSolidPhoto = nonBgRatio > 0.92 || minX >= maxX || minY >= maxY;
+
+          let cropX = 0, cropY = 0, cropW = iw, cropH = ih;
+          if (!isSolidPhoto) {
+            const scaleBackX = iw / sampleW;
+            const scaleBackY = ih / sampleH;
+            const padX = Math.round(10 * scaleBackX);
+            const padY = Math.round(10 * scaleBackY);
+
+            cropX = Math.max(0, Math.round(minX * scaleBackX) - padX);
+            cropY = Math.max(0, Math.round(minY * scaleBackY) - padY);
+            cropW = Math.min(iw - cropX, Math.round((maxX - minX) * scaleBackX) + padX * 2);
+            cropH = Math.min(ih - cropY, Math.round((maxY - minY) * scaleBackY) + padY * 2);
+          }
+
+          // 2. Disegna su Canvas HD 3:4 (900×1200px) riempiendo al massimo lo spazio disponibile
+          const canvas = document.createElement("canvas");
+          canvas.width = cw;
+          canvas.height = ch;
+          const ctx = canvas.getContext("2d");
+
+          if (isLightStudio) {
+            ctx.fillStyle = "#FFFFFF";
+          } else if (isDarkStudio || isTransparentBg) {
+            ctx.fillStyle = "#0A0B0E";
+          } else {
+            ctx.fillStyle = `rgb(${bgR}, ${bgG}, ${bgB})`;
+          }
+          ctx.fillRect(0, 0, cw, ch);
+
+          let drawW, drawH, drawX, drawY;
+
+          if (isSolidPhoto) {
+            const coverScale = Math.max(cw / iw, ch / ih);
+            drawW = Math.round(iw * coverScale);
+            drawH = Math.round(ih * coverScale);
+            drawX = Math.round((cw - drawW) / 2);
+            drawY = Math.round((ch - drawH) / 2);
+            ctx.drawImage(img, 0, 0, iw, ih, drawX, drawY, drawW, drawH);
+          } else {
+            const targetRatio = cw / ch; // 0.75
+            const cropRatio = cropW / cropH;
+
+            let scale;
+            if (cropRatio >= targetRatio) {
+              scale = (cw * 0.96) / cropW;
+              drawW = Math.round(cropW * scale);
+              drawH = Math.round(cropH * scale);
+              drawX = Math.round((cw - drawW) / 2);
+              drawY = Math.round(ch * 0.46 - drawH / 2);
+              if (drawY < 18) drawY = 18;
+              if (drawY + drawH > ch - 18) drawY = ch - 18 - drawH;
+            } else {
+              scale = (ch * 0.94) / cropH;
+              drawW = Math.round(cropW * scale);
+              drawH = Math.round(cropH * scale);
+              drawX = Math.round((cw - drawW) / 2);
+              drawY = Math.round((ch - drawH) / 2);
+            }
+
+            ctx.drawImage(img, cropX, cropY, cropW, cropH, drawX, drawY, drawW, drawH);
+          }
+
+          const resultDataUrl = canvas.toDataURL("image/jpeg", 0.80);
+          resolve(resultDataUrl);
+        } catch (err) {
+          console.warn("[autoAdaptShowcaseImage] Errore elaborazione:", err);
+          resolve(baseSrc);
         }
-
-        const dw = Math.round(iw * baseScale);
-        const dh = Math.round(ih * baseScale);
-        const dx = Math.round((cw - dw) * posX);
-        const dy = Math.round((ch - dh) * posY);
-
-        ctx.drawImage(img, dx, dy, dw, dh);
-        resolve(canvas.toDataURL("image/jpeg", 0.78));
       };
       img.onerror = () => resolve(baseSrc);
       img.src = baseSrc;
     });
   }
 
-  function updateUploadFramerLivePreview() {
-    if (!uploadShowcaseFramerImg) return;
-    const { posX, posY, zoom, fitMode } = uploadFramerState;
-    uploadShowcaseFramerImg.style.objectFit = fitMode;
-    uploadShowcaseFramerImg.style.objectPosition = `${posX}% ${posY}%`;
-    uploadShowcaseFramerImg.style.transformOrigin = `${posX}% ${posY}%`;
-    uploadShowcaseFramerImg.style.transform = `scale(${zoom / 100})`;
-
-    if (uploadFramerPosY) uploadFramerPosY.value = posY;
-    if (uploadFramerPosYVal) uploadFramerPosYVal.textContent = `${Math.round(posY)}%`;
-    if (uploadFramerPosX) uploadFramerPosX.value = posX;
-    if (uploadFramerPosXVal) uploadFramerPosXVal.textContent = `${Math.round(posX)}%`;
-    if (uploadFramerZoom) uploadFramerZoom.value = zoom;
-    if (uploadFramerZoomVal) uploadFramerZoomVal.textContent = `${Math.round(zoom)}%`;
-  }
-
   function renderUploadShowcaseSlot() {
     if (!uploadShowcaseCard) return;
-    const currentSrc = uploadFramerState.baseImageSrc || uploadShowcaseDataUrl;
-    if (currentSrc) {
-      if (uploadShowcaseFramerImg) {
-        uploadShowcaseFramerImg.src = currentSrc;
+    if (uploadShowcaseDataUrl) {
+      if (uploadShowcasePreviewImg) {
+        uploadShowcasePreviewImg.src = uploadShowcaseDataUrl;
       }
-      updateUploadFramerLivePreview();
-      if (uploadShowcaseFramer) uploadShowcaseFramer.hidden = false;
+      if (uploadShowcasePreviewCard) uploadShowcasePreviewCard.hidden = false;
       if (uploadShowcaseDropzone) uploadShowcaseDropzone.hidden = true;
     } else {
-      if (uploadShowcaseFramer) uploadShowcaseFramer.hidden = true;
+      if (uploadShowcasePreviewCard) uploadShowcasePreviewCard.hidden = true;
       if (uploadShowcaseDropzone) uploadShowcaseDropzone.hidden = false;
       if (uploadShowcasePreviewImg) uploadShowcasePreviewImg.src = "";
     }
   }
 
-  function updateEditFramerLivePreview() {
-    if (!editShowcaseFramerImg) return;
-    const { posX, posY, zoom, fitMode } = editFramerState;
-    editShowcaseFramerImg.style.objectFit = fitMode;
-    editShowcaseFramerImg.style.objectPosition = `${posX}% ${posY}%`;
-    editShowcaseFramerImg.style.transformOrigin = `${posX}% ${posY}%`;
-    editShowcaseFramerImg.style.transform = `scale(${zoom / 100})`;
-
-    if (editFramerPosY) editFramerPosY.value = posY;
-    if (editFramerPosYVal) editFramerPosYVal.textContent = `${Math.round(posY)}%`;
-    if (editFramerPosX) editFramerPosX.value = posX;
-    if (editFramerPosXVal) editFramerPosXVal.textContent = `${Math.round(posX)}%`;
-    if (editFramerZoom) editFramerZoom.value = zoom;
-    if (editFramerZoomVal) editFramerZoomVal.textContent = `${Math.round(zoom)}%`;
-  }
-
   function renderEditShowcaseSlot() {
     if (!editShowcaseCard) return;
-    const currentSrc = editFramerState.baseImageSrc || editDraftShowcaseImage;
-    if (currentSrc) {
-      if (editShowcaseFramerImg) {
-        editShowcaseFramerImg.src = currentSrc;
+    if (editDraftShowcaseImage) {
+      if (editShowcasePreviewImg) {
+        editShowcasePreviewImg.src = editDraftShowcaseImage;
       }
-      updateEditFramerLivePreview();
-      if (editShowcaseFramer) editShowcaseFramer.hidden = false;
+      if (editShowcasePreviewCard) editShowcasePreviewCard.hidden = false;
       if (editShowcaseDropzone) editShowcaseDropzone.hidden = true;
     } else {
-      if (editShowcaseFramer) editShowcaseFramer.hidden = true;
+      if (editShowcasePreviewCard) editShowcasePreviewCard.hidden = true;
       if (editShowcaseDropzone) editShowcaseDropzone.hidden = false;
       if (editShowcasePreviewImg) editShowcasePreviewImg.src = "";
     }
@@ -1616,115 +1645,29 @@
       else showUploadError("FORMATO NON VALIDO PER LA FOTO VETRINA (USA PNG, JPG O WEBP).");
       return;
     }
-    const options = {
-      bgNormalize: true,
-      studioEnhance: true,
-      transparentBg: false,
-      bgTolerance: 28,
-      paddingPct: 0.04
-    };
+
     try {
-      const res = await RDPImageProcessor.processGarmentFile(file, options);
+      const rawDataUrl = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (e) => resolve(e.target.result);
+        reader.onerror = () => reject(new Error("Errore lettura file immagine"));
+        reader.readAsDataURL(file);
+      });
+
+      const adapted = await autoAdaptShowcaseImage(rawDataUrl);
+
       if (isEdit) {
-        editFramerState.baseImageSrc = res.processedDataUrl;
-        editFramerState.posX = 50;
-        editFramerState.posY = 50;
-        editFramerState.zoom = 100;
-        editFramerState.fitMode = "cover";
-        editDraftShowcaseImage = res.processedDataUrl;
+        editDraftShowcaseImage = adapted;
         renderEditShowcaseSlot();
-        showToast("✓ FOTO VETRINA CARICATA! REGOLA ORA L'INQUADRATURA NEL RETTANGOLO");
+        showToast("✓ FOTO VETRINA CARICATA E ADATTATA AUTOMATICAMENTE A PIENO RETTANGOLO [3:4]!");
       } else {
-        uploadFramerState.baseImageSrc = res.processedDataUrl;
-        uploadFramerState.posX = 50;
-        uploadFramerState.posY = 50;
-        uploadFramerState.zoom = 100;
-        uploadFramerState.fitMode = "cover";
-        uploadShowcaseDataUrl = res.processedDataUrl;
+        uploadShowcaseDataUrl = adapted;
         renderUploadShowcaseSlot();
-        showToast("✓ FOTO VETRINA CARICATA! REGOLA ORA L'INQUADRATURA NEL RETTANGOLO");
+        showToast("✓ FOTO VETRINA CARICATA E ADATTATA AUTOMATICAMENTE A PIENO RETTANGOLO [3:4]!");
       }
     } catch (err) {
       if (isEdit) showEditError("ERRORE ELABORAZIONE FOTO VETRINA: " + (err.message || ""));
       else showUploadError("ERRORE ELABORAZIONE FOTO VETRINA: " + (err.message || ""));
-    }
-  }
-
-  function setupFramerViewportDrag(viewport, state, updateFn) {
-    if (!viewport) return;
-    let isDragging = false;
-    let startX = 0;
-    let startY = 0;
-    let initialPosX = 50;
-    let initialPosY = 50;
-
-    viewport.addEventListener("pointerdown", (e) => {
-      isDragging = true;
-      startX = e.clientX;
-      startY = e.clientY;
-      initialPosX = state.posX;
-      initialPosY = state.posY;
-      viewport.classList.add("is-dragging");
-      try {
-        viewport.setPointerCapture(e.pointerId);
-      } catch (_e) {}
-    });
-
-    viewport.addEventListener("pointermove", (e) => {
-      if (!isDragging) return;
-      const rect = viewport.getBoundingClientRect();
-      const deltaX = ((e.clientX - startX) / rect.width) * 100;
-      const deltaY = ((e.clientY - startY) / rect.height) * 100;
-      state.posX = Math.max(0, Math.min(100, initialPosX - deltaX));
-      state.posY = Math.max(0, Math.min(100, initialPosY - deltaY));
-      updateFn();
-    });
-
-    const endDrag = (e) => {
-      if (isDragging) {
-        isDragging = false;
-        viewport.classList.remove("is-dragging");
-        try {
-          viewport.releasePointerCapture(e.pointerId);
-        } catch (_e) {}
-      }
-    };
-    viewport.addEventListener("pointerup", endDrag);
-    viewport.addEventListener("pointercancel", endDrag);
-  }
-
-  function setupFramerControls(prefix, state, updateFn, onApplyFn, onUsePhoto1Fn, changeInput) {
-    const posYEl = document.getElementById(`${prefix}FramerPosY`);
-    const posXEl = document.getElementById(`${prefix}FramerPosX`);
-    const zoomEl = document.getElementById(`${prefix}FramerZoom`);
-
-    if (posYEl) posYEl.addEventListener("input", (e) => { state.posY = Number(e.target.value); updateFn(); });
-    if (posXEl) posXEl.addEventListener("input", (e) => { state.posX = Number(e.target.value); updateFn(); });
-    if (zoomEl) zoomEl.addEventListener("input", (e) => { state.zoom = Number(e.target.value); updateFn(); });
-
-    const btnTop = document.getElementById(`${prefix}FramerPresetTop`);
-    const btnCenter = document.getElementById(`${prefix}FramerPresetCenter`);
-    const btnBottom = document.getElementById(`${prefix}FramerPresetBottom`);
-    const btnFit = document.getElementById(`${prefix}FramerPresetFit`);
-    const btnCover = document.getElementById(`${prefix}FramerPresetCover`);
-    const btnApply = document.getElementById(`${prefix}FramerApplyBtn`);
-    const btnUsePhoto1 = document.getElementById(`${prefix}FramerUsePhoto1Btn`);
-    const btnChange = document.getElementById(`${prefix}ShowcaseChangeBtn`);
-
-    if (btnTop) btnTop.addEventListener("click", (e) => { e.preventDefault(); state.posY = 15; state.posX = 50; state.zoom = 105; state.fitMode = "cover"; updateFn(); });
-    if (btnCenter) btnCenter.addEventListener("click", (e) => { e.preventDefault(); state.posY = 50; state.posX = 50; state.zoom = 100; state.fitMode = "cover"; updateFn(); });
-    if (btnBottom) btnBottom.addEventListener("click", (e) => { e.preventDefault(); state.posY = 85; state.posX = 50; state.zoom = 105; state.fitMode = "cover"; updateFn(); });
-    if (btnFit) btnFit.addEventListener("click", (e) => { e.preventDefault(); state.fitMode = "contain"; state.zoom = 100; state.posX = 50; state.posY = 50; updateFn(); });
-    if (btnCover) btnCover.addEventListener("click", (e) => { e.preventDefault(); state.fitMode = "cover"; state.zoom = 100; state.posX = 50; state.posY = 50; updateFn(); });
-
-    if (btnApply && typeof onApplyFn === "function") {
-      btnApply.addEventListener("click", (e) => { e.preventDefault(); onApplyFn(e); });
-    }
-    if (btnUsePhoto1 && typeof onUsePhoto1Fn === "function") {
-      btnUsePhoto1.addEventListener("click", (e) => { e.preventDefault(); onUsePhoto1Fn(e); });
-    }
-    if (btnChange && changeInput) {
-      btnChange.addEventListener("click", (e) => { e.preventDefault(); changeInput.click(); });
     }
   }
 
@@ -1937,18 +1880,18 @@
       inputNotes.value.trim().toUpperCase() ||
       "MOCKUP CARICATO DAL CREATORE E STANDARDIZZATO AD ALTA RISOLUZIONE (1400×1400PX // CANVAS ENGINE).";
 
+    // Foto vetrina: se caricata usala (è già auto-adattata), altrimenti auto-adatta la 1ª foto del capo a pieno rettangolo
     let finalShowcase = uploadShowcaseDataUrl || null;
-    const framerBase = uploadFramerState.baseImageSrc || uploadShowcaseDataUrl;
-    if (framerBase) {
+    if (!finalShowcase && allUploaded[0]) {
       try {
-        const baked = await bakeShowcaseFraming(framerBase, uploadFramerState);
-        if (baked) {
-          finalShowcase = baked;
-          uploadShowcaseDataUrl = baked;
-        }
-      } catch (err) {
-        console.warn("[Framer Upload] Errore bake canvas:", err);
+        finalShowcase = await autoAdaptShowcaseImage(allUploaded[0]);
+      } catch (_e) {
+        finalShowcase = allUploaded[0];
       }
+    } else if (finalShowcase) {
+      try {
+        finalShowcase = await autoAdaptShowcaseImage(finalShowcase);
+      } catch (_e) {}
     }
 
     const newItem = {
@@ -1972,11 +1915,6 @@
       backNotes: null,
       notes,
       showcaseImage: finalShowcase,
-      showcaseBaseImage: framerBase || null,
-      showcasePosX: uploadFramerState.posX,
-      showcasePosY: uploadFramerState.posY,
-      showcaseZoom: uploadFramerState.zoom,
-      showcaseFitMode: uploadFramerState.fitMode || "cover",
       createdAt: Date.now(),
       images: {
         front: allUploaded[0] || "",
@@ -2096,17 +2034,7 @@
 
     editingGarmentId = item.id;
     editDraftImages = [...getItemImages(item)];
-    editDraftShowcaseImage = item.showcaseImage || null;
-    editFramerState = {
-      posX: item.showcasePosX !== undefined ? Number(item.showcasePosX) : 50,
-      posY: item.showcasePosY !== undefined ? Number(item.showcasePosY) : 50,
-      zoom: item.showcaseZoom !== undefined ? Number(item.showcaseZoom) : 100,
-      fitMode: item.showcaseFitMode || "cover",
-      baseImageSrc: item.showcaseBaseImage || item.showcaseImage || (editDraftImages[0] || null)
-    };
-    if (!editDraftShowcaseImage && editDraftImages[0]) {
-      editDraftShowcaseImage = editDraftImages[0];
-    }
+    editDraftShowcaseImage = item.showcaseImage || (editDraftImages[0] || null);
     replacingPhotoIndex = null;
     isProcessingEditImage = false;
 
@@ -2147,13 +2075,6 @@
     editDraftShowcaseImage = null;
     editDraftImages = [];
     replacingPhotoIndex = null;
-    editFramerState = {
-      posX: 50,
-      posY: 50,
-      zoom: 100,
-      fitMode: "cover",
-      baseImageSrc: null
-    };
     renderEditShowcaseSlot();
   }
 
@@ -2281,19 +2202,18 @@
       editGarmentSubmitBtn.textContent = "[SALVATAGGIO_IN_CORSO...]";
     }
 
-    // 1. Bake dell'inquadratura manuale al rettangolo [3:4] su Canvas se presente
+    // 1. Auto-adattamento della foto vetrina a pieno rettangolo [3:4]
     let finalShowcase = editDraftShowcaseImage || null;
-    const framerBase = editFramerState.baseImageSrc || editDraftShowcaseImage;
-    if (framerBase) {
+    if (!finalShowcase && finalImages[0]) {
       try {
-        const baked = await bakeShowcaseFraming(framerBase, editFramerState);
-        if (baked) {
-          finalShowcase = baked;
-          editDraftShowcaseImage = baked;
-        }
-      } catch (err) {
-        console.warn("[Framer Edit] Errore bake canvas:", err);
+        finalShowcase = await autoAdaptShowcaseImage(finalImages[0]);
+      } catch (_e) {
+        finalShowcase = finalImages[0];
       }
+    } else if (finalShowcase) {
+      try {
+        finalShowcase = await autoAdaptShowcaseImage(finalShowcase);
+      } catch (_e) {}
     }
 
     const updatedItem = {
@@ -2309,11 +2229,6 @@
       frontNotes: notes,
       backNotes: null,
       showcaseImage: finalShowcase,
-      showcaseBaseImage: framerBase || null,
-      showcasePosX: editFramerState.posX,
-      showcasePosY: editFramerState.posY,
-      showcaseZoom: editFramerState.zoom,
-      showcaseFitMode: editFramerState.fitMode || "cover",
       images: {
         front: finalImages[0] || "",
         back: finalImages[1] || null,
@@ -2336,12 +2251,12 @@
         openInspectionModal(updatedItem.id, activeModalImageIndex);
       }
 
-      showToast(`✓ MODIFICHE E INQUADRATURA SALVATE IN LOCALE (${updatedItem.code})!`);
+      showToast(`✓ MODIFICHE E FOTO VETRINA SALVATE IN LOCALE (${updatedItem.code})!`);
 
       // 5. Sincronizzazione Cloud in background ("salvare nel claude per tutti i dispositivi al mondo")
       RDPCloud.saveGarment(updatedItem).then((cloudRes) => {
         if (cloudRes && cloudRes.syncedToCloud) {
-          showToast(`✓ MODIFICHE SALVATE PERMANENTEMENTE NEL CLOUD PER TUTTI I DISPOSITIVI (${updatedItem.code})!`);
+          showToast(`✓ MODIFICHE E FOTO VETRINA SALVATE NEL CLOUD PER TUTTI I DISPOSITIVI (${updatedItem.code})!`);
         }
       }).catch((cloudErr) => {
         console.warn("[RDP Cloud] Errore sync differito:", cloudErr);
@@ -2836,57 +2751,37 @@
         if (files && files[0]) handleShowcaseUploadFile(files[0], false);
       });
     }
+
+    if (uploadShowcaseChangeBtn && uploadShowcaseFileInput) {
+      uploadShowcaseChangeBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        uploadShowcaseFileInput.value = "";
+        uploadShowcaseFileInput.click();
+      });
+    }
+
+    if (uploadShowcaseUsePhoto1Btn) {
+      uploadShowcaseUsePhoto1Btn.addEventListener("click", async (e) => {
+        e.stopPropagation();
+        const photo1 = uploadDraftResults && uploadDraftResults[0] ? uploadDraftResults[0].processedDataUrl : null;
+        if (photo1) {
+          uploadShowcaseDataUrl = await autoAdaptShowcaseImage(photo1);
+          renderUploadShowcaseSlot();
+          showToast("✓ 1ª FOTO DEL CAPO ADATTATA AUTOMATICAMENTE A PIENO RETTANGOLO [3:4]!");
+        } else {
+          showToast("PRIMA CARICA UNA FOTO DEL CAPO");
+        }
+      });
+    }
+
     if (uploadShowcaseRemoveBtn) {
       uploadShowcaseRemoveBtn.addEventListener("click", (e) => {
         e.stopPropagation();
         uploadShowcaseDataUrl = null;
-        uploadFramerState.baseImageSrc = null;
         renderUploadShowcaseSlot();
-        showToast("FOTO VETRINA RIMOSSA");
+        showToast("FOTO VETRINA DEDICATA RIMOSSA (VERRÀ USATA LA 1ª FOTO DEL CAPO)");
       });
     }
-    if (uploadShowcaseFramerRemoveBtn) {
-      uploadShowcaseFramerRemoveBtn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        uploadShowcaseDataUrl = null;
-        uploadFramerState.baseImageSrc = null;
-        renderUploadShowcaseSlot();
-        showToast("FOTO VETRINA RIMOSSA");
-      });
-    }
-
-    // 3:4 Showcase Framer Viewport Drag and Controls (Upload Modal)
-    setupFramerViewportDrag(uploadShowcaseViewport, uploadFramerState, updateUploadFramerLivePreview);
-
-    const onApplyUploadFramer = (e) => {
-      if (e && e.preventDefault) e.preventDefault();
-      const src = uploadFramerState.baseImageSrc || uploadShowcaseDataUrl;
-      if (!src) return;
-      if (uploadShowcaseViewport) {
-        uploadShowcaseViewport.classList.add("framer-locked-flash");
-        setTimeout(() => uploadShowcaseViewport.classList.remove("framer-locked-flash"), 600);
-      }
-      showToast("✓ INQUADRATURA BLOCCATA E CALIBRATA AL RETTANGOLO [3:4]");
-    };
-
-    const onUsePhoto1UploadFramer = (e) => {
-      if (e && e.preventDefault) e.preventDefault();
-      const photo1 = uploadDraftResults && uploadDraftResults[0] ? uploadDraftResults[0].processedDataUrl : null;
-      if (photo1) {
-        uploadFramerState.baseImageSrc = photo1;
-        uploadFramerState.posX = 50;
-        uploadFramerState.posY = 50;
-        uploadFramerState.zoom = 100;
-        uploadFramerState.fitMode = "cover";
-        uploadShowcaseDataUrl = photo1;
-        renderUploadShowcaseSlot();
-        showToast("✓ 1ª FOTO DEL CAPO IMPOSTATA COME VETRINA! ADATTA ORA L'INQUADRATURA");
-      } else {
-        showToast("PRIMA CARICA UNA FOTO DEL CAPO");
-      }
-    };
-
-    setupFramerControls("upload", uploadFramerState, updateUploadFramerLivePreview, onApplyUploadFramer, onUsePhoto1UploadFramer, uploadShowcaseFileInput);
 
     // Dedicated Showcase Photo bindings for Edit Modal
     if (editShowcaseDropzone && editShowcaseFileInput) {
@@ -2905,56 +2800,36 @@
         if (files && files[0]) handleShowcaseUploadFile(files[0], true);
       });
     }
+
+    if (editShowcaseChangeBtn && editShowcaseFileInput) {
+      editShowcaseChangeBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        editShowcaseFileInput.value = "";
+        editShowcaseFileInput.click();
+      });
+    }
+
+    if (editShowcaseUsePhoto1Btn) {
+      editShowcaseUsePhoto1Btn.addEventListener("click", async (e) => {
+        e.stopPropagation();
+        if (editDraftImages && editDraftImages[0]) {
+          editDraftShowcaseImage = await autoAdaptShowcaseImage(editDraftImages[0]);
+          renderEditShowcaseSlot();
+          showToast("✓ 1ª FOTO DEL CAPO ADATTATA AUTOMATICAMENTE A PIENO RETTANGOLO [3:4]!");
+        } else {
+          showToast("NESSUNA FOTO DEL CAPO PRESENTE");
+        }
+      });
+    }
+
     if (editShowcaseRemoveBtn) {
       editShowcaseRemoveBtn.addEventListener("click", (e) => {
         e.stopPropagation();
         editDraftShowcaseImage = null;
-        editFramerState.baseImageSrc = null;
         renderEditShowcaseSlot();
-        showToast("FOTO VETRINA RIMOSSA");
+        showToast("FOTO VETRINA DEDICATA RIMOSSA (VERRÀ USATA LA 1ª FOTO DEL CAPO)");
       });
     }
-    if (editShowcaseFramerRemoveBtn) {
-      editShowcaseFramerRemoveBtn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        editDraftShowcaseImage = null;
-        editFramerState.baseImageSrc = null;
-        renderEditShowcaseSlot();
-        showToast("FOTO VETRINA RIMOSSA");
-      });
-    }
-
-    // 3:4 Showcase Framer Viewport Drag and Controls (Edit Modal)
-    setupFramerViewportDrag(editShowcaseViewport, editFramerState, updateEditFramerLivePreview);
-
-    const onApplyEditFramer = (e) => {
-      if (e && e.preventDefault) e.preventDefault();
-      const src = editFramerState.baseImageSrc || editDraftShowcaseImage;
-      if (!src) return;
-      if (editShowcaseViewport) {
-        editShowcaseViewport.classList.add("framer-locked-flash");
-        setTimeout(() => editShowcaseViewport.classList.remove("framer-locked-flash"), 600);
-      }
-      showToast("✓ INQUADRATURA BLOCCATA E CALIBRATA AL RETTANGOLO [3:4]");
-    };
-
-    const onUsePhoto1EditFramer = (e) => {
-      if (e && e.preventDefault) e.preventDefault();
-      if (editDraftImages && editDraftImages[0]) {
-        editFramerState.baseImageSrc = editDraftImages[0];
-        editFramerState.posX = 50;
-        editFramerState.posY = 50;
-        editFramerState.zoom = 100;
-        editFramerState.fitMode = "cover";
-        editDraftShowcaseImage = editDraftImages[0];
-        renderEditShowcaseSlot();
-        showToast("✓ 1ª FOTO DEL CAPO IMPOSTATA COME VETRINA! ADATTA ORA L'INQUADRATURA");
-      } else {
-        showToast("NESSUNA FOTO DEL CAPO PRESENTE");
-      }
-    };
-
-    setupFramerControls("edit", editFramerState, updateEditFramerLivePreview, onApplyEditFramer, onUsePhoto1EditFramer, editShowcaseFileInput);
 
     if (editAddPhotoZone && editAddPhotoFileInput) {
       editAddPhotoZone.addEventListener("click", (e) => {
