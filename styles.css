@@ -561,10 +561,12 @@ img {
 }
 
 .filter-btn.is-active {
-  background-color: #FFFFFF;
-  color: #0A0B0E;
-  border-color: #FFFFFF;
-  box-shadow: 0 2px 10px rgba(255, 255, 255, 0.15);
+  background-image: linear-gradient(rgba(17, 17, 17, 0.28), rgba(17, 17, 17, 0.28)), var(--camo-pattern);
+  background-size: 130px 130px;
+  color: #FFFFFF;
+  border-color: var(--camo-sand);
+  box-shadow: 0 2px 14px rgba(75, 83, 32, 0.45);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9);
 }
 
 .filter-btn .filter-btn__count {
@@ -573,8 +575,8 @@ img {
 }
 
 .filter-btn.is-active .filter-btn__count {
-  color: #0A0B0E;
-  opacity: 0.85;
+  color: var(--camo-sand);
+  opacity: 1;
   font-weight: 900;
 }
 
@@ -916,9 +918,12 @@ img {
 }
 
 .quick-vote-btn.is-voted {
-  background-color: #FFFFFF;
-  color: #000000;
+  background-image: linear-gradient(rgba(17, 17, 17, 0.25), rgba(17, 17, 17, 0.25)), var(--camo-pattern);
+  background-size: 80px 80px;
+  border: 1px solid var(--camo-sand);
+  color: #FFFFFF;
   font-weight: 900;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9);
 }
 
 /* Physics Active Card State */
@@ -1244,14 +1249,16 @@ img {
 }
 
 .modal-header .camo-badge {
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.16);
+  background-image: linear-gradient(rgba(17, 17, 17, 0.28), rgba(17, 17, 17, 0.28)), var(--camo-pattern);
+  background-size: 110px 110px;
+  border: 1px solid var(--camo-sand);
   color: #FFFFFF;
   border-radius: 4px;
   font-size: 9.5px;
   letter-spacing: 0.08em;
   padding: 3px 8px;
-  text-shadow: none;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9);
+  box-shadow: 0 0 8px rgba(75, 83, 32, 0.4);
 }
 
 .modal-close-btn {
@@ -1423,10 +1430,12 @@ img {
 }
 
 .modal-view-tab.is-active {
-  background-color: #FFFFFF;
-  color: #0A0B0E;
-  border-color: #FFFFFF;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.6);
+  background-image: linear-gradient(rgba(17, 17, 17, 0.28), rgba(17, 17, 17, 0.28)), var(--camo-pattern);
+  background-size: 110px 110px;
+  color: #FFFFFF;
+  border-color: var(--camo-sand);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9);
+  box-shadow: 0 2px 10px rgba(75, 83, 32, 0.45);
 }
 
 .modal-view-tab:disabled {
@@ -1477,10 +1486,12 @@ img {
 }
 
 .voting-user-status.is-voted {
-  background-color: rgba(212, 175, 55, 0.12);
-  color: #E5C365;
-  border: 1px solid rgba(212, 175, 55, 0.4);
-  text-shadow: none;
+  background-image: linear-gradient(rgba(17, 17, 17, 0.28), rgba(17, 17, 17, 0.28)), var(--camo-pattern);
+  background-size: 110px 110px;
+  color: #FFFFFF;
+  border: 1px solid var(--camo-sand);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9);
+  box-shadow: 0 0 10px rgba(75, 83, 32, 0.4);
 }
 
 .voting-scale {
@@ -1520,11 +1531,13 @@ img {
 }
 
 .vote-num-btn.is-active {
-  background-color: #FFFFFF;
-  color: #0A0B0E;
-  border: 1px solid #FFFFFF;
+  background-image: linear-gradient(rgba(17, 17, 17, 0.25), rgba(17, 17, 17, 0.25)), var(--camo-pattern);
+  background-size: 100px 100px;
+  color: #FFFFFF;
+  border: 1px solid var(--camo-sand);
   font-weight: 900;
-  box-shadow: 0 0 16px rgba(255, 255, 255, 0.6);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9);
+  box-shadow: 0 0 14px rgba(75, 83, 32, 0.6);
   transform: scale(1.05);
   animation: votePop 0.28s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
@@ -1549,9 +1562,10 @@ img {
 
 .voting-meter__fill {
   height: 100%;
-  background: linear-gradient(90deg, #A8892D 0%, #D4AF37 50%, #F5DE88 100%);
+  background-image: linear-gradient(rgba(17, 17, 17, 0.2), rgba(17, 17, 17, 0.2)), var(--camo-pattern);
+  background-size: 80px 80px;
   border-radius: 3px;
-  box-shadow: 0 0 8px rgba(212, 175, 55, 0.5);
+  box-shadow: 0 0 10px rgba(75, 83, 32, 0.6);
   transition: width 0.35s ease;
 }
 
@@ -5320,8 +5334,13 @@ img {
 
   #inspectionModal .camo-badge {
     font-size: 8.5px !important;
-    padding: 2px 5px !important;
+    padding: 2px 6px !important;
     white-space: nowrap !important;
+    background-image: linear-gradient(rgba(17, 17, 17, 0.28), rgba(17, 17, 17, 0.28)), var(--camo-pattern) !important;
+    background-size: 110px 110px !important;
+    border: 1px solid var(--camo-sand) !important;
+    color: #FFFFFF !important;
+    border-radius: 4px !important;
   }
 
   #inspectionModal .modal-cat {
@@ -5500,11 +5519,13 @@ img {
   }
 
   #inspectionModal .vote-num-btn.is-active {
-    background: #FFFFFF !important;
-    color: #0A0B0E !important;
-    border-color: #FFFFFF !important;
-    box-shadow: 0 0 14px rgba(255, 255, 255, 0.6) !important;
+    background-image: linear-gradient(rgba(17, 17, 17, 0.25), rgba(17, 17, 17, 0.25)), var(--camo-pattern) !important;
+    background-size: 90px 90px !important;
+    color: #FFFFFF !important;
+    border-color: var(--camo-sand) !important;
+    box-shadow: 0 0 12px rgba(75, 83, 32, 0.6) !important;
     font-weight: 900 !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9) !important;
   }
 
   #inspectionModal .modal-vote-send-hint {
