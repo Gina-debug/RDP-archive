@@ -200,6 +200,16 @@
   const uploadExtraFileInput = document.getElementById("uploadExtraFileInput");
   let draftExtraResults = [];
 
+  // Dedicated Foto Vetrina Upload Elements
+  const uploadShowcaseCard = document.getElementById("uploadShowcaseCard");
+  const uploadShowcaseFileInput = document.getElementById("uploadShowcaseFileInput");
+  const uploadShowcaseDropzone = document.getElementById("uploadShowcaseDropzone");
+  const uploadShowcasePreviewWrap = document.getElementById("uploadShowcasePreviewWrap");
+  const uploadShowcasePreviewImg = document.getElementById("uploadShowcasePreviewImg");
+  const uploadShowcaseRemoveBtn = document.getElementById("uploadShowcaseRemoveBtn");
+  const uploadShowcasePlaceholder = document.getElementById("uploadShowcasePlaceholder");
+  let uploadShowcaseDataUrl = null;
+
   // Unified Multi-photo Upload Elements & State
   const uploadPhotosList = document.getElementById("uploadPhotosList");
   const uploadDropzoneUnified = document.getElementById("uploadDropzoneUnified");
@@ -236,6 +246,17 @@
   const editGarmentForm = document.getElementById("editGarmentForm");
   const editGarmentCode = document.getElementById("editGarmentCode");
   const editGarmentModalTitle = document.getElementById("editGarmentModalTitle");
+
+  // Dedicated Foto Vetrina in Creator Edit Modal
+  const editShowcaseCard = document.getElementById("editShowcaseCard");
+  const editShowcaseFileInput = document.getElementById("editShowcaseFileInput");
+  const editShowcaseDropzone = document.getElementById("editShowcaseDropzone");
+  const editShowcasePreviewWrap = document.getElementById("editShowcasePreviewWrap");
+  const editShowcasePreviewImg = document.getElementById("editShowcasePreviewImg");
+  const editShowcaseRemoveBtn = document.getElementById("editShowcaseRemoveBtn");
+  const editShowcasePlaceholder = document.getElementById("editShowcasePlaceholder");
+  let editDraftShowcaseImage = null;
+
   const editImagesCountLabel = document.getElementById("editImagesCountLabel");
   const editPhotosList = document.getElementById("editPhotosList");
   const editAddPhotoZone = document.getElementById("editAddPhotoZone");
@@ -265,6 +286,8 @@
   // ========================================================================
   // IMAGE HELPERS (MULTI-IMAGE SUPPORT & FOTO VETRINA)
   // ========================================================================
+  // Restituisce ESCLUSIVAMENTE le foto del capo destinate all'ispezione fullscreen.
+  // La Foto Vetrina NON fa parte di questa lista e non deve MAI comparire nell'ispezione!
   function getItemImages(item) {
     if (!item) return [];
     if (Array.isArray(item.images)) {
@@ -285,9 +308,11 @@
     return [];
   }
 
-  // Restituisce la Foto Vetrina del capo (impostata dal creator) o la prima foto
+  // Restituisce la Foto Vetrina del capo (mostrata SOLO nelle card del catalogo)
+  // Se non è stata caricata una foto vetrina dedicata, ripiega sulla 1ª foto del capo
   function getShowcaseImage(item) {
     if (!item) return "";
+    if (item.showcaseImage) return item.showcaseImage;
     const imgs = getItemImages(item);
     if (imgs.length === 0) return "";
     const idx =
@@ -797,12 +822,12 @@
       </div>
     `;
 
-    // Hover desktop: mostra la 1ª foto caricata (o foto successiva se già vetrina)
+    // Hover desktop: mostra la 1ª foto caricata del capo
     card.addEventListener("mouseenter", () => {
       const currentItem = allItems.find((i) => i.id === card.dataset.itemId);
       if (!currentItem) return;
       const imgs = getItemImages(currentItem);
-      if (imgs.length > 1) {
+      if (imgs.length > 0) {
         const currentShowcase = getShowcaseImage(currentItem);
         // Mostra la 1ª foto caricata dall'utente su quel capo (imgs[0])
         const hoverTargetSrc = (currentShowcase !== imgs[0]) ? imgs[0] : (imgs[1] || imgs[0]);
@@ -815,7 +840,7 @@
             img.src = hoverTargetSrc;
             img.style.opacity = "1";
             img.style.transform = "scale(1.05)";
-          }, 70);
+          }, 60);
         }
       }
     });
@@ -833,7 +858,7 @@
           img.src = currentShowcase;
           img.style.opacity = "1";
           img.style.transform = "scale(1)";
-        }, 70);
+        }, 60);
       }
     });
 
@@ -1382,12 +1407,16 @@
     document.body.style.overflow = "";
     uploadDraftResults = [];
     uploadDraftShowcaseIndex = 0;
+    uploadShowcaseDataUrl = null;
+    renderUploadShowcaseSlot();
   }
 
   function resetUploadForm() {
     if (uploadForm) uploadForm.reset();
     uploadDraftResults = [];
     uploadDraftShowcaseIndex = 0;
+    uploadShowcaseDataUrl = null;
+    renderUploadShowcaseSlot();
     renderUploadPhotosManager();
     if (uploadErrorMsg) uploadErrorMsg.hidden = true;
     if (uploadSubmitBtn) uploadSubmitBtn.disabled = true;
@@ -1399,14 +1428,74 @@
     return /\.(png|jpe?g|webp|heic|heif|avif|bmp)$/i.test(file.name || "");
   }
 
-  // Multi-Photo Upload Manager: Gestione foto illimitate e selezione Foto Vetrina
+  // ========================================================================
+  // FOTO VETRINA MANAGEMENT (DEDICATA // SEPARATA DALLE FOTO FULLSCREEN)
+  // ========================================================================
+  function renderUploadShowcaseSlot() {
+    if (!uploadShowcasePreviewWrap || !uploadShowcasePlaceholder) return;
+    if (uploadShowcaseDataUrl) {
+      if (uploadShowcasePreviewImg) uploadShowcasePreviewImg.src = uploadShowcaseDataUrl;
+      uploadShowcasePreviewWrap.hidden = false;
+      uploadShowcasePlaceholder.hidden = true;
+    } else {
+      uploadShowcasePreviewWrap.hidden = true;
+      uploadShowcasePlaceholder.hidden = false;
+      if (uploadShowcasePreviewImg) uploadShowcasePreviewImg.src = "";
+    }
+  }
+
+  function renderEditShowcaseSlot() {
+    if (!editShowcasePreviewWrap || !editShowcasePlaceholder) return;
+    if (editDraftShowcaseImage) {
+      if (editShowcasePreviewImg) editShowcasePreviewImg.src = editDraftShowcaseImage;
+      editShowcasePreviewWrap.hidden = false;
+      editShowcasePlaceholder.hidden = true;
+    } else {
+      editShowcasePreviewWrap.hidden = true;
+      editShowcasePlaceholder.hidden = false;
+      if (editShowcasePreviewImg) editShowcasePreviewImg.src = "";
+    }
+  }
+
+  async function handleShowcaseUploadFile(file, isEdit = false) {
+    if (!file) return;
+    if (!isValidImageFile(file)) {
+      if (isEdit) showEditError("FORMATO NON VALIDO PER LA FOTO VETRINA (USA PNG, JPG O WEBP).");
+      else showUploadError("FORMATO NON VALIDO PER LA FOTO VETRINA (USA PNG, JPG O WEBP).");
+      return;
+    }
+    const options = {
+      bgNormalize: true,
+      studioEnhance: true,
+      transparentBg: false,
+      bgTolerance: 28,
+      paddingPct: 0.06
+    };
+    try {
+      const res = await RDPImageProcessor.processGarmentFile(file, options);
+      if (isEdit) {
+        editDraftShowcaseImage = res.processedDataUrl;
+        renderEditShowcaseSlot();
+        showToast("✓ FOTO VETRINA AGGIORNATA (SOLO CATALOGO)");
+      } else {
+        uploadShowcaseDataUrl = res.processedDataUrl;
+        renderUploadShowcaseSlot();
+        showToast("✓ FOTO VETRINA CARICATA (SOLO CATALOGO)");
+      }
+    } catch (err) {
+      if (isEdit) showEditError("ERRORE ELABORAZIONE FOTO VETRINA: " + (err.message || ""));
+      else showUploadError("ERRORE ELABORAZIONE FOTO VETRINA: " + (err.message || ""));
+    }
+  }
+
+  // Multi-Photo Upload Manager: Gestione foto del capo visibili a tutto schermo
   function renderUploadPhotosManager() {
     if (!uploadPhotosList) return;
 
     if (uploadDraftResults.length === 0) {
       uploadPhotosList.innerHTML = "";
       if (uploadUnifiedFileName) {
-        uploadUnifiedFileName.textContent = "TOCCA O TRASCINA PER AGGIUNGERE FOTO";
+        uploadUnifiedFileName.textContent = "TOCCA O TRASCINA PER CARICARE LE FOTO DEL CAPO";
       }
       if (uploadDropzoneUnified) {
         uploadDropzoneUnified.classList.remove("has-file");
@@ -1427,14 +1516,9 @@
       return;
     }
 
-    if (uploadDraftShowcaseIndex >= uploadDraftResults.length) {
-      uploadDraftShowcaseIndex = Math.max(0, uploadDraftResults.length - 1);
-    }
-
     uploadPhotosList.innerHTML = uploadDraftResults.map((item, idx) => {
-      const isShowcase = idx === uploadDraftShowcaseIndex;
-      const tag = `FOTO ${pad2(idx + 1)}`;
-      const hint = isShowcase ? "★ FOTO VETRINA (MOSTRATA IN CATALOGO)" : "Foto capo";
+      const tag = `FOTO CAPO ${pad2(idx + 1)}`;
+      const hint = "Foto visibile nell'ispezione a schermo intero";
 
       return `
         <div class="upload-photo-item" data-idx="${idx}">
@@ -1447,9 +1531,6 @@
             <span class="upload-photo-hint">${hint}</span>
           </div>
           <div class="upload-photo-btns">
-            <button type="button" class="btn-set-showcase ${isShowcase ? "is-showcase" : ""}" data-upload-action="showcase" data-idx="${idx}" title="Imposta come foto vetrina">
-              ★ ${isShowcase ? "VETRINA ATTIVA" : "FOTO VETRINA"}
-            </button>
             ${idx > 0 ? `<button type="button" class="btn-edit-action btn-edit-action--move" data-upload-action="up" data-idx="${idx}" title="Sposta prima">▲</button>` : ""}
             ${idx < uploadDraftResults.length - 1 ? `<button type="button" class="btn-edit-action btn-edit-action--move" data-upload-action="down" data-idx="${idx}" title="Sposta dopo">▼</button>` : ""}
             ${uploadDraftResults.length > 1 ? `<button type="button" class="btn-edit-action btn-edit-action--delete" data-upload-action="delete" data-idx="${idx}" title="Elimina foto">✕</button>` : ""}
@@ -1464,42 +1545,24 @@
         const action = btn.dataset.uploadAction;
         const idx = Number(btn.dataset.idx);
 
-        if (action === "showcase") {
-          uploadDraftShowcaseIndex = idx;
-          renderUploadPhotosManager();
-        } else if (action === "delete") {
+        if (action === "delete") {
           uploadDraftResults.splice(idx, 1);
-          if (uploadDraftShowcaseIndex === idx) {
-            uploadDraftShowcaseIndex = 0;
-          } else if (uploadDraftShowcaseIndex > idx) {
-            uploadDraftShowcaseIndex--;
-          }
           renderUploadPhotosManager();
         } else if (action === "up" && idx > 0) {
           const tmp = uploadDraftResults[idx];
           uploadDraftResults[idx] = uploadDraftResults[idx - 1];
           uploadDraftResults[idx - 1] = tmp;
-          if (uploadDraftShowcaseIndex === idx) {
-            uploadDraftShowcaseIndex = idx - 1;
-          } else if (uploadDraftShowcaseIndex === idx - 1) {
-            uploadDraftShowcaseIndex = idx;
-          }
           renderUploadPhotosManager();
         } else if (action === "down" && idx < uploadDraftResults.length - 1) {
           const tmp = uploadDraftResults[idx];
           uploadDraftResults[idx] = uploadDraftResults[idx + 1];
           uploadDraftResults[idx + 1] = tmp;
-          if (uploadDraftShowcaseIndex === idx) {
-            uploadDraftShowcaseIndex = idx + 1;
-          } else if (uploadDraftShowcaseIndex === idx + 1) {
-            uploadDraftShowcaseIndex = idx;
-          }
           renderUploadPhotosManager();
         }
       });
     });
 
-    const activeShowcase = uploadDraftResults[uploadDraftShowcaseIndex] || uploadDraftResults[0];
+    const activeShowcase = uploadDraftResults[0];
     if (processedPreviewImg && activeShowcase) {
       processedPreviewImg.src = activeShowcase.processedDataUrl;
       processedPreviewImg.hidden = false;
@@ -1654,7 +1717,7 @@
       frontNotes: notes,
       backNotes: null,
       notes,
-      showcaseImageIndex: uploadDraftShowcaseIndex,
+      showcaseImage: uploadShowcaseDataUrl || null,
       createdAt: Date.now(),
       images: {
         front: allUploaded[0] || "",
@@ -1665,15 +1728,19 @@
     };
 
     try {
-      const res = await RDPCloud.saveGarment(newItem);
+      await RDPStorage.saveUserItem(newItem);
       closeUploadModal();
       switchMainView("showcase");
       await reloadArchiveData();
-      if (res && res.syncedToCloud) {
-        showToast(`✓ CAPO ${newItem.code} AGGIUNTO E SINCRONIZZATO! (${allUploaded.length} FOTO)`);
-      } else {
-        showToast(`⚠ CAPO ${newItem.code} SALVATO IN LOCALE (${res && res.error ? res.error : "DATABASE NON CREATO"}).`);
-      }
+      showToast(`✓ CAPO ${newItem.code} AGGIUNTO ALL'ARCHIVIO! (${allUploaded.length} FOTO)`);
+
+      RDPCloud.saveGarment(newItem).then((res) => {
+        if (res && res.syncedToCloud) {
+          showToast(`✓ CAPO ${newItem.code} SINCRONIZZATO SU FIREBASE!`);
+        }
+      }).catch((err) => {
+        console.warn("[RDP Cloud] Sync differito:", err);
+      });
     } catch (_err) {
       showUploadError("ERRORE SALVATAGGIO CAPO.");
     }
@@ -1686,7 +1753,7 @@
   function renderEditImagesManager() {
     if (!editPhotosList) return;
     if (editImagesCountLabel) {
-      editImagesCountLabel.textContent = `FOTO DEL CAPO (${editDraftImages.length} FOTO ATTIVE) // TOCCA PER CAMBIARE O AGGIUNGERE`;
+      editImagesCountLabel.textContent = `FOTO DEL CAPO (${editDraftImages.length} FOTO ATTIVE) // VISIBILI A SCHERMO INTERO`;
     }
 
     if (editDraftImages.length === 0) {
@@ -1699,14 +1766,9 @@
       return;
     }
 
-    if (editDraftShowcaseIndex >= editDraftImages.length) {
-      editDraftShowcaseIndex = Math.max(0, editDraftImages.length - 1);
-    }
-
     editPhotosList.innerHTML = editDraftImages.map((src, idx) => {
-      const isShowcase = idx === editDraftShowcaseIndex;
-      const tag = `FOTO ${pad2(idx + 1)}`;
-      const hint = isShowcase ? "★ FOTO VETRINA (MOSTRATA IN CATALOGO)" : "Foto capo";
+      const tag = `FOTO CAPO ${pad2(idx + 1)}`;
+      const hint = "Foto visibile nell'ispezione a schermo intero";
 
       return `
         <div class="edit-photo-item" data-idx="${idx}">
@@ -1719,9 +1781,6 @@
             <span class="edit-photo-hint">${hint}</span>
           </div>
           <div class="edit-photo-btns">
-            <button type="button" class="btn-set-showcase ${isShowcase ? "is-showcase" : ""}" data-action="showcase" data-idx="${idx}" title="Imposta come foto vetrina">
-              ★ ${isShowcase ? "VETRINA ATTIVA" : "FOTO VETRINA"}
-            </button>
             ${idx > 0 ? `<button type="button" class="btn-edit-action btn-edit-action--move" data-action="up" data-idx="${idx}" title="Sposta prima">▲</button>` : ""}
             ${idx < editDraftImages.length - 1 ? `<button type="button" class="btn-edit-action btn-edit-action--move" data-action="down" data-idx="${idx}" title="Sposta dopo">▼</button>` : ""}
             <button type="button" class="btn-edit-action btn-edit-action--replace" data-action="replace" data-idx="${idx}">✎ CAMBIA</button>
@@ -1737,10 +1796,7 @@
         const action = btn.dataset.action;
         const idx = Number(btn.dataset.idx);
 
-        if (action === "showcase") {
-          editDraftShowcaseIndex = idx;
-          renderEditImagesManager();
-        } else if (action === "replace") {
+        if (action === "replace") {
           replacingPhotoIndex = idx;
           if (editReplacePhotoFileInput) {
             editReplacePhotoFileInput.value = "";
@@ -1748,39 +1804,23 @@
           }
         } else if (action === "delete") {
           editDraftImages.splice(idx, 1);
-          if (editDraftShowcaseIndex === idx) {
-            editDraftShowcaseIndex = 0;
-          } else if (editDraftShowcaseIndex > idx) {
-            editDraftShowcaseIndex--;
-          }
           renderEditImagesManager();
         } else if (action === "up" && idx > 0) {
           const tmp = editDraftImages[idx];
           editDraftImages[idx] = editDraftImages[idx - 1];
           editDraftImages[idx - 1] = tmp;
-          if (editDraftShowcaseIndex === idx) {
-            editDraftShowcaseIndex = idx - 1;
-          } else if (editDraftShowcaseIndex === idx - 1) {
-            editDraftShowcaseIndex = idx;
-          }
           renderEditImagesManager();
         } else if (action === "down" && idx < editDraftImages.length - 1) {
           const tmp = editDraftImages[idx];
           editDraftImages[idx] = editDraftImages[idx + 1];
           editDraftImages[idx + 1] = tmp;
-          if (editDraftShowcaseIndex === idx) {
-            editDraftShowcaseIndex = idx + 1;
-          } else if (editDraftShowcaseIndex === idx + 1) {
-            editDraftShowcaseIndex = idx;
-          }
           renderEditImagesManager();
         }
       });
     });
 
     if (editProcessedPreviewImg && editDraftImages[0]) {
-      const previewSrc = editDraftImages[editDraftShowcaseIndex] || editDraftImages[0];
-      editProcessedPreviewImg.src = previewSrc;
+      editProcessedPreviewImg.src = editDraftImages[0];
       editProcessedPreviewImg.hidden = false;
     }
   }
@@ -1796,10 +1836,8 @@
     if (!item) return;
 
     editingGarmentId = item.id;
+    editDraftShowcaseImage = item.showcaseImage || null;
     editDraftImages = [...getItemImages(item)];
-    editDraftShowcaseIndex = typeof item.showcaseImageIndex === "number" && item.showcaseImageIndex >= 0 && item.showcaseImageIndex < editDraftImages.length
-      ? item.showcaseImageIndex
-      : 0;
     replacingPhotoIndex = null;
     isProcessingEditImage = false;
 
@@ -1819,6 +1857,7 @@
     if (inputEditColorway) inputEditColorway.value = item.colorway || "";
     if (inputEditNotes) inputEditNotes.value = item.notes || item.frontNotes || "";
 
+    renderEditShowcaseSlot();
     renderEditImagesManager();
 
     if (editErrorMsg) editErrorMsg.hidden = true;
@@ -1836,8 +1875,10 @@
       document.body.style.overflow = "";
     }
     editingGarmentId = null;
+    editDraftShowcaseImage = null;
     editDraftImages = [];
     replacingPhotoIndex = null;
+    renderEditShowcaseSlot();
   }
 
   function showEditError(msg) {
@@ -1919,7 +1960,7 @@
   }
 
   async function handleEditGarmentSubmit(e) {
-    e.preventDefault();
+    if (e && e.preventDefault) e.preventDefault();
     if (!RDPAuth.isAuthenticated()) {
       showEditError("ACCESSO NON AUTORIZZATO. EFFETTUA IL LOGIN.");
       return;
@@ -1930,30 +1971,34 @@
       return;
     }
 
-    const currentItem = allItems.find((i) => i.id === editingGarmentId);
+    const targetId = editingGarmentId || activeModalItemId;
+    const currentItem = allItems.find((i) => i.id === targetId);
     if (!currentItem) {
       showEditError("CAPO NON TROVATO.");
       return;
     }
 
-    const finalImages = editDraftImages.filter(Boolean);
+    let finalImages = editDraftImages.filter(Boolean);
+    if (finalImages.length === 0) {
+      finalImages = getItemImages(currentItem);
+    }
     if (finalImages.length === 0) {
       showEditError("IL CAPO DEVE AVERE ALMENO UNA FOTO CARICATA.");
       return;
     }
 
-    const title = inputEditTitle.value.trim().toUpperCase() || currentItem.title;
-    const category = inputEditCategory.value || currentItem.category;
-    let gsm = inputEditGsm.value.trim().toUpperCase() || currentItem.gsm || "450 GSM";
+    const title = (inputEditTitle && inputEditTitle.value.trim().toUpperCase()) || currentItem.title || "RDP ARCHIVE SPEC";
+    const category = (inputEditCategory && inputEditCategory.value) || currentItem.category || "HOODIES";
+    let gsm = (inputEditGsm && inputEditGsm.value.trim().toUpperCase()) || currentItem.gsm || "450 GSM";
     if (/^\d+$/.test(gsm)) {
       gsm = `${gsm} GSM`;
     }
 
-    const fit = inputEditFit.value.trim().toUpperCase() || currentItem.fit || "OVERSIZED BOXY";
-    const statusBadge = inputEditBadge.value.trim().toUpperCase() || currentItem.statusBadge || "CREATOR ARCHIVE";
-    const fabric = inputEditFabric.value.trim().toUpperCase() || currentItem.fabric || "100% HEAVYWEIGHT COTTON";
-    const colorway = inputEditColorway.value.trim().toUpperCase() || currentItem.colorway || "STUDIO SPEC";
-    const notes = inputEditNotes.value.trim().toUpperCase() || currentItem.notes || "";
+    const fit = (inputEditFit && inputEditFit.value.trim().toUpperCase()) || currentItem.fit || "OVERSIZED BOXY";
+    const statusBadge = (inputEditBadge && inputEditBadge.value.trim().toUpperCase()) || currentItem.statusBadge || "CREATOR ARCHIVE";
+    const fabric = (inputEditFabric && inputEditFabric.value.trim().toUpperCase()) || currentItem.fabric || "100% HEAVYWEIGHT COTTON";
+    const colorway = (inputEditColorway && inputEditColorway.value.trim().toUpperCase()) || currentItem.colorway || "STUDIO SPEC";
+    const notes = (inputEditNotes && inputEditNotes.value.trim().toUpperCase()) || currentItem.notes || "";
 
     const updatedItem = {
       ...currentItem,
@@ -1967,7 +2012,7 @@
       notes,
       frontNotes: notes,
       backNotes: null,
-      showcaseImageIndex: editDraftShowcaseIndex,
+      showcaseImage: editDraftShowcaseImage || null,
       images: {
         front: finalImages[0] || "",
         back: finalImages[1] || null,
@@ -1978,22 +2023,33 @@
     };
 
     try {
-      const res = await RDPCloud.saveGarment(updatedItem);
+      // 1. Salva sempre immediatamente in locale
+      await RDPStorage.saveUserItem(updatedItem);
+
+      // 2. Chiudi la finestra modale
       closeEditGarmentModal();
+
+      // 3. Ricarica i dati dell'archivio e aggiorna la vista
       await reloadArchiveData();
 
-      // Se il capo modificato è attualmente aperto nel modal a tutto schermo, aggiornalo sul posto
+      // 4. Se il capo modificato è attualmente aperto nel modal a tutto schermo, aggiornalo sul posto
       if (activeModalItemId === updatedItem.id && inspectionModal && !inspectionModal.hidden) {
         openInspectionModal(updatedItem.id, activeModalImageIndex);
       }
 
-      if (res && res.syncedToCloud) {
-        showToast(`✓ CAPO ${updatedItem.code} MODIFICATO E SINCRONIZZATO! (${finalImages.length} FOTO)`);
-      } else {
-        showToast(`✓ CAPO ${updatedItem.code} MODIFICATO IN LOCALE! (${finalImages.length} FOTO)`);
-      }
-    } catch (_err) {
-      showEditError("ERRORE DURANTE IL SALVATAGGIO DELLE MODIFICHE.");
+      showToast(`✓ MODIFICHE SALVATE PER ${updatedItem.code} // ${updatedItem.title}!`);
+
+      // 5. Sincronizzazione cloud in background
+      RDPCloud.saveGarment(updatedItem).then((res) => {
+        if (res && res.syncedToCloud) {
+          showToast(`✓ CAPO ${updatedItem.code} SINCRONIZZATO SU FIREBASE!`);
+        }
+      }).catch((err) => {
+        console.warn("[RDP Cloud] Sync differito:", err);
+      });
+    } catch (err) {
+      console.error("Errore salvataggio modifiche:", err);
+      showEditError("ERRORE DURANTE IL SALVATAGGIO: " + (err.message || ""));
     }
   }
 
@@ -2453,6 +2509,64 @@
       });
     }
     if (editGarmentForm) editGarmentForm.addEventListener("submit", handleEditGarmentSubmit);
+    if (editGarmentSubmitBtn) {
+      editGarmentSubmitBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        handleEditGarmentSubmit(e);
+      });
+    }
+
+    // Dedicated Showcase Photo bindings for Upload Modal
+    if (uploadShowcaseDropzone && uploadShowcaseFileInput) {
+      uploadShowcaseDropzone.addEventListener("click", (e) => {
+        if (e.target.closest("#uploadShowcaseRemoveBtn")) return;
+        uploadShowcaseFileInput.value = "";
+        uploadShowcaseFileInput.click();
+      });
+      uploadShowcaseFileInput.addEventListener("change", async (e) => {
+        if (e.target.files && e.target.files[0]) {
+          await handleShowcaseUploadFile(e.target.files[0], false);
+          uploadShowcaseFileInput.value = "";
+        }
+      });
+      setupZoneDrag(uploadShowcaseDropzone, (files) => {
+        if (files && files[0]) handleShowcaseUploadFile(files[0], false);
+      });
+    }
+    if (uploadShowcaseRemoveBtn) {
+      uploadShowcaseRemoveBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        uploadShowcaseDataUrl = null;
+        renderUploadShowcaseSlot();
+        showToast("FOTO VETRINA RIMOSSA");
+      });
+    }
+
+    // Dedicated Showcase Photo bindings for Edit Modal
+    if (editShowcaseDropzone && editShowcaseFileInput) {
+      editShowcaseDropzone.addEventListener("click", (e) => {
+        if (e.target.closest("#editShowcaseRemoveBtn")) return;
+        editShowcaseFileInput.value = "";
+        editShowcaseFileInput.click();
+      });
+      editShowcaseFileInput.addEventListener("change", async (e) => {
+        if (e.target.files && e.target.files[0]) {
+          await handleShowcaseUploadFile(e.target.files[0], true);
+          editShowcaseFileInput.value = "";
+        }
+      });
+      setupZoneDrag(editShowcaseDropzone, (files) => {
+        if (files && files[0]) handleShowcaseUploadFile(files[0], true);
+      });
+    }
+    if (editShowcaseRemoveBtn) {
+      editShowcaseRemoveBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        editDraftShowcaseImage = null;
+        renderEditShowcaseSlot();
+        showToast("FOTO VETRINA RIMOSSA");
+      });
+    }
 
     if (editAddPhotoZone && editAddPhotoFileInput) {
       editAddPhotoZone.addEventListener("click", (e) => {

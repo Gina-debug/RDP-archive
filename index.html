@@ -545,13 +545,40 @@
         <!-- Colonna Sinistra: Dropzone & Canvas Engine -->
         <div class="upload-processor-col">
           <div class="upload-dropzones" id="uploadDropzonesContainer">
-            <!-- Elenco Dinamico Foto Caricate con Selezione Foto Vetrina -->
+            <!-- SEZIONE 1: FOTO VETRINA (SOLO CATALOGO // NASCOSTA NELL'ISPEZIONE A TUTTO SCHERMO) -->
+            <div class="showcase-upload-card" id="uploadShowcaseCard">
+              <div class="showcase-upload-card__header">
+                <span class="showcase-upload-card__title">FOTO VETRINA (SOLO CATALOGO)</span>
+                <span class="showcase-upload-card__tag">NASCOSTA NELL'ISPEZIONE A TUTTO SCHERMO</span>
+              </div>
+              <div class="showcase-upload-card__body">
+                <input type="file" id="uploadShowcaseFileInput" accept="image/*,image/png,image/jpeg,image/webp" style="display: none;" />
+                <div class="showcase-upload-zone" id="uploadShowcaseDropzone" role="button" tabindex="0">
+                  <div class="showcase-preview-wrap" id="uploadShowcasePreviewWrap" hidden>
+                    <img id="uploadShowcasePreviewImg" src="" alt="Foto Vetrina" class="showcase-thumb-img" />
+                    <button class="showcase-remove-btn" id="uploadShowcaseRemoveBtn" type="button" title="Rimuovi foto vetrina">✕ RIMUOVI</button>
+                  </div>
+                  <div class="showcase-placeholder" id="uploadShowcasePlaceholder">
+                    <span class="showcase-placeholder-icon">★</span>
+                    <span class="showcase-placeholder-text">CARICA FOTO VETRINA (OPZIONALE)</span>
+                    <span class="showcase-placeholder-sub">Visibile solo nelle schede mockup del catalogo. Al passaggio del mouse mostrerà la 1ª foto del capo.</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- SEZIONE 2: FOTO DEL CAPO (VISIBILI A TUTTO SCHERMO) -->
+            <div class="garment-photos-section-header">
+              <span class="garment-photos-section-title">FOTO DEL CAPO (VISIBILI A SCHERMO INTERO) *</span>
+            </div>
+
+            <!-- Elenco Dinamico Foto Caricate con Anteprima -->
             <div class="upload-photos-list" id="uploadPhotosList"></div>
 
             <!-- Dropzone Unificato per Foto Illimitate -->
             <div class="dropzone-box dropzone-box--unified" id="uploadDropzoneUnified" role="button" tabindex="0" title="Carica foto del capo (quante ne vuoi)">
               <input type="file" id="uploadUnifiedFileInput" multiple accept="image/*,image/png,image/jpeg,image/webp" style="display: none;" />
-              <span class="dropzone-box__tag" id="uploadDropzoneTag">CARICA FOTO CAPO (QUANTE NE VUOI) *</span>
+              <span class="dropzone-box__tag" id="uploadDropzoneTag">AGGIUNGI FOTO CAPO (QUANTE NE VUOI) *</span>
               <span class="dropzone-box__label" id="uploadUnifiedFileName">TOCCA O TRASCINA PER AGGIUNGERE FOTO</span>
             </div>
           </div>
@@ -673,8 +700,31 @@
       <div class="upload-body">
         <!-- Colonna Sinistra: Gestione Immagini con Canvas Processor -->
         <div class="upload-processor-col">
+          <!-- SEZIONE 1: FOTO VETRINA (SOLO CATALOGO // NASCOSTA NELL'ISPEZIONE A TUTTO SCHERMO) -->
+          <div class="showcase-upload-card" id="editShowcaseCard">
+            <div class="showcase-upload-card__header">
+              <span class="showcase-upload-card__title">FOTO VETRINA (SOLO CATALOGO)</span>
+              <span class="showcase-upload-card__tag">NASCOSTA NELL'ISPEZIONE A TUTTO SCHERMO</span>
+            </div>
+            <div class="showcase-upload-card__body">
+              <input type="file" id="editShowcaseFileInput" accept="image/*,image/png,image/jpeg,image/webp" style="display: none;" />
+              <div class="showcase-upload-zone" id="editShowcaseDropzone" role="button" tabindex="0">
+                <div class="showcase-preview-wrap" id="editShowcasePreviewWrap" hidden>
+                  <img id="editShowcasePreviewImg" src="" alt="Foto Vetrina" class="showcase-thumb-img" />
+                  <button class="showcase-remove-btn" id="editShowcaseRemoveBtn" type="button" title="Rimuovi foto vetrina">✕ RIMUOVI</button>
+                </div>
+                <div class="showcase-placeholder" id="editShowcasePlaceholder">
+                  <span class="showcase-placeholder-icon">★</span>
+                  <span class="showcase-placeholder-text">CARICA / CAMBIA FOTO VETRINA</span>
+                  <span class="showcase-placeholder-sub">Visibile solo nelle schede del catalogo. Al passaggio mouse mostrerà la 1ª foto. Non compare nel fullscreen.</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- SEZIONE 2: FOTO DEL CAPO (VISIBILI A TUTTO SCHERMO) -->
           <div class="edit-images-overview">
-            <span class="edit-section-label" id="editImagesCountLabel">FOTO DEL CAPO (PIÙ DI 2 FOTO SUPPORTATE)</span>
+            <span class="edit-section-label" id="editImagesCountLabel">FOTO DEL CAPO (VISIBILI A SCHERMO INTERO)</span>
           </div>
 
           <!-- Dynamic container for all garment photos -->
@@ -687,7 +737,7 @@
               <span class="edit-add-photo-icon">＋</span>
               <div class="edit-add-photo-texts">
                 <span class="edit-add-photo-title">AGGIUNGI ALTRE FOTO AL CAPO</span>
-                <span class="edit-add-photo-sub">CLICCA O TRASCINA QUI (FOTO ILLIMITATE // DETTAGLI)</span>
+                <span class="edit-add-photo-sub">CLICCA O TRASCINA QUI (FOTO ILLIMITATE)</span>
               </div>
             </div>
           </div>
@@ -711,17 +761,17 @@
 
         <!-- Colonna Destra: Modifica Dati e Specifiche Tecniche -->
         <div class="upload-form-col">
-          <form id="editGarmentForm">
+          <form id="editGarmentForm" novalidate>
             <div class="upload-fields">
               <div class="field-group">
                 <label for="inputEditTitle">NOME CAPO / MODELLO *</label>
-                <input type="text" id="inputEditTitle" placeholder="ES. MILANO NORD HOODIE" required />
+                <input type="text" id="inputEditTitle" placeholder="ES. MILANO NORD HOODIE" />
               </div>
 
               <div class="field-row-2">
                 <div class="field-group">
-                  <label for="inputEditCategory">CATEGORIA *</label>
-                  <select id="inputEditCategory" required>
+                  <label for="inputEditCategory">CATEGORIA</label>
+                  <select id="inputEditCategory">
                     <option value="HOODIES">HOODIES</option>
                     <option value="TEES">TEES</option>
                     <option value="PANTS">PANTS</option>
@@ -729,15 +779,15 @@
                   </select>
                 </div>
                 <div class="field-group">
-                  <label for="inputEditGsm">PESO / GSM *</label>
-                  <input type="text" id="inputEditGsm" placeholder="ES. 450 GSM" required />
+                  <label for="inputEditGsm">PESO / GSM</label>
+                  <input type="text" id="inputEditGsm" placeholder="ES. 450 GSM" />
                 </div>
               </div>
 
               <div class="field-row-2">
                 <div class="field-group">
-                  <label for="inputEditFit">VESTIBILITÀ / FIT *</label>
-                  <input type="text" id="inputEditFit" placeholder="ES. OVERSIZED BOXY" required />
+                  <label for="inputEditFit">VESTIBILITÀ / FIT</label>
+                  <input type="text" id="inputEditFit" placeholder="ES. OVERSIZED BOXY" />
                 </div>
                 <div class="field-group">
                   <label for="inputEditBadge">BADGE DI STATO</label>
@@ -766,7 +816,7 @@
 
             <div class="upload-submit-bar">
               <button class="modal-util-btn" id="editGarmentCancelBtn" type="button">[ANNULLA]</button>
-              <button class="upload-submit-btn" id="editGarmentSubmitBtn" type="submit">[✓ SALVA MODIFICHE ↗]</button>
+              <button class="upload-submit-btn" id="editGarmentSubmitBtn" type="button">[✓ SALVA MODIFICHE ↗]</button>
             </div>
           </form>
         </div>
