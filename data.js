@@ -7,6 +7,8 @@
 const RDP_ARCHIVE = [
   {
     id: "rdp-001",
+    showcaseImage: "assets/showcase/rdp-001.jpg",
+    secondaryImage: "assets/showcase/rdp-001-back.jpg",
     code: "RDP-001",
     title: "RAGAZZI DI PROVINCIA CRUCIFIX HEAVY TEE",
     category: "TEES",
@@ -34,6 +36,8 @@ const RDP_ARCHIVE = [
   },
   {
     id: "rdp-002",
+    showcaseImage: "assets/showcase/rdp-002.jpg",
+    secondaryImage: "assets/showcase/rdp-002-back.jpg",
     code: "RDP-002",
     title: "GOTHIC BARBED CROSS HEAVY TEE",
     category: "TEES",
@@ -61,6 +65,8 @@ const RDP_ARCHIVE = [
   },
   {
     id: "rdp-003",
+    showcaseImage: "assets/showcase/rdp-003.jpg",
+    secondaryImage: "assets/showcase/rdp-003-back.jpg",
     code: "RDP-003",
     title: "ROSARY AK-47 & SPRAY CROSS TEE",
     category: "TEES",
@@ -88,6 +94,8 @@ const RDP_ARCHIVE = [
   },
   {
     id: "rdp-004",
+    showcaseImage: "assets/showcase/rdp-004.jpg",
+    secondaryImage: "assets/showcase/rdp-004-back.jpg",
     code: "RDP-004",
     title: "ITALIA TRICOLORE FLARE DENIM",
     category: "PANTS",
@@ -115,6 +123,8 @@ const RDP_ARCHIVE = [
   },
   {
     id: "rdp-005",
+    showcaseImage: "assets/showcase/rdp-005.jpg",
+    secondaryImage: "assets/showcase/rdp-005-back.jpg",
     code: "RDP-005",
     title: "PATCHWORK CAMO & LEOPARD FLARE JEANS",
     category: "PANTS",
@@ -142,6 +152,8 @@ const RDP_ARCHIVE = [
   },
   {
     id: "rdp-006",
+    showcaseImage: "assets/showcase/rdp-006.jpg",
+    secondaryImage: "assets/showcase/rdp-006-back.jpg",
     code: "RDP-006",
     title: "LEOPARD RDP OVERSIZED FLARE JEANS",
     category: "PANTS",
@@ -169,6 +181,8 @@ const RDP_ARCHIVE = [
   },
   {
     id: "rdp-007",
+    showcaseImage: "assets/showcase/rdp-007.jpg",
+    secondaryImage: "assets/showcase/rdp-007-back.jpg",
     code: "RDP-007",
     title: "CASINO ROYALE SNOW LEOPARD ZIP HOODIE",
     category: "HOODIES",
@@ -196,6 +210,8 @@ const RDP_ARCHIVE = [
   },
   {
     id: "rdp-008",
+    showcaseImage: "assets/showcase/rdp-008.jpg",
+    secondaryImage: "assets/showcase/rdp-008-back.jpg",
     code: "RDP-008",
     title: "TACTICAL WOODLAND KNUCKLE JORTS",
     category: "PANTS",
@@ -223,6 +239,8 @@ const RDP_ARCHIVE = [
   },
   {
     id: "rdp-009",
+    showcaseImage: "assets/showcase/rdp-009.jpg",
+    secondaryImage: "assets/showcase/rdp-009-back.jpg",
     code: "RDP-009",
     title: "WOODLAND BRASS KNUCKLE CONTRAST TEE",
     category: "TEES",
@@ -250,6 +268,8 @@ const RDP_ARCHIVE = [
   },
   {
     id: "rdp-010",
+    showcaseImage: "assets/showcase/rdp-010.jpg",
+    secondaryImage: "assets/showcase/rdp-010-back.jpg",
     code: "RDP-010",
     title: "PROVINCIA PATCH LIGHTER DENIM JORTS",
     category: "PANTS",
@@ -277,6 +297,8 @@ const RDP_ARCHIVE = [
   },
   {
     id: "rdp-011",
+    showcaseImage: "assets/showcase/rdp-011.jpg",
+    secondaryImage: "assets/showcase/rdp-011-back.jpg",
     code: "RDP-011",
     title: "MILITARY ROSARY GOTHIC HOODED JACKET",
     category: "HOODIES",

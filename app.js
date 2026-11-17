@@ -441,7 +441,8 @@
     if (!Array.isArray(items)) return;
     items.forEach((item) => {
       if (item && item.showcaseImage && typeof item.showcaseImage === "string") {
-        const cacheKey = `rdp_showcase_adapted_${item.id}`;
+        if (item.showcaseImage.startsWith("assets/showcase/")) return;
+        const cacheKey = `rdp_showcase_v6_${item.id}`;
         if (sessionStorage.getItem(cacheKey)) return;
         sessionStorage.setItem(cacheKey, "1");
 
@@ -1524,6 +1525,8 @@
 
           // Rilevamento bordi vuoti/bande esterne (letterboxing preesistente da rimuovere)
           let srcX = 0, srcY = 0, srcW = iw, srcH = ih;
+          let isUniformCorner = false;
+          let c1 = null;
 
           if (iw > 40 && ih > 40) {
             const testCanvas = document.createElement("canvas");
@@ -1535,8 +1538,8 @@
             tCtx.drawImage(img, 0, 0, tw, th);
             const tData = tCtx.getImageData(0, 0, tw, th).data;
 
-            const c1 = [tData[0], tData[1], tData[2], tData[3]];
-            const isUniformCorner = (c1[3] < 30) || (c1[0] > 230 && c1[1] > 230 && c1[2] > 230) || (c1[0] < 25 && c1[1] < 25 && c1[2] < 25);
+            c1 = [tData[0], tData[1], tData[2], tData[3]];
+            isUniformCorner = (c1[3] < 30) || (c1[0] > 230 && c1[1] > 230 && c1[2] > 230) || (c1[0] < 25 && c1[1] < 25 && c1[2] < 25);
 
             if (isUniformCorner) {
               const isBgPx = (r, g, b, a) => {
@@ -1615,19 +1618,43 @@
             }
           }
 
-          // COVER TOTALE: scala in modo che l'immagine COPRE AL 100% l'intero rettangolo 3:4
-          // Math.max assicura zero barre, zero bordi, zero spazi vuoti
-          const scale = Math.max(cw / srcW, ch / srcH);
-          const drawW = Math.round(srcW * scale);
-          const drawH = Math.round(srcH * scale);
-          const drawX = Math.round((cw - drawW) / 2);
-          const drawY = Math.round((ch - drawH) / 2);
+          let isTransparent = false;
+          if (isUniformCorner && c1) {
+            isTransparent = c1[3] < 30;
+            if (!isTransparent) {
+              // Riempi l'intero rettangolo 3:4 con lo stesso colore di sfondo studio (zero bande visibili)
+              ctx.fillStyle = `rgb(${c1[0]}, ${c1[1]}, ${c1[2]})`;
+              ctx.fillRect(0, 0, cw, ch);
+            }
 
-          ctx.imageSmoothingEnabled = true;
-          ctx.imageSmoothingQuality = "high";
-          ctx.drawImage(img, srcX, srcY, srcW, srcH, drawX, drawY, drawW, drawH);
+            // Fitting intelligente: il capo occupa il massimo spazio possibile (94% larghezza o 92% altezza)
+            // senza MAI tagliare le maniche, il colletto o la vita/gambe
+            const maxW = Math.round(cw * 0.94);
+            const maxH = Math.round(ch * 0.92);
+            const fitScale = Math.min(maxW / srcW, maxH / srcH);
+            const drawW = Math.round(srcW * fitScale);
+            const drawH = Math.round(srcH * fitScale);
+            const drawX = Math.round((cw - drawW) / 2);
+            const drawY = Math.round((ch - drawH) / 2);
 
-          const resultDataUrl = canvas.toDataURL("image/jpeg", 0.82);
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = "high";
+            ctx.drawImage(img, srcX, srcY, srcW, srcH, drawX, drawY, drawW, drawH);
+          } else {
+            // Foto lifestyle / editoriale complessa: scala a copertura piena 100%
+            const scale = Math.max(cw / srcW, ch / srcH);
+            const drawW = Math.round(srcW * scale);
+            const drawH = Math.round(srcH * scale);
+            const drawX = Math.round((cw - drawW) / 2);
+            const drawY = Math.round((ch - drawH) / 2);
+
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = "high";
+            ctx.drawImage(img, srcX, srcY, srcW, srcH, drawX, drawY, drawW, drawH);
+          }
+
+          const mime = isTransparent ? "image/png" : "image/jpeg";
+          const resultDataUrl = canvas.toDataURL(mime, 0.86);
           resolve(resultDataUrl);
         } catch (err) {
           console.warn("[autoAdaptShowcaseImage] Errore elaborazione:", err);

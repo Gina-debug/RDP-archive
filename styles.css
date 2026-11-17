@@ -3618,20 +3618,22 @@ img {
     position: relative;
   }
 
-  /* Fixed/Sticky Header on Smartphone */
+  /* Fixed Header on Smartphone */
   .site-header {
-    position: sticky;
+    position: fixed;
     top: 0;
+    left: 0;
+    right: 0;
     z-index: 200;
     width: 100%;
     max-width: 100%;
+    height: var(--header-height);
     background-color: rgba(10, 11, 14, 0.94);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
     box-sizing: border-box;
-    overflow: hidden;
   }
 
   /* Compact Smoothly Scrollable Top Main Bar on Mobile */
@@ -3760,29 +3762,35 @@ img {
     z-index: 300;
   }
 
-  .archive-main,
+  .archive-main {
+    margin-top: 0 !important;
+    padding-top: var(--header-height) !important;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
   .main-page-view {
     margin-top: 0 !important;
     padding-top: 0;
     width: 100%;
     max-width: 100%;
     box-sizing: border-box;
-    overflow-x: hidden;
   }
 
   /* Centered, Clean Sub-Toolbar on Mobile */
   .directory-bar {
     position: sticky;
-    top: 48px;
+    top: var(--header-height);
     z-index: 100;
     display: flex;
     align-items: center;
     justify-content: center;
     width: 100%;
     max-width: 100%;
-    padding: 6px 8px;
+    padding: 8px 10px;
     box-sizing: border-box;
-    background-color: rgba(10, 11, 14, 0.90);
+    background-color: rgba(10, 11, 14, 0.92);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
@@ -3792,22 +3800,30 @@ img {
   .filter-group {
     display: flex;
     align-items: center;
-    justify-content: center;
-    gap: 4px;
+    justify-content: flex-start;
+    gap: 6px;
     width: 100%;
     max-width: 100%;
-    flex-wrap: wrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
     box-sizing: border-box;
+    padding: 2px 2px;
+  }
+
+  .filter-group::-webkit-scrollbar {
+    display: none;
   }
 
   .filter-btn {
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 16px;
-    padding: 5px 9px;
+    padding: 5px 10px;
     font-size: 9px;
     background-color: rgba(255, 255, 255, 0.06);
     color: #A0A4AF;
     white-space: nowrap;
+    flex-shrink: 0;
     touch-action: manipulation;
   }
 
@@ -3823,12 +3839,11 @@ img {
   /* 2-Column Clean Editorial Fashion Grid on Mobile (Protect LDN layout) */
   .archive-grid {
     grid-template-columns: repeat(2, 1fr);
-    padding: 14px 10px 48px;
+    padding: 14px 10px max(50px, calc(36px + env(safe-area-inset-bottom)));
     gap: 18px 10px;
     width: 100%;
     max-width: 100%;
     box-sizing: border-box;
-    overflow-x: hidden;
   }
 
   .archive-card-slot {
@@ -3850,13 +3865,23 @@ img {
   .archive-card__image-wrap {
     width: 100%;
     aspect-ratio: 3 / 4;
-    border-radius: 8px;
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
+    background-color: #FFFFFF;
+    overflow: hidden;
   }
 
   .archive-card__meta {
     padding-top: 8px;
-    gap: 2px;
+    gap: 3px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .archive-card__title-row {
+    width: 100%;
+    box-sizing: border-box;
   }
 
   .archive-card__title {
@@ -3864,11 +3889,16 @@ img {
     line-height: 1.25;
     word-break: break-word;
     text-align: center;
+    white-space: normal !important;
+    overflow: visible !important;
+    text-overflow: unset !important;
   }
 
   .archive-card__info-row {
     font-size: 9px !important;
-    gap: 3px;
+    gap: 4px;
+    white-space: nowrap;
+    justify-content: center;
   }
 
   .archive-card__vote-bar {
