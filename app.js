@@ -1451,11 +1451,14 @@
     if (!baseSrc) return null;
     return new Promise((resolve) => {
       const img = new Image();
-      img.crossOrigin = "anonymous";
+      // Solo per URL remoti (evita il bug tainted canvas DOMException su data: o blob: in Safari e WebKit)
+      if (typeof baseSrc === "string" && !baseSrc.startsWith("data:") && !baseSrc.startsWith("blob:")) {
+        img.crossOrigin = "anonymous";
+      }
       img.onload = () => {
         try {
-          const cw = 900;
-          const ch = 1200; // Esatto rapporto 3:4 delle schede catalogo
+          const cw = 800;
+          const ch = 1067; // Esatto rapporto 3:4 delle schede catalogo
           const iw = img.naturalWidth || img.width;
           const ih = img.naturalHeight || img.height;
 
@@ -1548,7 +1551,7 @@
             cropH = Math.min(ih - cropY, Math.round((maxY - minY) * scaleBackY) + padY * 2);
           }
 
-          // 2. Disegna su Canvas HD 3:4 (900×1200px) riempiendo al massimo lo spazio disponibile
+          // 2. Disegna su Canvas HD 3:4 (800×1067px) riempiendo al massimo lo spazio disponibile
           const canvas = document.createElement("canvas");
           canvas.width = cw;
           canvas.height = ch;
@@ -1596,7 +1599,7 @@
             ctx.drawImage(img, cropX, cropY, cropW, cropH, drawX, drawY, drawW, drawH);
           }
 
-          const resultDataUrl = canvas.toDataURL("image/jpeg", 0.80);
+          const resultDataUrl = canvas.toDataURL("image/jpeg", 0.76);
           resolve(resultDataUrl);
         } catch (err) {
           console.warn("[autoAdaptShowcaseImage] Errore elaborazione:", err);
@@ -1880,7 +1883,7 @@
       inputNotes.value.trim().toUpperCase() ||
       "MOCKUP CARICATO DAL CREATORE E STANDARDIZZATO AD ALTA RISOLUZIONE (1400×1400PX // CANVAS ENGINE).";
 
-    // Foto vetrina: se caricata usala (è già auto-adattata), altrimenti auto-adatta la 1ª foto del capo a pieno rettangolo
+    // Foto vetrina: se caricata usala (è già auto-adattata), altrimenti auto-adatta la 1ª foto del capo a pieno rettangolo [3:4]
     let finalShowcase = uploadShowcaseDataUrl || null;
     if (!finalShowcase && allUploaded[0]) {
       try {
@@ -1888,10 +1891,6 @@
       } catch (_e) {
         finalShowcase = allUploaded[0];
       }
-    } else if (finalShowcase) {
-      try {
-        finalShowcase = await autoAdaptShowcaseImage(finalShowcase);
-      } catch (_e) {}
     }
 
     const newItem = {
@@ -1919,27 +1918,39 @@
       images: {
         front: allUploaded[0] || "",
         back: allUploaded[1] || null,
-        extra: allUploaded.slice(2),
-        gallery: allUploaded
+        extra: allUploaded.slice(2)
       }
     };
 
-    try {
-      await RDPStorage.saveUserItem(newItem);
-      closeUploadModal();
-      switchMainView("showcase");
-      await reloadArchiveData();
-      showToast(`✓ CAPO ${newItem.code} AGGIUNTO ALL'ARCHIVIO! (${allUploaded.length} FOTO)`);
+    if (uploadSubmitBtn) {
+      uploadSubmitBtn.disabled = true;
+      uploadSubmitBtn.textContent = "[SALVATAGGIO_NEL_CLOUD...]";
+    }
 
-      RDPCloud.saveGarment(newItem).then((res) => {
-        if (res && res.syncedToCloud) {
-          showToast(`✓ CAPO ${newItem.code} SINCRONIZZATO SU CLOUD FIRESTORE!`);
+    try {
+      // Salva nel Cloud Firestore (SDK + REST dual-engine) attendendo la conferma
+      const cloudRes = await RDPCloud.saveGarment(newItem);
+
+      if (cloudRes && cloudRes.syncedToCloud) {
+        closeUploadModal();
+        switchMainView("showcase");
+        await reloadArchiveData();
+        showToast(`✓ CAPO ${newItem.code} E FOTO VETRINA SALVATI NEL CLOUD PER TUTTI I DISPOSITIVI!`);
+      } else {
+        const errMsg = (cloudRes && cloudRes.error) || "Impossibile salvare nel Cloud. Riprova.";
+        showUploadError("ERRORE SALVATAGGIO CLOUD: " + errMsg);
+        showToast("⚠️ ERRORE SALVATAGGIO CLOUD. Riprova.");
+        if (uploadSubmitBtn) {
+          uploadSubmitBtn.disabled = false;
+          uploadSubmitBtn.textContent = "[SALVA CAPO IN ARCHIVIO ↗]";
         }
-      }).catch((err) => {
-        console.warn("[RDP Cloud] Sync differito:", err);
-      });
+      }
     } catch (_err) {
-      showUploadError("ERRORE SALVATAGGIO CAPO.");
+      showUploadError("ERRORE SALVATAGGIO CAPO: " + (_err.message || ""));
+      if (uploadSubmitBtn) {
+        uploadSubmitBtn.disabled = false;
+        uploadSubmitBtn.textContent = "[SALVA CAPO IN ARCHIVIO ↗]";
+      }
     }
   }
 
@@ -2199,7 +2210,7 @@
 
     if (editGarmentSubmitBtn) {
       editGarmentSubmitBtn.disabled = true;
-      editGarmentSubmitBtn.textContent = "[SALVATAGGIO_IN_CORSO...]";
+      editGarmentSubmitBtn.textContent = "[SALVATAGGIO_NEL_CLOUD...]";
     }
 
     // 1. Auto-adattamento della foto vetrina a pieno rettangolo [3:4]
@@ -2210,10 +2221,6 @@
       } catch (_e) {
         finalShowcase = finalImages[0];
       }
-    } else if (finalShowcase) {
-      try {
-        finalShowcase = await autoAdaptShowcaseImage(finalShowcase);
-      } catch (_e) {}
     }
 
     const updatedItem = {
@@ -2232,35 +2239,35 @@
       images: {
         front: finalImages[0] || "",
         back: finalImages[1] || null,
-        extra: finalImages.slice(2),
-        gallery: finalImages
+        extra: finalImages.slice(2)
       },
       updatedAt: Date.now()
     };
 
     try {
-      // 2. SALVATAGGIO LOCALE IMMEDIATO (Infallibile e istantaneo in IndexedDB + LocalStorage)
-      await RDPStorage.saveUserItem(updatedItem);
+      // 2. SALVATAGGIO CLOUD FIRESTORE (SDK + REST dual-engine) attendendo la risposta
+      const cloudRes = await RDPCloud.saveGarment(updatedItem);
 
-      // 3. Chiudi subito la finestra modale e ricarica i dati a video
-      closeEditGarmentModal();
-      await reloadArchiveData();
+      if (cloudRes && cloudRes.syncedToCloud) {
+        // 3. Chiudi la finestra modale e ricarica i dati a video solo a salvataggio cloud confermato
+        closeEditGarmentModal();
+        await reloadArchiveData();
 
-      // 4. Se il capo modificato è attualmente aperto nel modal a tutto schermo, aggiornalo sul posto
-      if (activeModalItemId === updatedItem.id && inspectionModal && !inspectionModal.hidden) {
-        openInspectionModal(updatedItem.id, activeModalImageIndex);
-      }
-
-      showToast(`✓ MODIFICHE E FOTO VETRINA SALVATE IN LOCALE (${updatedItem.code})!`);
-
-      // 5. Sincronizzazione Cloud in background ("salvare nel claude per tutti i dispositivi al mondo")
-      RDPCloud.saveGarment(updatedItem).then((cloudRes) => {
-        if (cloudRes && cloudRes.syncedToCloud) {
-          showToast(`✓ MODIFICHE E FOTO VETRINA SALVATE NEL CLOUD PER TUTTI I DISPOSITIVI (${updatedItem.code})!`);
+        // 4. Se il capo modificato è attualmente aperto nel modal a tutto schermo, aggiornalo sul posto
+        if (activeModalItemId === updatedItem.id && inspectionModal && !inspectionModal.hidden) {
+          openInspectionModal(updatedItem.id, activeModalImageIndex);
         }
-      }).catch((cloudErr) => {
-        console.warn("[RDP Cloud] Errore sync differito:", cloudErr);
-      });
+
+        showToast(`✓ MODIFICHE E FOTO VETRINA SALVATE NEL CLOUD PER TUTTI I DISPOSITIVI (${updatedItem.code})!`);
+      } else {
+        const errMsg = (cloudRes && cloudRes.error) || "Impossibile salvare nel Cloud. Riprova.";
+        showEditError(`ERRORE SALVATAGGIO CLOUD: ${errMsg}`);
+        showToast("⚠️ ERRORE SALVATAGGIO CLOUD. Modifiche mantenute aperte per riprovare.");
+        if (editGarmentSubmitBtn) {
+          editGarmentSubmitBtn.disabled = false;
+          editGarmentSubmitBtn.textContent = "[SALVA_MODIFICHE_CAPO]";
+        }
+      }
     } catch (err) {
       console.error("Errore salvataggio modifiche:", err);
       showEditError("ERRORE DURANTE IL SALVATAGGIO: " + (err.message || ""));
