@@ -10,7 +10,7 @@
 const RDPImageProcessor = (() => {
   "use strict";
 
-  const OUTPUT_DIM = 1400; // 1400×1400px HD Canvas
+  const OUTPUT_DIM = 1200; // 1200×1200px HD Studio Canvas (ottimizzato per sincronizzazione cloud multi-dispositivo)
   const DEFAULT_PADDING_PCT = 0.06; // 6% padding (~94% fill safe span)
 
   // Carica un file come HTMLImageElement
@@ -182,13 +182,13 @@ const RDPImageProcessor = (() => {
 
     const elapsed = Math.round(performance.now() - startTime);
     const mime = transparentBg ? "image/png" : "image/jpeg";
-    const quality = transparentBg ? undefined : 0.84;
+    const quality = transparentBg ? undefined : 0.78;
     let processedDataUrl = outCanvas.toDataURL(mime, quality);
 
     // Salvaguardia per non superare il limite di 1MB per documento di Google Cloud Firestore:
-    // Se la stringa base64 supera 450KB, ricomprimi a 0.76 per garantire la sincronizzazione cloud multi-dispositivo
-    if (!transparentBg && processedDataUrl.length > 450000) {
-      processedDataUrl = outCanvas.toDataURL("image/jpeg", 0.76);
+    // Se la stringa base64 supera 220KB, ricomprimi a 0.70 per garantire la sincronizzazione cloud multi-dispositivo
+    if (!transparentBg && processedDataUrl.length > 220000) {
+      processedDataUrl = outCanvas.toDataURL("image/jpeg", 0.70);
     }
 
     // Telemetria di Processamento

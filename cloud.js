@@ -55,6 +55,9 @@ const RDPCloud = (() => {
         window.firebase.initializeApp(config);
       }
       db = window.firebase.firestore();
+      try {
+        db.settings({ ignoreUndefinedProperties: true });
+      } catch (_e) {}
       isInitialized = true;
       initError = null;
 
@@ -232,10 +235,18 @@ const RDPCloud = (() => {
           }
         });
 
-        // Unisci i capi locali in sola lettura (nessun set() automatico durante la lettura)
+        // Unisci i capi locali in sola lettura: se un capo locale ha updatedAt più recente rispetto al cloud, usa quello
         localItems.forEach((local) => {
-          if (local && local.id && !cloudMap.has(local.id)) {
+          if (!local || !local.id) return;
+          if (!cloudMap.has(local.id)) {
             cloudMap.set(local.id, local);
+          } else {
+            const cloudItem = cloudMap.get(local.id);
+            const localTime = Number(local.updatedAt || local.createdAt || 0);
+            const cloudTime = Number(cloudItem.updatedAt || cloudItem.createdAt || 0);
+            if (localTime > cloudTime) {
+              cloudMap.set(local.id, local);
+            }
           }
         });
 
@@ -300,40 +311,138 @@ const RDPCloud = (() => {
     return localIds;
   }
 
-  // Salva un nuovo capo (Cloud e Locale)
+  // Sanitizza l'oggetto rimuovendo campi undefined per conformità Firestore
+  function sanitizeForFirestore(val) {
+    if (val === undefined || val === null) return null;
+    if (typeof val !== "object") return val;
+    if (Array.isArray(val)) {
+      return val.map(sanitizeForFirestore).filter((v) => v !== undefined);
+    }
+    const clean = {};
+    for (const [k, v] of Object.entries(val)) {
+      if (v !== undefined) {
+        clean[k] = sanitizeForFirestore(v);
+      }
+    }
+    return clean;
+  }
+
+  // Comprime un DataURL immagine se necessario
+  function shrinkDataUrl(dataUrl, maxDim = 1000, quality = 0.72) {
+    if (typeof dataUrl !== "string" || !dataUrl.startsWith("data:image/")) {
+      return Promise.resolve(dataUrl);
+    }
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        let w = img.naturalWidth || img.width;
+        let h = img.naturalHeight || img.height;
+        if (w > maxDim || h > maxDim) {
+          if (w > h) {
+            h = Math.round((h * maxDim) / w);
+            w = maxDim;
+          } else {
+            w = Math.round((w * maxDim) / h);
+            h = maxDim;
+          }
+        }
+        const canvas = document.createElement("canvas");
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL("image/jpeg", quality));
+      };
+      img.onerror = () => resolve(dataUrl);
+      img.src = dataUrl;
+    });
+  }
+
+  // Verifica che il documento non superi gli 800KB di sicurezza per Firestore (limite hard 1MB)
+  async function ensureDocumentFitsFirestore(item) {
+    let jsonStr = JSON.stringify(item);
+    if (jsonStr.length <= 800000) {
+      return item;
+    }
+
+    const clone = JSON.parse(jsonStr);
+    if (clone.showcaseImage) {
+      clone.showcaseImage = await shrinkDataUrl(clone.showcaseImage, 900, 0.70);
+    }
+    if (clone.images && typeof clone.images === "object") {
+      if (clone.images.front) {
+        clone.images.front = await shrinkDataUrl(clone.images.front, 1000, 0.72);
+      }
+      if (clone.images.back) {
+        clone.images.back = await shrinkDataUrl(clone.images.back, 1000, 0.72);
+      }
+      if (Array.isArray(clone.images.gallery)) {
+        for (let i = 0; i < clone.images.gallery.length; i++) {
+          clone.images.gallery[i] = await shrinkDataUrl(clone.images.gallery[i], 1000, 0.72);
+        }
+      }
+      if (Array.isArray(clone.images.extra)) {
+        for (let i = 0; i < clone.images.extra.length; i++) {
+          clone.images.extra[i] = await shrinkDataUrl(clone.images.extra[i], 1000, 0.72);
+        }
+      }
+    }
+    return clone;
+  }
+
+  // Salva un nuovo capo o le sue modifiche (Cloud e Locale sincronizzati perennemente per tutti i dispositivi)
   async function saveGarment(item) {
+    if (!item || !item.id) {
+      return { success: false, syncedToCloud: false, error: "Dati capo mancanti" };
+    }
+
+    const now = Date.now();
+    let prepared = {
+      ...item,
+      updatedAt: now
+    };
+
+    // Assicura che rispetti la dimensione massima di Firestore
+    try {
+      prepared = await ensureDocumentFitsFirestore(prepared);
+    } catch (_e) {}
+
+    const cleanItem = sanitizeForFirestore(prepared);
+
     // Salva sempre anche nel local storage di sicurezza
-    await RDPStorage.saveUserItem(item);
+    await RDPStorage.saveUserItem(cleanItem);
 
     if (init() && db) {
       try {
         // Se era tra gli eliminati, rimuovilo da rdp_deletions
-        await db.collection("rdp_deletions").doc(item.id).delete().catch(() => {});
+        await db.collection("rdp_deletions").doc(cleanItem.id).delete().catch(() => {});
         if (latestCloudDeletions) {
-          latestCloudDeletions = latestCloudDeletions.filter((id) => id !== item.id);
+          latestCloudDeletions = latestCloudDeletions.filter((id) => id !== cleanItem.id);
         }
 
-        // Salva su Firestore
-        await db.collection("rdp_garments").doc(item.id).set({
-          ...item,
-          updatedAt: Date.now()
-        });
+        // Salva su Firestore con merge: true per persistenza globale perenne
+        await db.collection("rdp_garments").doc(cleanItem.id).set(cleanItem, { merge: true });
 
         // Aggiorna cache locale immediata
-        if (latestCloudGarments) {
-          const existingIdx = latestCloudGarments.findIndex((g) => g.id === item.id);
-          if (existingIdx >= 0) {
-            latestCloudGarments[existingIdx] = item;
-          } else {
-            latestCloudGarments.push(item);
-          }
+        if (!latestCloudGarments) latestCloudGarments = [];
+        const existingIdx = latestCloudGarments.findIndex((g) => g.id === cleanItem.id);
+        if (existingIdx >= 0) {
+          latestCloudGarments[existingIdx] = cleanItem;
+        } else {
+          latestCloudGarments.unshift(cleanItem);
         }
+
+        lastGarmentsSig = latestCloudGarments
+          .map((g) => `${g.id}:${g.updatedAt || 0}`)
+          .sort()
+          .join("|");
 
         isConnected = true;
         cloudDbMissing = false;
+        cloudDbPermissionDenied = false;
         initError = null;
         notifyStatusChange();
-        return { success: true, syncedToCloud: true };
+        return { success: true, syncedToCloud: true, item: cleanItem };
       } catch (err) {
         console.error("[RDP Cloud] Errore salvataggio Firestore:", err);
         const errMsg = err ? err.message || "" : "";
@@ -346,11 +455,11 @@ const RDPCloud = (() => {
         }
         isConnected = false;
         notifyStatusChange();
-        return { success: true, syncedToCloud: false, error: errMsg, code: err ? err.code : null };
+        return { success: true, syncedToCloud: false, error: errMsg, code: err ? err.code : null, item: cleanItem };
       }
     }
 
-    return { success: true, syncedToCloud: false, error: initError || "Cloud non connesso" };
+    return { success: true, syncedToCloud: false, error: initError || "Cloud non connesso", item: cleanItem };
   }
 
   // Elimina un capo (aggiunge agli eliminati e rimuove dai caricati su Cloud e Locale)

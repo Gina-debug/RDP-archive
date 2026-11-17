@@ -395,7 +395,15 @@
       }
     });
 
-    const mappedSeed = activeSeed.map((s) => editedSeedMap.get(s.id) || s);
+    const mappedSeed = activeSeed.map((s) => {
+      if (editedSeedMap.has(s.id)) {
+        return {
+          ...s,
+          ...editedSeedMap.get(s.id)
+        };
+      }
+      return s;
+    });
     // I nuovi capi aggiunti dal Creator compaiono per primi (ordine decrescente di caricamento)
     const sortedUser = [...newUserItems].sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
     const combined = [...sortedUser, ...mappedSeed];
@@ -801,9 +809,11 @@
     const creatorEditBtnHtml = isCreator
       ? `<button class="card-creator-edit-btn" data-edit-item="${escapeAttr(item.id)}" type="button" title="Modifica ${escapeAttr(item.title)} (Solo Creator)">✎ MODIFICA</button>`
       : "";
+    const codeBadgeHtml = `<span class="archive-card__code-badge"><span class="code-dot"></span>${escapeHtml(item.code || "")}</span>`;
 
     card.innerHTML = `
       <div class="archive-card__media">
+        ${codeBadgeHtml}
         ${creatorEditBtnHtml}
         <img
           class="archive-card__img"
@@ -822,25 +832,18 @@
       </div>
     `;
 
-    // Hover desktop: mostra la 1ª foto caricata del capo
+    // Hover desktop: mostra la 1ª foto caricata del capo (imgs[0]) con transizione fluida
     card.addEventListener("mouseenter", () => {
       const currentItem = allItems.find((i) => i.id === card.dataset.itemId);
       if (!currentItem) return;
       const imgs = getItemImages(currentItem);
       if (imgs.length > 0) {
         const currentShowcase = getShowcaseImage(currentItem);
-        // Mostra la 1ª foto caricata dall'utente su quel capo (imgs[0])
         const hoverTargetSrc = (currentShowcase !== imgs[0]) ? imgs[0] : (imgs[1] || imgs[0]);
         const img = card.querySelector(".archive-card__img");
         if (img && img.dataset.state !== "hover") {
           img.dataset.state = "hover";
-          img.style.opacity = "0.35";
-          img.style.transform = "scale(0.98)";
-          setTimeout(() => {
-            img.src = hoverTargetSrc;
-            img.style.opacity = "1";
-            img.style.transform = "scale(1.05)";
-          }, 60);
+          img.src = hoverTargetSrc;
         }
       }
     });
@@ -852,13 +855,7 @@
       const img = card.querySelector(".archive-card__img");
       if (img && img.dataset.state === "hover") {
         img.dataset.state = "default";
-        img.style.opacity = "0.35";
-        img.style.transform = "scale(0.98)";
-        setTimeout(() => {
-          img.src = currentShowcase;
-          img.style.opacity = "1";
-          img.style.transform = "scale(1)";
-        }, 60);
+        img.src = currentShowcase;
       }
     });
 
@@ -911,6 +908,18 @@
     card.dataset.itemId = item.id;
     card.dataset.activePage = activePage;
 
+    // Codice
+    let codeBadge = card.querySelector(".archive-card__code-badge");
+    const media = card.querySelector(".archive-card__media");
+    if (!codeBadge && media) {
+      codeBadge = document.createElement("span");
+      codeBadge.className = "archive-card__code-badge";
+      media.prepend(codeBadge);
+    }
+    if (codeBadge) {
+      codeBadge.innerHTML = `<span class="code-dot"></span>${escapeHtml(item.code || "")}`;
+    }
+
     // Titolo
     const titleEl = card.querySelector(".archive-card__title");
     if (titleEl && titleEl.textContent !== item.title) {
@@ -919,7 +928,6 @@
 
     // Pulsante Modifica Rapida Creator
     const isCreator = RDPAuth.isAuthenticated();
-    const media = card.querySelector(".archive-card__media");
     let editBtn = card.querySelector(".card-creator-edit-btn");
     if (isCreator && !editBtn && media) {
       const btn = document.createElement("button");
@@ -2022,9 +2030,14 @@
       updatedAt: Date.now()
     };
 
+    if (editGarmentSubmitBtn) {
+      editGarmentSubmitBtn.disabled = true;
+      editGarmentSubmitBtn.textContent = "[SALVATAGGIO_IN_CORSO_CLOUD...]";
+    }
+
     try {
-      // 1. Salva sempre immediatamente in locale
-      await RDPStorage.saveUserItem(updatedItem);
+      // 1. Salva nel Cloud Firestore (con sincronizzazione persistente per tutti i dispositivi nel mondo)
+      const cloudRes = await RDPCloud.saveGarment(updatedItem);
 
       // 2. Chiudi la finestra modale
       closeEditGarmentModal();
@@ -2037,19 +2050,18 @@
         openInspectionModal(updatedItem.id, activeModalImageIndex);
       }
 
-      showToast(`✓ MODIFICHE SALVATE PER ${updatedItem.code} // ${updatedItem.title}!`);
-
-      // 5. Sincronizzazione cloud in background
-      RDPCloud.saveGarment(updatedItem).then((res) => {
-        if (res && res.syncedToCloud) {
-          showToast(`✓ CAPO ${updatedItem.code} SINCRONIZZATO SU FIREBASE!`);
-        }
-      }).catch((err) => {
-        console.warn("[RDP Cloud] Sync differito:", err);
-      });
+      if (cloudRes && cloudRes.syncedToCloud) {
+        showToast(`✓ MODIFICHE SALVATE PERMANENTEMENTE PER TUTTI I DISPOSITIVI NEL MONDO (${updatedItem.code})!`);
+      } else {
+        showToast(`✓ SALVATO IN LOCALE (${cloudRes && cloudRes.error ? cloudRes.error : "CLOUD NON CONNESSO"})`);
+      }
     } catch (err) {
       console.error("Errore salvataggio modifiche:", err);
       showEditError("ERRORE DURANTE IL SALVATAGGIO: " + (err.message || ""));
+      if (editGarmentSubmitBtn) {
+        editGarmentSubmitBtn.disabled = false;
+        editGarmentSubmitBtn.textContent = "[SALVA_MODIFICHE_CAPO]";
+      }
     }
   }
 
