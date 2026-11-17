@@ -434,6 +434,29 @@
     updateCounts();
     renderGrid();
     updateBallotSummary();
+    autoUpgradeShowcaseImages(allItems);
+  }
+
+  function autoUpgradeShowcaseImages(items) {
+    if (!Array.isArray(items)) return;
+    items.forEach((item) => {
+      if (item && item.showcaseImage && typeof item.showcaseImage === "string") {
+        const cacheKey = `rdp_showcase_adapted_${item.id}`;
+        if (sessionStorage.getItem(cacheKey)) return;
+        sessionStorage.setItem(cacheKey, "1");
+
+        autoAdaptShowcaseImage(item.showcaseImage).then((upgraded) => {
+          if (upgraded && upgraded !== item.showcaseImage) {
+            item.showcaseImage = upgraded;
+            const slot = document.querySelector(`.archive-card-slot[data-item-id="${item.id}"]`);
+            if (slot) {
+              const img = slot.querySelector(".archive-card__img--primary");
+              if (img) img.src = upgraded;
+            }
+          }
+        }).catch(() => {});
+      }
+    });
   }
 
   function preloadBackImages() {
@@ -1484,8 +1507,8 @@
       }
       img.onload = () => {
         try {
-          const cw = 800;
-          const ch = 1067; // Esatto rapporto 3:4 delle schede catalogo
+          const cw = 900;
+          const ch = 1200; // Esatto rapporto 3:4 ad alta definizione
           const iw = img.naturalWidth || img.width;
           const ih = img.naturalHeight || img.height;
 
@@ -1494,139 +1517,117 @@
             return;
           }
 
-          // 1. Campionamento per bounding box detection del capo
-          const sampleDim = Math.min(600, Math.max(iw, ih));
-          const sampleW = Math.round(iw * (sampleDim / Math.max(iw, ih)));
-          const sampleH = Math.round(ih * (sampleDim / Math.max(iw, ih)));
-
-          const sCanvas = document.createElement("canvas");
-          sCanvas.width = sampleW;
-          sCanvas.height = sampleH;
-          const sCtx = sCanvas.getContext("2d", { willReadFrequently: true });
-          sCtx.drawImage(img, 0, 0, sampleW, sampleH);
-
-          const imgData = sCtx.getImageData(0, 0, sampleW, sampleH);
-          const data = imgData.data;
-
-          // Rilevamento colore dello sfondo dai 4 angoli
-          const cornerIndices = [
-            0,
-            (sampleW - 1) * 4,
-            ((sampleH - 1) * sampleW) * 4,
-            ((sampleH - 1) * sampleW + sampleW - 1) * 4
-          ];
-
-          let bgR = 0, bgG = 0, bgB = 0, bgAlpha = 0;
-          cornerIndices.forEach((idx) => {
-            bgR += data[idx];
-            bgG += data[idx + 1];
-            bgB += data[idx + 2];
-            bgAlpha += data[idx + 3];
-          });
-          bgR = Math.round(bgR / 4);
-          bgG = Math.round(bgG / 4);
-          bgB = Math.round(bgB / 4);
-          bgAlpha = Math.round(bgAlpha / 4);
-
-          const isTransparentBg = bgAlpha < 30;
-          const isLightStudio = bgAlpha >= 200 && bgR >= 220 && bgG >= 220 && bgB >= 220;
-          const isDarkStudio = bgAlpha >= 200 && bgR <= 35 && bgG <= 35 && bgB <= 35;
-
-          function isBg(r, g, b, a) {
-            if (isTransparentBg) return a < 25;
-            if (isLightStudio) {
-              return a < 25 || (r >= 210 && g >= 210 && b >= 210 && Math.abs(r - g) < 25 && Math.abs(g - b) < 25);
-            }
-            if (isDarkStudio) {
-              return a < 25 || (r <= 40 && g <= 40 && b <= 40 && Math.abs(r - g) < 20 && Math.abs(g - b) < 20);
-            }
-            const dist = Math.abs(r - bgR) + Math.abs(g - bgG) + Math.abs(b - bgB);
-            return a < 25 || dist < 35;
-          }
-
-          let minX = sampleW, minY = sampleH, maxX = 0, maxY = 0;
-          let nonBgCount = 0;
-          const step = 2;
-
-          for (let y = 0; y < sampleH; y += step) {
-            for (let x = 0; x < sampleW; x += step) {
-              const idx = (y * sampleW + x) * 4;
-              if (!isBg(data[idx], data[idx + 1], data[idx + 2], data[idx + 3])) {
-                if (x < minX) minX = x;
-                if (x > maxX) maxX = x;
-                if (y < minY) minY = y;
-                if (y > maxY) maxY = y;
-                nonBgCount++;
-              }
-            }
-          }
-
-          const totalSampled = (sampleW * sampleH) / (step * step);
-          const nonBgRatio = nonBgCount / totalSampled;
-          const isSolidPhoto = nonBgRatio > 0.92 || minX >= maxX || minY >= maxY;
-
-          let cropX = 0, cropY = 0, cropW = iw, cropH = ih;
-          if (!isSolidPhoto) {
-            const scaleBackX = iw / sampleW;
-            const scaleBackY = ih / sampleH;
-            const padX = Math.round(10 * scaleBackX);
-            const padY = Math.round(10 * scaleBackY);
-
-            cropX = Math.max(0, Math.round(minX * scaleBackX) - padX);
-            cropY = Math.max(0, Math.round(minY * scaleBackY) - padY);
-            cropW = Math.min(iw - cropX, Math.round((maxX - minX) * scaleBackX) + padX * 2);
-            cropH = Math.min(ih - cropY, Math.round((maxY - minY) * scaleBackY) + padY * 2);
-          }
-
-          // 2. Disegna su Canvas HD 3:4 (800×1067px) riempiendo al massimo lo spazio disponibile
           const canvas = document.createElement("canvas");
           canvas.width = cw;
           canvas.height = ch;
           const ctx = canvas.getContext("2d");
 
-          if (isLightStudio) {
-            ctx.fillStyle = "#FFFFFF";
-          } else if (isDarkStudio || isTransparentBg) {
-            ctx.fillStyle = "#0A0B0E";
-          } else {
-            ctx.fillStyle = `rgb(${bgR}, ${bgG}, ${bgB})`;
-          }
-          ctx.fillRect(0, 0, cw, ch);
+          // Rilevamento bordi vuoti/bande esterne (letterboxing preesistente da rimuovere)
+          let srcX = 0, srcY = 0, srcW = iw, srcH = ih;
 
-          let drawW, drawH, drawX, drawY;
+          if (iw > 40 && ih > 40) {
+            const testCanvas = document.createElement("canvas");
+            const tw = Math.min(300, iw);
+            const th = Math.round(ih * (tw / iw));
+            testCanvas.width = tw;
+            testCanvas.height = th;
+            const tCtx = testCanvas.getContext("2d", { willReadFrequently: true });
+            tCtx.drawImage(img, 0, 0, tw, th);
+            const tData = tCtx.getImageData(0, 0, tw, th).data;
 
-          if (isSolidPhoto) {
-            const coverScale = Math.max(cw / iw, ch / ih);
-            drawW = Math.round(iw * coverScale);
-            drawH = Math.round(ih * coverScale);
-            drawX = Math.round((cw - drawW) / 2);
-            drawY = Math.round((ch - drawH) / 2);
-            ctx.drawImage(img, 0, 0, iw, ih, drawX, drawY, drawW, drawH);
-          } else {
-            const targetRatio = cw / ch; // 0.75
-            const cropRatio = cropW / cropH;
+            const c1 = [tData[0], tData[1], tData[2], tData[3]];
+            const isUniformCorner = (c1[3] < 30) || (c1[0] > 230 && c1[1] > 230 && c1[2] > 230) || (c1[0] < 25 && c1[1] < 25 && c1[2] < 25);
 
-            let scale;
-            if (cropRatio >= targetRatio) {
-              scale = (cw * 0.96) / cropW;
-              drawW = Math.round(cropW * scale);
-              drawH = Math.round(cropH * scale);
-              drawX = Math.round((cw - drawW) / 2);
-              drawY = Math.round(ch * 0.46 - drawH / 2);
-              if (drawY < 18) drawY = 18;
-              if (drawY + drawH > ch - 18) drawY = ch - 18 - drawH;
-            } else {
-              scale = (ch * 0.94) / cropH;
-              drawW = Math.round(cropW * scale);
-              drawH = Math.round(cropH * scale);
-              drawX = Math.round((cw - drawW) / 2);
-              drawY = Math.round((ch - drawH) / 2);
+            if (isUniformCorner) {
+              const isBgPx = (r, g, b, a) => {
+                if (c1[3] < 30) return a < 30;
+                if (c1[0] > 230) return a < 30 || (r > 220 && g > 220 && b > 220 && Math.abs(r - g) < 20 && Math.abs(g - b) < 20);
+                return a < 30 || (r < 30 && g < 30 && b < 30 && Math.abs(r - g) < 18 && Math.abs(g - b) < 18);
+              };
+
+              let top = 0, bottom = th - 1, left = 0, right = tw - 1;
+              const step = 2;
+
+              // Top scan
+              while (top < th - 10) {
+                let isRowBg = true;
+                for (let x = 0; x < tw; x += step) {
+                  const idx = (top * tw + x) * 4;
+                  if (!isBgPx(tData[idx], tData[idx + 1], tData[idx + 2], tData[idx + 3])) {
+                    isRowBg = false;
+                    break;
+                  }
+                }
+                if (!isRowBg) break;
+                top += step;
+              }
+
+              // Bottom scan
+              while (bottom > top + 10) {
+                let isRowBg = true;
+                for (let x = 0; x < tw; x += step) {
+                  const idx = (bottom * tw + x) * 4;
+                  if (!isBgPx(tData[idx], tData[idx + 1], tData[idx + 2], tData[idx + 3])) {
+                    isRowBg = false;
+                    break;
+                  }
+                }
+                if (!isRowBg) break;
+                bottom -= step;
+              }
+
+              // Left scan
+              while (left < tw - 10) {
+                let isColBg = true;
+                for (let y = top; y <= bottom; y += step) {
+                  const idx = (y * tw + left) * 4;
+                  if (!isBgPx(tData[idx], tData[idx + 1], tData[idx + 2], tData[idx + 3])) {
+                    isColBg = false;
+                    break;
+                  }
+                }
+                if (!isColBg) break;
+                left += step;
+              }
+
+              // Right scan
+              while (right > left + 10) {
+                let isColBg = true;
+                for (let y = top; y <= bottom; y += step) {
+                  const idx = (y * tw + right) * 4;
+                  if (!isBgPx(tData[idx], tData[idx + 1], tData[idx + 2], tData[idx + 3])) {
+                    isColBg = false;
+                    break;
+                  }
+                }
+                if (!isColBg) break;
+                right -= step;
+              }
+
+              if (right > left + 10 && bottom > top + 10) {
+                const scaleX = iw / tw;
+                const scaleY = ih / th;
+                srcX = Math.round(left * scaleX);
+                srcY = Math.round(top * scaleY);
+                srcW = Math.round((right - left) * scaleX);
+                srcH = Math.round((bottom - top) * scaleY);
+              }
             }
-
-            ctx.drawImage(img, cropX, cropY, cropW, cropH, drawX, drawY, drawW, drawH);
           }
 
-          const resultDataUrl = canvas.toDataURL("image/jpeg", 0.76);
+          // COVER TOTALE: scala in modo che l'immagine COPRE AL 100% l'intero rettangolo 3:4
+          // Math.max assicura zero barre, zero bordi, zero spazi vuoti
+          const scale = Math.max(cw / srcW, ch / srcH);
+          const drawW = Math.round(srcW * scale);
+          const drawH = Math.round(srcH * scale);
+          const drawX = Math.round((cw - drawW) / 2);
+          const drawY = Math.round((ch - drawH) / 2);
+
+          ctx.imageSmoothingEnabled = true;
+          ctx.imageSmoothingQuality = "high";
+          ctx.drawImage(img, srcX, srcY, srcW, srcH, drawX, drawY, drawW, drawH);
+
+          const resultDataUrl = canvas.toDataURL("image/jpeg", 0.82);
           resolve(resultDataUrl);
         } catch (err) {
           console.warn("[autoAdaptShowcaseImage] Errore elaborazione:", err);
