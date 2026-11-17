@@ -788,7 +788,16 @@
     );
 
     const cardImgs = getItemImages(item);
-    const imgSrc = getShowcaseImage(item);
+    const showcaseSrc = getShowcaseImage(item);
+    let secondarySrc = null;
+    if (cardImgs.length > 0) {
+      if (showcaseSrc !== cardImgs[0]) {
+        secondarySrc = cardImgs[0];
+      } else if (cardImgs.length > 1) {
+        secondarySrc = cardImgs[1];
+      }
+    }
+
     const stats = RDPRatings.getItemStats(item);
     const userVote = stats.userVote;
 
@@ -813,55 +822,43 @@
     const creatorEditBtnHtml = isCreator
       ? `<button class="card-creator-edit-btn" data-edit-item="${escapeAttr(item.id)}" type="button" title="Modifica ${escapeAttr(item.title)} (Solo Creator)">✎ MODIFICA</button>`
       : "";
-    const codeBadgeHtml = `<span class="archive-card__code-badge"><span class="code-dot"></span>${escapeHtml(item.code || "")}</span>`;
 
     card.innerHTML = `
-      <div class="archive-card__media">
-        ${codeBadgeHtml}
+      <div class="archive-card__image-wrap">
+        <div class="archive-card__media">
+          <img
+            class="archive-card__img archive-card__img--primary"
+            src="${escapeAttr(showcaseSrc)}"
+            alt="${escapeAttr(item.title)}"
+            loading="lazy"
+          />
+          ${secondarySrc ? `
+            <img
+              class="archive-card__img archive-card__img--secondary"
+              src="${escapeAttr(secondarySrc)}"
+              alt="${escapeAttr(item.title)} - Dettaglio"
+              loading="lazy"
+            />
+          ` : ""}
+        </div>
         ${creatorEditBtnHtml}
-        <img
-          class="archive-card__img"
-          src="${escapeAttr(imgSrc)}"
-          alt="${escapeAttr(item.title)}"
-          loading="lazy"
-        />
       </div>
-      <div class="archive-card__foot">
+      <div class="archive-card__meta">
         <div class="archive-card__title-row">
           <h2 class="archive-card__title">${escapeHtml(item.title)}</h2>
         </div>
-        <div class="archive-card__vote-btns" role="group" aria-label="Schema votazione ${escapeAttr(item.title)} da 0 a 10">
+        <div class="archive-card__info-row">
+          <span class="archive-card__code">${escapeHtml(item.code || "")}</span>
+          <span class="archive-card__bullet">·</span>
+          <span class="archive-card__spec">${escapeHtml(item.category || "ARCHIVE")}</span>
+          <span class="archive-card__bullet">·</span>
+          <span class="archive-card__rating">★ ${stats.average}</span>
+        </div>
+        <div class="archive-card__vote-bar" role="group" aria-label="Schema votazione ${escapeAttr(item.title)} da 0 a 10">
           ${quickVoteButtonsHtml}
         </div>
       </div>
     `;
-
-    // Hover desktop: mostra la 1ª foto caricata del capo (imgs[0]) con transizione fluida
-    card.addEventListener("mouseenter", () => {
-      const currentItem = allItems.find((i) => i.id === card.dataset.itemId);
-      if (!currentItem) return;
-      const imgs = getItemImages(currentItem);
-      if (imgs.length > 0) {
-        const currentShowcase = getShowcaseImage(currentItem);
-        const hoverTargetSrc = (currentShowcase !== imgs[0]) ? imgs[0] : (imgs[1] || imgs[0]);
-        const img = card.querySelector(".archive-card__img");
-        if (img && img.dataset.state !== "hover") {
-          img.dataset.state = "hover";
-          img.src = hoverTargetSrc;
-        }
-      }
-    });
-
-    card.addEventListener("mouseleave", () => {
-      const currentItem = allItems.find((i) => i.id === card.dataset.itemId);
-      if (!currentItem) return;
-      const currentShowcase = getShowcaseImage(currentItem);
-      const img = card.querySelector(".archive-card__img");
-      if (img && img.dataset.state === "hover") {
-        img.dataset.state = "default";
-        img.src = currentShowcase;
-      }
-    });
 
     card.addEventListener("click", async (e) => {
       if (RDPPhysics.getActiveState()) return;
@@ -904,7 +901,7 @@
     return slot;
   }
 
-  // Aggiorna uno slot esistente sul posto senza distruggere il tag <img> per azzerare lo sfarfallio
+  // Aggiorna uno slot esistente sul posto senza distruggere i tag <img> per azzerare lo sfarfallio
   function updateExistingCardSlot(slot, item, activePage, fixedPageLabel = null) {
     const card = slot.querySelector(".archive-card");
     if (!card) return;
@@ -912,51 +909,81 @@
     card.dataset.itemId = item.id;
     card.dataset.activePage = activePage;
 
-    // Codice
-    let codeBadge = card.querySelector(".archive-card__code-badge");
-    const media = card.querySelector(".archive-card__media");
-    if (!codeBadge && media) {
-      codeBadge = document.createElement("span");
-      codeBadge.className = "archive-card__code-badge";
-      media.prepend(codeBadge);
-    }
-    if (codeBadge) {
-      codeBadge.innerHTML = `<span class="code-dot"></span>${escapeHtml(item.code || "")}`;
-    }
-
     // Titolo
     const titleEl = card.querySelector(".archive-card__title");
     if (titleEl && titleEl.textContent !== item.title) {
       titleEl.textContent = item.title;
     }
 
-    // Pulsante Modifica Rapida Creator
+    // Codice, Categoria e Rating
+    const codeEl = card.querySelector(".archive-card__code");
+    if (codeEl && codeEl.textContent !== item.code) {
+      codeEl.textContent = item.code || "";
+    }
+
+    const specEl = card.querySelector(".archive-card__spec");
+    if (specEl && specEl.textContent !== (item.category || "ARCHIVE")) {
+      specEl.textContent = item.category || "ARCHIVE";
+    }
+
+    const stats = RDPRatings.getItemStats(item);
+    const ratingEl = card.querySelector(".archive-card__rating");
+    if (ratingEl) {
+      ratingEl.textContent = `★ ${stats.average}`;
+    }
+
+    // Creator Edit Button
     const isCreator = RDPAuth.isAuthenticated();
+    const imgWrap = card.querySelector(".archive-card__image-wrap");
     let editBtn = card.querySelector(".card-creator-edit-btn");
-    if (isCreator && !editBtn && media) {
+    if (isCreator && !editBtn && imgWrap) {
       const btn = document.createElement("button");
       btn.className = "card-creator-edit-btn";
       btn.dataset.editItem = item.id;
       btn.type = "button";
       btn.title = `Modifica ${item.title} (Solo Creator)`;
       btn.textContent = "✎ MODIFICA";
-      media.appendChild(btn);
+      imgWrap.appendChild(btn);
     } else if (!isCreator && editBtn) {
       editBtn.remove();
     }
 
-    // Immagine: mostra la foto vetrina del capo se non in hover
-    const imgEl = card.querySelector(".archive-card__img");
+    // Immagini: Primaria (showcase) e Secondaria (dettaglio per hover fluido Protect LDN)
+    const cardImgs = getItemImages(item);
     const showcaseSrc = getShowcaseImage(item);
-    if (imgEl && !card.matches(":hover")) {
-      if (imgEl.getAttribute("src") !== showcaseSrc) {
-        imgEl.src = showcaseSrc;
+    let secondarySrc = null;
+    if (cardImgs.length > 0) {
+      if (showcaseSrc !== cardImgs[0]) {
+        secondarySrc = cardImgs[0];
+      } else if (cardImgs.length > 1) {
+        secondarySrc = cardImgs[1];
       }
-      imgEl.alt = item.title;
+    }
+
+    const imgPrimary = card.querySelector(".archive-card__img--primary");
+    if (imgPrimary && imgPrimary.getAttribute("src") !== showcaseSrc) {
+      imgPrimary.src = showcaseSrc;
+      imgPrimary.alt = item.title;
+    }
+
+    const media = card.querySelector(".archive-card__media");
+    let imgSecondary = card.querySelector(".archive-card__img--secondary");
+    if (secondarySrc) {
+      if (!imgSecondary && media) {
+        imgSecondary = document.createElement("img");
+        imgSecondary.className = "archive-card__img archive-card__img--secondary";
+        imgSecondary.loading = "lazy";
+        media.appendChild(imgSecondary);
+      }
+      if (imgSecondary && imgSecondary.getAttribute("src") !== secondarySrc) {
+        imgSecondary.src = secondarySrc;
+        imgSecondary.alt = `${item.title} - Dettaglio`;
+      }
+    } else if (imgSecondary) {
+      imgSecondary.remove();
     }
 
     // Schema voti
-    const stats = RDPRatings.getItemStats(item);
     const voteBtns = card.querySelectorAll(".quick-vote-btn");
     voteBtns.forEach((btn) => {
       const val = Number(btn.dataset.quickVote);
