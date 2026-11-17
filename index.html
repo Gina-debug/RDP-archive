@@ -549,7 +549,7 @@
             <div class="showcase-upload-card" id="uploadShowcaseCard">
               <div class="showcase-upload-card__header">
                 <span class="showcase-upload-card__title">FOTO VETRINA (SOLO CATALOGO)</span>
-                <span class="showcase-upload-card__tag">NASCOSTA NELL'ISPEZIONE A TUTTO SCHERMO</span>
+                <span class="showcase-upload-card__tag">INQUADRATURA RETTANGOLO 3:4</span>
               </div>
               <div class="showcase-upload-card__body">
                 <input type="file" id="uploadShowcaseFileInput" accept="image/*,image/png,image/jpeg,image/webp" style="display: none;" />
@@ -562,6 +562,70 @@
                     <span class="showcase-placeholder-icon">★</span>
                     <span class="showcase-placeholder-text">CARICA FOTO VETRINA (OPZIONALE)</span>
                     <span class="showcase-placeholder-sub">Visibile solo nelle schede mockup del catalogo. Al passaggio del mouse mostrerà la 1ª foto del capo.</span>
+                  </div>
+                </div>
+
+                <!-- Interactive 3:4 Rectangle Framer & Calibrator -->
+                <div class="showcase-framer" id="uploadShowcaseFramer" hidden>
+                  <div class="showcase-framer-top-bar">
+                    <span class="framer-badge">📐 INQUADRATURA RETTANGOLO [3:4]</span>
+                    <div class="framer-top-actions">
+                      <button class="framer-change-btn" id="uploadShowcaseChangeBtn" type="button" title="Carica un'altra foto per la vetrina">↻ CAMBIA FOTO</button>
+                      <button class="showcase-remove-btn" id="uploadShowcaseFramerRemoveBtn" type="button" title="Rimuovi foto vetrina">✕ RIMUOVI</button>
+                    </div>
+                  </div>
+
+                  <div class="showcase-framer-stage">
+                    <div class="showcase-framer-viewport" id="uploadShowcaseViewport" title="Trascina con il mouse per posizionare l'inquadratura">
+                      <img id="uploadShowcaseFramerImg" src="" alt="Foto Vetrina nel Rettangolo" class="showcase-framer-target-img" />
+                      <div class="showcase-framer-overlay-guides">
+                        <div class="guide-cross"></div>
+                      </div>
+                      <span class="framer-drag-hint">⇄ TRASCINA PER POSIZIONARE</span>
+                    </div>
+                  </div>
+
+                  <div class="showcase-framer-controls">
+                    <div class="framer-slider-row">
+                      <div class="framer-slider-meta">
+                        <span class="framer-slider-name">ALTO / BASSO (Y)</span>
+                        <span class="framer-slider-val" id="uploadFramerPosYVal">50%</span>
+                      </div>
+                      <input type="range" class="framer-range" id="uploadFramerPosY" min="0" max="100" value="50" />
+                    </div>
+
+                    <div class="framer-slider-row">
+                      <div class="framer-slider-meta">
+                        <span class="framer-slider-name">SINISTRA / DESTRA (X)</span>
+                        <span class="framer-slider-val" id="uploadFramerPosXVal">50%</span>
+                      </div>
+                      <input type="range" class="framer-range" id="uploadFramerPosX" min="0" max="100" value="50" />
+                    </div>
+
+                    <div class="framer-slider-row">
+                      <div class="framer-slider-meta">
+                        <span class="framer-slider-name">ZOOM / SCALA</span>
+                        <span class="framer-slider-val" id="uploadFramerZoomVal">100%</span>
+                      </div>
+                      <input type="range" class="framer-range" id="uploadFramerZoom" min="80" max="220" value="100" />
+                    </div>
+
+                    <div class="framer-presets">
+                      <button type="button" class="framer-preset-btn" id="uploadFramerPresetTop" title="Allinea in alto per mostrare colletto e petto">⬆ IN ALTO</button>
+                      <button type="button" class="framer-preset-btn" id="uploadFramerPresetCenter" title="Centra il capo nel rettangolo">✛ CENTRA</button>
+                      <button type="button" class="framer-preset-btn" id="uploadFramerPresetBottom" title="Allinea in basso per mostrare stampe fondo o orli">⬇ IN BASSO</button>
+                      <button type="button" class="framer-preset-btn" id="uploadFramerPresetFit" title="Adatta interamente il capo nel rettangolo">↔ ADATTA</button>
+                      <button type="button" class="framer-preset-btn" id="uploadFramerPresetCover" title="Riempi tutto il rettangolo da bordo a bordo">⊡ RIEMPI</button>
+                    </div>
+
+                    <div class="framer-actions">
+                      <button type="button" class="framer-confirm-btn" id="uploadFramerApplyBtn">
+                        ✓ APPLICA &amp; BLOCCA INQUADRATURA
+                      </button>
+                      <button type="button" class="framer-use-photo-btn" id="uploadFramerUsePhoto1Btn" title="Usa la 1ª foto del capo per la vetrina">
+                        📷 USA 1ª FOTO DEL CAPO
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -704,7 +768,7 @@
           <div class="showcase-upload-card" id="editShowcaseCard">
             <div class="showcase-upload-card__header">
               <span class="showcase-upload-card__title">FOTO VETRINA (SOLO CATALOGO)</span>
-              <span class="showcase-upload-card__tag">NASCOSTA NELL'ISPEZIONE A TUTTO SCHERMO</span>
+              <span class="showcase-upload-card__tag">INQUADRATURA RETTANGOLO 3:4</span>
             </div>
             <div class="showcase-upload-card__body">
               <input type="file" id="editShowcaseFileInput" accept="image/*,image/png,image/jpeg,image/webp" style="display: none;" />
@@ -717,6 +781,70 @@
                   <span class="showcase-placeholder-icon">★</span>
                   <span class="showcase-placeholder-text">CARICA / CAMBIA FOTO VETRINA</span>
                   <span class="showcase-placeholder-sub">Visibile solo nelle schede del catalogo. Al passaggio mouse mostrerà la 1ª foto. Non compare nel fullscreen.</span>
+                </div>
+              </div>
+
+              <!-- Interactive 3:4 Rectangle Framer & Calibrator -->
+              <div class="showcase-framer" id="editShowcaseFramer" hidden>
+                <div class="showcase-framer-top-bar">
+                  <span class="framer-badge">📐 INQUADRATURA RETTANGOLO [3:4]</span>
+                  <div class="framer-top-actions">
+                    <button class="framer-change-btn" id="editShowcaseChangeBtn" type="button" title="Carica un'altra foto per la vetrina">↻ CAMBIA FOTO</button>
+                    <button class="showcase-remove-btn" id="editShowcaseFramerRemoveBtn" type="button" title="Rimuovi foto vetrina">✕ RIMUOVI</button>
+                  </div>
+                </div>
+
+                <div class="showcase-framer-stage">
+                  <div class="showcase-framer-viewport" id="editShowcaseViewport" title="Trascina con il mouse per posizionare l'inquadratura">
+                    <img id="editShowcaseFramerImg" src="" alt="Foto Vetrina nel Rettangolo" class="showcase-framer-target-img" />
+                    <div class="showcase-framer-overlay-guides">
+                      <div class="guide-cross"></div>
+                    </div>
+                    <span class="framer-drag-hint">⇄ TRASCINA PER POSIZIONARE</span>
+                  </div>
+                </div>
+
+                <div class="showcase-framer-controls">
+                  <div class="framer-slider-row">
+                    <div class="framer-slider-meta">
+                      <span class="framer-slider-name">ALTO / BASSO (Y)</span>
+                      <span class="framer-slider-val" id="editFramerPosYVal">50%</span>
+                    </div>
+                    <input type="range" class="framer-range" id="editFramerPosY" min="0" max="100" value="50" />
+                  </div>
+
+                  <div class="framer-slider-row">
+                    <div class="framer-slider-meta">
+                      <span class="framer-slider-name">SINISTRA / DESTRA (X)</span>
+                      <span class="framer-slider-val" id="editFramerPosXVal">50%</span>
+                    </div>
+                    <input type="range" class="framer-range" id="editFramerPosX" min="0" max="100" value="50" />
+                  </div>
+
+                  <div class="framer-slider-row">
+                    <div class="framer-slider-meta">
+                      <span class="framer-slider-name">ZOOM / SCALA</span>
+                      <span class="framer-slider-val" id="editFramerZoomVal">100%</span>
+                    </div>
+                    <input type="range" class="framer-range" id="editFramerZoom" min="80" max="220" value="100" />
+                  </div>
+
+                  <div class="framer-presets">
+                    <button type="button" class="framer-preset-btn" id="editFramerPresetTop" title="Allinea in alto per mostrare colletto e petto">⬆ IN ALTO</button>
+                    <button type="button" class="framer-preset-btn" id="editFramerPresetCenter" title="Centra il capo nel rettangolo">✛ CENTRA</button>
+                    <button type="button" class="framer-preset-btn" id="editFramerPresetBottom" title="Allinea in basso per mostrare stampe fondo o orli">⬇ IN BASSO</button>
+                    <button type="button" class="framer-preset-btn" id="editFramerPresetFit" title="Adatta interamente il capo nel rettangolo">↔ ADATTA</button>
+                    <button type="button" class="framer-preset-btn" id="editFramerPresetCover" title="Riempi tutto il rettangolo da bordo a bordo">⊡ RIEMPI</button>
+                  </div>
+
+                  <div class="framer-actions">
+                    <button type="button" class="framer-confirm-btn" id="editFramerApplyBtn">
+                      ✓ APPLICA &amp; BLOCCA INQUADRATURA
+                    </button>
+                    <button type="button" class="framer-use-photo-btn" id="editFramerUsePhoto1Btn" title="Usa la 1ª foto del capo per la vetrina">
+                      📷 USA 1ª FOTO DEL CAPO
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>

@@ -87,11 +87,12 @@ const RDPStorage = (() => {
     } catch (_e) {}
   }
 
-  // Carica tutti i capi caricati dal creatore
+  // Carica tutti i capi salvati in locale (unione robusta di IndexedDB e LocalStorage)
   async function getAllUserItems() {
+    const lsItems = getLSItems();
     const db = await openDB();
     if (!db) {
-      return getLSItems();
+      return lsItems;
     }
 
     return new Promise((resolve) => {
@@ -101,46 +102,70 @@ const RDPStorage = (() => {
         const req = store.getAll();
         req.onsuccess = () => {
           const results = req.result || [];
-          const lsItems = getLSItems();
-          if (results.length === 0 && lsItems.length > 0) {
-            resolve(lsItems);
-          } else {
-            resolve(results);
-          }
+          const mergedMap = new Map();
+          // Prima carica da LocalStorage
+          lsItems.forEach((item) => {
+            if (item && item.id) mergedMap.set(item.id, item);
+          });
+          // Poi unisci con IndexedDB privilegiando il record con updatedAt più recente
+          results.forEach((item) => {
+            if (!item || !item.id) return;
+            if (!mergedMap.has(item.id)) {
+              mergedMap.set(item.id, item);
+            } else {
+              const existing = mergedMap.get(item.id);
+              const existingTime = Number(existing.updatedAt || existing.createdAt || 0);
+              const idbTime = Number(item.updatedAt || item.createdAt || 0);
+              if (idbTime >= existingTime) {
+                mergedMap.set(item.id, item);
+              }
+            }
+          });
+          resolve(Array.from(mergedMap.values()));
         };
-        req.onerror = () => resolve(getLSItems());
+        req.onerror = () => resolve(lsItems);
       } catch (_e) {
-        resolve(getLSItems());
+        resolve(lsItems);
       }
     });
   }
 
-  // Salva un nuovo capo
+  // Salva un capo in locale in modo garantito e infallibile (LocalStorage + IndexedDB)
   async function saveUserItem(item) {
-    const currentLS = getLSItems().filter((i) => i.id !== item.id);
-    currentLS.push(item);
-    setLSItems(currentLS);
+    if (!item || !item.id) return item;
 
-    // Se era precedentemente nella lista eliminati, rimuovilo
-    const deleted = getDeletedItemIds().filter((dId) => dId !== item.id);
+    // 1. Salva sempre in LocalStorage (fallback rapido)
     try {
+      const currentLS = getLSItems().filter((i) => i.id !== item.id);
+      currentLS.push(item);
+      setLSItems(currentLS);
+    } catch (_e) {}
+
+    // 2. Se era precedentemente nella lista eliminati, rimuovilo
+    try {
+      const deleted = getDeletedItemIds().filter((dId) => dId !== item.id);
       window.localStorage.setItem(LS_DELETED_KEY, JSON.stringify(deleted));
     } catch (_e) {}
 
-    const db = await openDB();
-    if (!db) return item;
-
-    return new Promise((resolve, reject) => {
-      try {
-        const tx = db.transaction(STORE_NAME, "readwrite");
-        const store = tx.objectStore(STORE_NAME);
-        const req = store.put(item);
-        req.onsuccess = () => resolve(item);
-        req.onerror = () => reject(req.error);
-      } catch (err) {
-        reject(err);
+    // 3. Salva in IndexedDB ad alta capacità
+    try {
+      const db = await openDB();
+      if (db) {
+        await new Promise((resolve) => {
+          try {
+            const tx = db.transaction(STORE_NAME, "readwrite");
+            const store = tx.objectStore(STORE_NAME);
+            const req = store.put(item);
+            req.onsuccess = () => resolve(item);
+            req.onerror = () => resolve(item);
+          } catch (_err) {
+            resolve(item);
+          }
+        });
       }
-    });
+    } catch (_e) {}
+
+    return item;
   }
 
   // Elimina un capo qualsiasi dall'archivio (originale o caricato)

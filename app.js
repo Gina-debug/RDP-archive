@@ -257,6 +257,62 @@
   const editShowcasePlaceholder = document.getElementById("editShowcasePlaceholder");
   let editDraftShowcaseImage = null;
 
+  // Showcase 3:4 Rectangle Framer & Calibrator Elements (Edit Modal)
+  const editShowcaseFramer = document.getElementById("editShowcaseFramer");
+  const editShowcaseViewport = document.getElementById("editShowcaseViewport");
+  const editShowcaseFramerImg = document.getElementById("editShowcaseFramerImg");
+  const editShowcaseChangeBtn = document.getElementById("editShowcaseChangeBtn");
+  const editShowcaseFramerRemoveBtn = document.getElementById("editShowcaseFramerRemoveBtn");
+  const editFramerPosY = document.getElementById("editFramerPosY");
+  const editFramerPosYVal = document.getElementById("editFramerPosYVal");
+  const editFramerPosX = document.getElementById("editFramerPosX");
+  const editFramerPosXVal = document.getElementById("editFramerPosXVal");
+  const editFramerZoom = document.getElementById("editFramerZoom");
+  const editFramerZoomVal = document.getElementById("editFramerZoomVal");
+  const editFramerPresetTop = document.getElementById("editFramerPresetTop");
+  const editFramerPresetCenter = document.getElementById("editFramerPresetCenter");
+  const editFramerPresetBottom = document.getElementById("editFramerPresetBottom");
+  const editFramerPresetFit = document.getElementById("editFramerPresetFit");
+  const editFramerPresetCover = document.getElementById("editFramerPresetCover");
+  const editFramerApplyBtn = document.getElementById("editFramerApplyBtn");
+  const editFramerUsePhoto1Btn = document.getElementById("editFramerUsePhoto1Btn");
+
+  let editFramerState = {
+    posX: 50,
+    posY: 50,
+    zoom: 100,
+    fitMode: "cover",
+    baseImageSrc: null
+  };
+
+  // Showcase 3:4 Rectangle Framer & Calibrator Elements (Upload Modal)
+  const uploadShowcaseFramer = document.getElementById("uploadShowcaseFramer");
+  const uploadShowcaseViewport = document.getElementById("uploadShowcaseViewport");
+  const uploadShowcaseFramerImg = document.getElementById("uploadShowcaseFramerImg");
+  const uploadShowcaseChangeBtn = document.getElementById("uploadShowcaseChangeBtn");
+  const uploadShowcaseFramerRemoveBtn = document.getElementById("uploadShowcaseFramerRemoveBtn");
+  const uploadFramerPosY = document.getElementById("uploadFramerPosY");
+  const uploadFramerPosYVal = document.getElementById("uploadFramerPosYVal");
+  const uploadFramerPosX = document.getElementById("uploadFramerPosX");
+  const uploadFramerPosXVal = document.getElementById("uploadFramerPosXVal");
+  const uploadFramerZoom = document.getElementById("uploadFramerZoom");
+  const uploadFramerZoomVal = document.getElementById("uploadFramerZoomVal");
+  const uploadFramerPresetTop = document.getElementById("uploadFramerPresetTop");
+  const uploadFramerPresetCenter = document.getElementById("uploadFramerPresetCenter");
+  const uploadFramerPresetBottom = document.getElementById("uploadFramerPresetBottom");
+  const uploadFramerPresetFit = document.getElementById("uploadFramerPresetFit");
+  const uploadFramerPresetCover = document.getElementById("uploadFramerPresetCover");
+  const uploadFramerApplyBtn = document.getElementById("uploadFramerApplyBtn");
+  const uploadFramerUsePhoto1Btn = document.getElementById("uploadFramerUsePhoto1Btn");
+
+  let uploadFramerState = {
+    posX: 50,
+    posY: 50,
+    zoom: 100,
+    fitMode: "cover",
+    baseImageSrc: null
+  };
+
   const editImagesCountLabel = document.getElementById("editImagesCountLabel");
   const editPhotosList = document.getElementById("editPhotosList");
   const editAddPhotoZone = document.getElementById("editAddPhotoZone");
@@ -1437,30 +1493,118 @@
   }
 
   // ========================================================================
-  // FOTO VETRINA MANAGEMENT (DEDICATA // SEPARATA DALLE FOTO FULLSCREEN)
+  // FOTO VETRINA MANAGEMENT & MANUAL RECTANGULAR FRAMER (3:4 RATIO)
+  // Permette al Creator di calibrare, inquadrare e adattare manualmente
+  // l'immagine per il rettangolo delle card catalogo (3:4) e salvarla nel Cloud e Locale.
   // ========================================================================
+
+  // Disegna l'immagine su un Canvas HD 3:4 (900×1200px) con zoom, panX e panY manuali
+  async function bakeShowcaseFraming(baseSrc, state) {
+    if (!baseSrc) return null;
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.onload = () => {
+        const cw = 900;
+        const ch = 1200; // Esatto rapporto 3:4 delle schede catalogo
+        const canvas = document.createElement("canvas");
+        canvas.width = cw;
+        canvas.height = ch;
+        const ctx = canvas.getContext("2d");
+
+        // Sfondo scuro ossidiana matching con l'archivio
+        ctx.fillStyle = "#0A0B0E";
+        ctx.fillRect(0, 0, cw, ch);
+
+        const iw = img.naturalWidth || img.width;
+        const ih = img.naturalHeight || img.height;
+        const zoom = Math.max(0.5, ((state && state.zoom) || 100) / 100);
+        const posX = Math.max(0, Math.min(100, (state && state.posX !== undefined) ? state.posX : 50)) / 100;
+        const posY = Math.max(0, Math.min(100, (state && state.posY !== undefined) ? state.posY : 50)) / 100;
+        const isFit = state && state.fitMode === "contain";
+
+        let baseScale;
+        if (isFit) {
+          baseScale = Math.min(cw / iw, ch / ih) * zoom;
+        } else {
+          baseScale = Math.max(cw / iw, ch / ih) * zoom;
+        }
+
+        const dw = Math.round(iw * baseScale);
+        const dh = Math.round(ih * baseScale);
+        const dx = Math.round((cw - dw) * posX);
+        const dy = Math.round((ch - dh) * posY);
+
+        ctx.drawImage(img, dx, dy, dw, dh);
+        resolve(canvas.toDataURL("image/jpeg", 0.78));
+      };
+      img.onerror = () => resolve(baseSrc);
+      img.src = baseSrc;
+    });
+  }
+
+  function updateUploadFramerLivePreview() {
+    if (!uploadShowcaseFramerImg) return;
+    const { posX, posY, zoom, fitMode } = uploadFramerState;
+    uploadShowcaseFramerImg.style.objectFit = fitMode;
+    uploadShowcaseFramerImg.style.objectPosition = `${posX}% ${posY}%`;
+    uploadShowcaseFramerImg.style.transformOrigin = `${posX}% ${posY}%`;
+    uploadShowcaseFramerImg.style.transform = `scale(${zoom / 100})`;
+
+    if (uploadFramerPosY) uploadFramerPosY.value = posY;
+    if (uploadFramerPosYVal) uploadFramerPosYVal.textContent = `${Math.round(posY)}%`;
+    if (uploadFramerPosX) uploadFramerPosX.value = posX;
+    if (uploadFramerPosXVal) uploadFramerPosXVal.textContent = `${Math.round(posX)}%`;
+    if (uploadFramerZoom) uploadFramerZoom.value = zoom;
+    if (uploadFramerZoomVal) uploadFramerZoomVal.textContent = `${Math.round(zoom)}%`;
+  }
+
   function renderUploadShowcaseSlot() {
-    if (!uploadShowcasePreviewWrap || !uploadShowcasePlaceholder) return;
-    if (uploadShowcaseDataUrl) {
-      if (uploadShowcasePreviewImg) uploadShowcasePreviewImg.src = uploadShowcaseDataUrl;
-      uploadShowcasePreviewWrap.hidden = false;
-      uploadShowcasePlaceholder.hidden = true;
+    if (!uploadShowcaseCard) return;
+    const currentSrc = uploadFramerState.baseImageSrc || uploadShowcaseDataUrl;
+    if (currentSrc) {
+      if (uploadShowcaseFramerImg) {
+        uploadShowcaseFramerImg.src = currentSrc;
+      }
+      updateUploadFramerLivePreview();
+      if (uploadShowcaseFramer) uploadShowcaseFramer.hidden = false;
+      if (uploadShowcaseDropzone) uploadShowcaseDropzone.hidden = true;
     } else {
-      uploadShowcasePreviewWrap.hidden = true;
-      uploadShowcasePlaceholder.hidden = false;
+      if (uploadShowcaseFramer) uploadShowcaseFramer.hidden = true;
+      if (uploadShowcaseDropzone) uploadShowcaseDropzone.hidden = false;
       if (uploadShowcasePreviewImg) uploadShowcasePreviewImg.src = "";
     }
   }
 
+  function updateEditFramerLivePreview() {
+    if (!editShowcaseFramerImg) return;
+    const { posX, posY, zoom, fitMode } = editFramerState;
+    editShowcaseFramerImg.style.objectFit = fitMode;
+    editShowcaseFramerImg.style.objectPosition = `${posX}% ${posY}%`;
+    editShowcaseFramerImg.style.transformOrigin = `${posX}% ${posY}%`;
+    editShowcaseFramerImg.style.transform = `scale(${zoom / 100})`;
+
+    if (editFramerPosY) editFramerPosY.value = posY;
+    if (editFramerPosYVal) editFramerPosYVal.textContent = `${Math.round(posY)}%`;
+    if (editFramerPosX) editFramerPosX.value = posX;
+    if (editFramerPosXVal) editFramerPosXVal.textContent = `${Math.round(posX)}%`;
+    if (editFramerZoom) editFramerZoom.value = zoom;
+    if (editFramerZoomVal) editFramerZoomVal.textContent = `${Math.round(zoom)}%`;
+  }
+
   function renderEditShowcaseSlot() {
-    if (!editShowcasePreviewWrap || !editShowcasePlaceholder) return;
-    if (editDraftShowcaseImage) {
-      if (editShowcasePreviewImg) editShowcasePreviewImg.src = editDraftShowcaseImage;
-      editShowcasePreviewWrap.hidden = false;
-      editShowcasePlaceholder.hidden = true;
+    if (!editShowcaseCard) return;
+    const currentSrc = editFramerState.baseImageSrc || editDraftShowcaseImage;
+    if (currentSrc) {
+      if (editShowcaseFramerImg) {
+        editShowcaseFramerImg.src = currentSrc;
+      }
+      updateEditFramerLivePreview();
+      if (editShowcaseFramer) editShowcaseFramer.hidden = false;
+      if (editShowcaseDropzone) editShowcaseDropzone.hidden = true;
     } else {
-      editShowcasePreviewWrap.hidden = true;
-      editShowcasePlaceholder.hidden = false;
+      if (editShowcaseFramer) editShowcaseFramer.hidden = true;
+      if (editShowcaseDropzone) editShowcaseDropzone.hidden = false;
       if (editShowcasePreviewImg) editShowcasePreviewImg.src = "";
     }
   }
@@ -1477,22 +1621,110 @@
       studioEnhance: true,
       transparentBg: false,
       bgTolerance: 28,
-      paddingPct: 0.06
+      paddingPct: 0.04
     };
     try {
       const res = await RDPImageProcessor.processGarmentFile(file, options);
       if (isEdit) {
+        editFramerState.baseImageSrc = res.processedDataUrl;
+        editFramerState.posX = 50;
+        editFramerState.posY = 50;
+        editFramerState.zoom = 100;
+        editFramerState.fitMode = "cover";
         editDraftShowcaseImage = res.processedDataUrl;
         renderEditShowcaseSlot();
-        showToast("✓ FOTO VETRINA AGGIORNATA (SOLO CATALOGO)");
+        showToast("✓ FOTO VETRINA CARICATA! REGOLA ORA L'INQUADRATURA NEL RETTANGOLO");
       } else {
+        uploadFramerState.baseImageSrc = res.processedDataUrl;
+        uploadFramerState.posX = 50;
+        uploadFramerState.posY = 50;
+        uploadFramerState.zoom = 100;
+        uploadFramerState.fitMode = "cover";
         uploadShowcaseDataUrl = res.processedDataUrl;
         renderUploadShowcaseSlot();
-        showToast("✓ FOTO VETRINA CARICATA (SOLO CATALOGO)");
+        showToast("✓ FOTO VETRINA CARICATA! REGOLA ORA L'INQUADRATURA NEL RETTANGOLO");
       }
     } catch (err) {
       if (isEdit) showEditError("ERRORE ELABORAZIONE FOTO VETRINA: " + (err.message || ""));
       else showUploadError("ERRORE ELABORAZIONE FOTO VETRINA: " + (err.message || ""));
+    }
+  }
+
+  function setupFramerViewportDrag(viewport, state, updateFn) {
+    if (!viewport) return;
+    let isDragging = false;
+    let startX = 0;
+    let startY = 0;
+    let initialPosX = 50;
+    let initialPosY = 50;
+
+    viewport.addEventListener("pointerdown", (e) => {
+      isDragging = true;
+      startX = e.clientX;
+      startY = e.clientY;
+      initialPosX = state.posX;
+      initialPosY = state.posY;
+      viewport.classList.add("is-dragging");
+      try {
+        viewport.setPointerCapture(e.pointerId);
+      } catch (_e) {}
+    });
+
+    viewport.addEventListener("pointermove", (e) => {
+      if (!isDragging) return;
+      const rect = viewport.getBoundingClientRect();
+      const deltaX = ((e.clientX - startX) / rect.width) * 100;
+      const deltaY = ((e.clientY - startY) / rect.height) * 100;
+      state.posX = Math.max(0, Math.min(100, initialPosX - deltaX));
+      state.posY = Math.max(0, Math.min(100, initialPosY - deltaY));
+      updateFn();
+    });
+
+    const endDrag = (e) => {
+      if (isDragging) {
+        isDragging = false;
+        viewport.classList.remove("is-dragging");
+        try {
+          viewport.releasePointerCapture(e.pointerId);
+        } catch (_e) {}
+      }
+    };
+    viewport.addEventListener("pointerup", endDrag);
+    viewport.addEventListener("pointercancel", endDrag);
+  }
+
+  function setupFramerControls(prefix, state, updateFn, onApplyFn, onUsePhoto1Fn, changeInput) {
+    const posYEl = document.getElementById(`${prefix}FramerPosY`);
+    const posXEl = document.getElementById(`${prefix}FramerPosX`);
+    const zoomEl = document.getElementById(`${prefix}FramerZoom`);
+
+    if (posYEl) posYEl.addEventListener("input", (e) => { state.posY = Number(e.target.value); updateFn(); });
+    if (posXEl) posXEl.addEventListener("input", (e) => { state.posX = Number(e.target.value); updateFn(); });
+    if (zoomEl) zoomEl.addEventListener("input", (e) => { state.zoom = Number(e.target.value); updateFn(); });
+
+    const btnTop = document.getElementById(`${prefix}FramerPresetTop`);
+    const btnCenter = document.getElementById(`${prefix}FramerPresetCenter`);
+    const btnBottom = document.getElementById(`${prefix}FramerPresetBottom`);
+    const btnFit = document.getElementById(`${prefix}FramerPresetFit`);
+    const btnCover = document.getElementById(`${prefix}FramerPresetCover`);
+    const btnApply = document.getElementById(`${prefix}FramerApplyBtn`);
+    const btnUsePhoto1 = document.getElementById(`${prefix}FramerUsePhoto1Btn`);
+    const btnChange = document.getElementById(`${prefix}ShowcaseChangeBtn`);
+
+    if (btnTop) btnTop.addEventListener("click", (e) => { e.preventDefault(); state.posY = 15; state.posX = 50; state.zoom = 105; state.fitMode = "cover"; updateFn(); });
+    if (btnCenter) btnCenter.addEventListener("click", (e) => { e.preventDefault(); state.posY = 50; state.posX = 50; state.zoom = 100; state.fitMode = "cover"; updateFn(); });
+    if (btnBottom) btnBottom.addEventListener("click", (e) => { e.preventDefault(); state.posY = 85; state.posX = 50; state.zoom = 105; state.fitMode = "cover"; updateFn(); });
+    if (btnFit) btnFit.addEventListener("click", (e) => { e.preventDefault(); state.fitMode = "contain"; state.zoom = 100; state.posX = 50; state.posY = 50; updateFn(); });
+    if (btnCover) btnCover.addEventListener("click", (e) => { e.preventDefault(); state.fitMode = "cover"; state.zoom = 100; state.posX = 50; state.posY = 50; updateFn(); });
+
+    if (btnApply && typeof onApplyFn === "function") {
+      btnApply.addEventListener("click", (e) => { e.preventDefault(); onApplyFn(e); });
+    }
+    if (btnUsePhoto1 && typeof onUsePhoto1Fn === "function") {
+      btnUsePhoto1.addEventListener("click", (e) => { e.preventDefault(); onUsePhoto1Fn(e); });
+    }
+    if (btnChange && changeInput) {
+      btnChange.addEventListener("click", (e) => { e.preventDefault(); changeInput.click(); });
     }
   }
 
@@ -1705,6 +1937,20 @@
       inputNotes.value.trim().toUpperCase() ||
       "MOCKUP CARICATO DAL CREATORE E STANDARDIZZATO AD ALTA RISOLUZIONE (1400×1400PX // CANVAS ENGINE).";
 
+    let finalShowcase = uploadShowcaseDataUrl || null;
+    const framerBase = uploadFramerState.baseImageSrc || uploadShowcaseDataUrl;
+    if (framerBase) {
+      try {
+        const baked = await bakeShowcaseFraming(framerBase, uploadFramerState);
+        if (baked) {
+          finalShowcase = baked;
+          uploadShowcaseDataUrl = baked;
+        }
+      } catch (err) {
+        console.warn("[Framer Upload] Errore bake canvas:", err);
+      }
+    }
+
     const newItem = {
       id: `rdp-creator-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
       code: formatArchiveCode(allItems.length + 1),
@@ -1725,7 +1971,12 @@
       frontNotes: notes,
       backNotes: null,
       notes,
-      showcaseImage: uploadShowcaseDataUrl || null,
+      showcaseImage: finalShowcase,
+      showcaseBaseImage: framerBase || null,
+      showcasePosX: uploadFramerState.posX,
+      showcasePosY: uploadFramerState.posY,
+      showcaseZoom: uploadFramerState.zoom,
+      showcaseFitMode: uploadFramerState.fitMode || "cover",
       createdAt: Date.now(),
       images: {
         front: allUploaded[0] || "",
@@ -1744,7 +1995,7 @@
 
       RDPCloud.saveGarment(newItem).then((res) => {
         if (res && res.syncedToCloud) {
-          showToast(`✓ CAPO ${newItem.code} SINCRONIZZATO SU FIREBASE!`);
+          showToast(`✓ CAPO ${newItem.code} SINCRONIZZATO SU CLOUD FIRESTORE!`);
         }
       }).catch((err) => {
         console.warn("[RDP Cloud] Sync differito:", err);
@@ -1844,8 +2095,18 @@
     if (!item) return;
 
     editingGarmentId = item.id;
-    editDraftShowcaseImage = item.showcaseImage || null;
     editDraftImages = [...getItemImages(item)];
+    editDraftShowcaseImage = item.showcaseImage || null;
+    editFramerState = {
+      posX: item.showcasePosX !== undefined ? Number(item.showcasePosX) : 50,
+      posY: item.showcasePosY !== undefined ? Number(item.showcasePosY) : 50,
+      zoom: item.showcaseZoom !== undefined ? Number(item.showcaseZoom) : 100,
+      fitMode: item.showcaseFitMode || "cover",
+      baseImageSrc: item.showcaseBaseImage || item.showcaseImage || (editDraftImages[0] || null)
+    };
+    if (!editDraftShowcaseImage && editDraftImages[0]) {
+      editDraftShowcaseImage = editDraftImages[0];
+    }
     replacingPhotoIndex = null;
     isProcessingEditImage = false;
 
@@ -1886,6 +2147,13 @@
     editDraftShowcaseImage = null;
     editDraftImages = [];
     replacingPhotoIndex = null;
+    editFramerState = {
+      posX: 50,
+      posY: 50,
+      zoom: 100,
+      fitMode: "cover",
+      baseImageSrc: null
+    };
     renderEditShowcaseSlot();
   }
 
@@ -2008,6 +2276,26 @@
     const colorway = (inputEditColorway && inputEditColorway.value.trim().toUpperCase()) || currentItem.colorway || "STUDIO SPEC";
     const notes = (inputEditNotes && inputEditNotes.value.trim().toUpperCase()) || currentItem.notes || "";
 
+    if (editGarmentSubmitBtn) {
+      editGarmentSubmitBtn.disabled = true;
+      editGarmentSubmitBtn.textContent = "[SALVATAGGIO_IN_CORSO...]";
+    }
+
+    // 1. Bake dell'inquadratura manuale al rettangolo [3:4] su Canvas se presente
+    let finalShowcase = editDraftShowcaseImage || null;
+    const framerBase = editFramerState.baseImageSrc || editDraftShowcaseImage;
+    if (framerBase) {
+      try {
+        const baked = await bakeShowcaseFraming(framerBase, editFramerState);
+        if (baked) {
+          finalShowcase = baked;
+          editDraftShowcaseImage = baked;
+        }
+      } catch (err) {
+        console.warn("[Framer Edit] Errore bake canvas:", err);
+      }
+    }
+
     const updatedItem = {
       ...currentItem,
       title,
@@ -2020,7 +2308,12 @@
       notes,
       frontNotes: notes,
       backNotes: null,
-      showcaseImage: editDraftShowcaseImage || null,
+      showcaseImage: finalShowcase,
+      showcaseBaseImage: framerBase || null,
+      showcasePosX: editFramerState.posX,
+      showcasePosY: editFramerState.posY,
+      showcaseZoom: editFramerState.zoom,
+      showcaseFitMode: editFramerState.fitMode || "cover",
       images: {
         front: finalImages[0] || "",
         back: finalImages[1] || null,
@@ -2030,19 +2323,12 @@
       updatedAt: Date.now()
     };
 
-    if (editGarmentSubmitBtn) {
-      editGarmentSubmitBtn.disabled = true;
-      editGarmentSubmitBtn.textContent = "[SALVATAGGIO_IN_CORSO_CLOUD...]";
-    }
-
     try {
-      // 1. Salva nel Cloud Firestore (con sincronizzazione persistente per tutti i dispositivi nel mondo)
-      const cloudRes = await RDPCloud.saveGarment(updatedItem);
+      // 2. SALVATAGGIO LOCALE IMMEDIATO (Infallibile e istantaneo in IndexedDB + LocalStorage)
+      await RDPStorage.saveUserItem(updatedItem);
 
-      // 2. Chiudi la finestra modale
+      // 3. Chiudi subito la finestra modale e ricarica i dati a video
       closeEditGarmentModal();
-
-      // 3. Ricarica i dati dell'archivio e aggiorna la vista
       await reloadArchiveData();
 
       // 4. Se il capo modificato è attualmente aperto nel modal a tutto schermo, aggiornalo sul posto
@@ -2050,11 +2336,16 @@
         openInspectionModal(updatedItem.id, activeModalImageIndex);
       }
 
-      if (cloudRes && cloudRes.syncedToCloud) {
-        showToast(`✓ MODIFICHE SALVATE PERMANENTEMENTE PER TUTTI I DISPOSITIVI NEL MONDO (${updatedItem.code})!`);
-      } else {
-        showToast(`✓ SALVATO IN LOCALE (${cloudRes && cloudRes.error ? cloudRes.error : "CLOUD NON CONNESSO"})`);
-      }
+      showToast(`✓ MODIFICHE E INQUADRATURA SALVATE IN LOCALE (${updatedItem.code})!`);
+
+      // 5. Sincronizzazione Cloud in background ("salvare nel claude per tutti i dispositivi al mondo")
+      RDPCloud.saveGarment(updatedItem).then((cloudRes) => {
+        if (cloudRes && cloudRes.syncedToCloud) {
+          showToast(`✓ MODIFICHE SALVATE PERMANENTEMENTE NEL CLOUD PER TUTTI I DISPOSITIVI (${updatedItem.code})!`);
+        }
+      }).catch((cloudErr) => {
+        console.warn("[RDP Cloud] Errore sync differito:", cloudErr);
+      });
     } catch (err) {
       console.error("Errore salvataggio modifiche:", err);
       showEditError("ERRORE DURANTE IL SALVATAGGIO: " + (err.message || ""));
@@ -2549,10 +2840,53 @@
       uploadShowcaseRemoveBtn.addEventListener("click", (e) => {
         e.stopPropagation();
         uploadShowcaseDataUrl = null;
+        uploadFramerState.baseImageSrc = null;
         renderUploadShowcaseSlot();
         showToast("FOTO VETRINA RIMOSSA");
       });
     }
+    if (uploadShowcaseFramerRemoveBtn) {
+      uploadShowcaseFramerRemoveBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        uploadShowcaseDataUrl = null;
+        uploadFramerState.baseImageSrc = null;
+        renderUploadShowcaseSlot();
+        showToast("FOTO VETRINA RIMOSSA");
+      });
+    }
+
+    // 3:4 Showcase Framer Viewport Drag and Controls (Upload Modal)
+    setupFramerViewportDrag(uploadShowcaseViewport, uploadFramerState, updateUploadFramerLivePreview);
+
+    const onApplyUploadFramer = (e) => {
+      if (e && e.preventDefault) e.preventDefault();
+      const src = uploadFramerState.baseImageSrc || uploadShowcaseDataUrl;
+      if (!src) return;
+      if (uploadShowcaseViewport) {
+        uploadShowcaseViewport.classList.add("framer-locked-flash");
+        setTimeout(() => uploadShowcaseViewport.classList.remove("framer-locked-flash"), 600);
+      }
+      showToast("✓ INQUADRATURA BLOCCATA E CALIBRATA AL RETTANGOLO [3:4]");
+    };
+
+    const onUsePhoto1UploadFramer = (e) => {
+      if (e && e.preventDefault) e.preventDefault();
+      const photo1 = uploadDraftResults && uploadDraftResults[0] ? uploadDraftResults[0].processedDataUrl : null;
+      if (photo1) {
+        uploadFramerState.baseImageSrc = photo1;
+        uploadFramerState.posX = 50;
+        uploadFramerState.posY = 50;
+        uploadFramerState.zoom = 100;
+        uploadFramerState.fitMode = "cover";
+        uploadShowcaseDataUrl = photo1;
+        renderUploadShowcaseSlot();
+        showToast("✓ 1ª FOTO DEL CAPO IMPOSTATA COME VETRINA! ADATTA ORA L'INQUADRATURA");
+      } else {
+        showToast("PRIMA CARICA UNA FOTO DEL CAPO");
+      }
+    };
+
+    setupFramerControls("upload", uploadFramerState, updateUploadFramerLivePreview, onApplyUploadFramer, onUsePhoto1UploadFramer, uploadShowcaseFileInput);
 
     // Dedicated Showcase Photo bindings for Edit Modal
     if (editShowcaseDropzone && editShowcaseFileInput) {
@@ -2575,10 +2909,52 @@
       editShowcaseRemoveBtn.addEventListener("click", (e) => {
         e.stopPropagation();
         editDraftShowcaseImage = null;
+        editFramerState.baseImageSrc = null;
         renderEditShowcaseSlot();
         showToast("FOTO VETRINA RIMOSSA");
       });
     }
+    if (editShowcaseFramerRemoveBtn) {
+      editShowcaseFramerRemoveBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        editDraftShowcaseImage = null;
+        editFramerState.baseImageSrc = null;
+        renderEditShowcaseSlot();
+        showToast("FOTO VETRINA RIMOSSA");
+      });
+    }
+
+    // 3:4 Showcase Framer Viewport Drag and Controls (Edit Modal)
+    setupFramerViewportDrag(editShowcaseViewport, editFramerState, updateEditFramerLivePreview);
+
+    const onApplyEditFramer = (e) => {
+      if (e && e.preventDefault) e.preventDefault();
+      const src = editFramerState.baseImageSrc || editDraftShowcaseImage;
+      if (!src) return;
+      if (editShowcaseViewport) {
+        editShowcaseViewport.classList.add("framer-locked-flash");
+        setTimeout(() => editShowcaseViewport.classList.remove("framer-locked-flash"), 600);
+      }
+      showToast("✓ INQUADRATURA BLOCCATA E CALIBRATA AL RETTANGOLO [3:4]");
+    };
+
+    const onUsePhoto1EditFramer = (e) => {
+      if (e && e.preventDefault) e.preventDefault();
+      if (editDraftImages && editDraftImages[0]) {
+        editFramerState.baseImageSrc = editDraftImages[0];
+        editFramerState.posX = 50;
+        editFramerState.posY = 50;
+        editFramerState.zoom = 100;
+        editFramerState.fitMode = "cover";
+        editDraftShowcaseImage = editDraftImages[0];
+        renderEditShowcaseSlot();
+        showToast("✓ 1ª FOTO DEL CAPO IMPOSTATA COME VETRINA! ADATTA ORA L'INQUADRATURA");
+      } else {
+        showToast("NESSUNA FOTO DEL CAPO PRESENTE");
+      }
+    };
+
+    setupFramerControls("edit", editFramerState, updateEditFramerLivePreview, onApplyEditFramer, onUsePhoto1EditFramer, editShowcaseFileInput);
 
     if (editAddPhotoZone && editAddPhotoFileInput) {
       editAddPhotoZone.addEventListener("click", (e) => {
