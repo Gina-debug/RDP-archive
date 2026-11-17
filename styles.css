@@ -1119,13 +1119,13 @@ img {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
-  padding: 8px 12px;
-  background-color: rgba(75, 83, 32, 0.12);
-  border: 1px solid rgba(194, 178, 128, 0.4);
-  border-radius: 8px;
-  font-size: 10px;
-  color: var(--camo-olive);
+  gap: 12px;
+  padding: 10px 14px;
+  background-color: rgba(212, 175, 55, 0.08);
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  border-radius: 10px;
+  font-size: 11px;
+  color: #E5C365;
   font-weight: 700;
   margin: 6px 0;
 }
@@ -1137,24 +1137,25 @@ img {
 .modal-vote-send-btn {
   display: inline-flex;
   align-items: center;
-  padding: 5px 12px;
-  background-image: linear-gradient(rgba(17, 17, 17, 0.30), rgba(17, 17, 17, 0.30)), var(--camo-pattern);
-  background-size: 120px 120px;
-  color: #FFFFFF;
-  border: 1px solid var(--camo-sand);
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.85);
-  font-size: 10px;
+  padding: 6px 14px;
+  background-color: #D4AF37;
+  color: #0A0B0E;
+  border: none;
+  font-size: 10.5px;
   font-weight: 800;
   border-radius: 14px;
   cursor: pointer;
   white-space: nowrap;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
-  box-shadow: 0 2px 6px rgba(75, 83, 32, 0.3);
+  letter-spacing: 0.04em;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 2px 8px rgba(212, 175, 55, 0.35);
 }
 
 .modal-vote-send-btn:hover {
-  transform: scale(1.04);
-  box-shadow: 0 4px 10px rgba(75, 83, 32, 0.45);
+  background-color: #FFFFFF;
+  color: #0A0B0E;
+  transform: translateY(-1px) scale(1.03);
+  box-shadow: 0 4px 14px rgba(255, 255, 255, 0.35);
 }
 
 /* ==========================================================================
@@ -1187,20 +1188,20 @@ img {
   width: min(1320px, 94vw);
   height: min(90vh, 860px);
   max-height: 90vh;
-  background-color: #0C0D11;
-  border: 1px solid rgba(194, 178, 128, 0.35);
+  background-color: #0B0C10;
+  border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 16px;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  box-shadow: 0 32px 80px rgba(0, 0, 0, 0.85), 0 0 40px rgba(75, 83, 32, 0.35);
+  box-shadow: 0 32px 90px rgba(0, 0, 0, 0.95), 0 0 0 1px rgba(255, 255, 255, 0.04);
   animation: modalWindowPopIn 0.32s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 @keyframes modalWindowPopIn {
   from {
     opacity: 0;
-    transform: scale(0.94) translateY(18px);
+    transform: scale(0.96) translateY(14px);
   }
   to {
     opacity: 1;
@@ -1213,9 +1214,9 @@ img {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 12px 24px;
+  padding: 14px 24px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  background-color: #111218;
+  background-color: #0D0E13;
   flex-shrink: 0;
 }
 
@@ -1229,42 +1230,55 @@ img {
 .modal-code {
   font-size: 12px;
   font-weight: 800;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.1em;
   color: #FFFFFF;
 }
 
 .modal-cat {
   font-size: 10px;
+  font-weight: 700;
   color: #8E919C;
   letter-spacing: 0.08em;
-  border-left: 1px solid rgba(255, 255, 255, 0.12);
+  border-left: 1px solid rgba(255, 255, 255, 0.15);
   padding-left: 10px;
 }
 
+.modal-header .camo-badge {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  color: #FFFFFF;
+  border-radius: 4px;
+  font-size: 9.5px;
+  letter-spacing: 0.08em;
+  padding: 3px 8px;
+  text-shadow: none;
+}
+
 .modal-close-btn {
-  padding: 6px 14px;
+  padding: 6px 16px;
   font-size: 11px;
   font-weight: 700;
+  letter-spacing: 0.05em;
   border: 1px solid rgba(255, 255, 255, 0.16);
-  background-color: rgba(255, 255, 255, 0.08);
+  background-color: rgba(255, 255, 255, 0.06);
   color: #FFFFFF;
-  border-radius: 16px;
+  border-radius: 20px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .modal-close-btn:hover {
-  background-color: var(--camo-olive);
-  border-color: var(--camo-sand);
-  color: #FFFFFF;
-  box-shadow: 0 0 12px rgba(75, 83, 32, 0.5);
+  background-color: #FFFFFF;
+  border-color: #FFFFFF;
+  color: #0A0B0E;
+  box-shadow: 0 0 14px rgba(255, 255, 255, 0.3);
 }
 
 .modal-body {
   flex: 1;
   display: grid;
   grid-template-columns: 1.15fr 0.85fr;
-  height: calc(100% - 49px);
+  height: calc(100% - 53px);
   overflow: hidden;
 }
 
@@ -1274,7 +1288,7 @@ img {
   flex-direction: column;
   height: 100%;
   border-right: 1px solid rgba(255, 255, 255, 0.08);
-  background-color: #0A0B0E;
+  background-color: #07080A;
   position: relative;
 }
 
@@ -1297,9 +1311,9 @@ img {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 32px;
+  padding: 36px;
   box-sizing: border-box;
-  background: radial-gradient(circle at center, #262833 0%, #101116 75%, #08090C 100%);
+  background: radial-gradient(circle at center, #15171F 0%, #090A0E 75%, #050608 100%);
   overflow: hidden;
   cursor: pointer;
 }
@@ -1314,7 +1328,7 @@ img {
   object-fit: contain;
   transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.22s ease;
   will-change: transform, opacity;
-  filter: drop-shadow(0 12px 28px rgba(0, 0, 0, 0.75));
+  filter: drop-shadow(0 16px 36px rgba(0, 0, 0, 0.85));
 }
 
 .modal-viewer__stage img.is-flipping {
@@ -1324,7 +1338,7 @@ img {
 @keyframes photoStageFlip {
   0% {
     opacity: 0.3;
-    transform: scale(0.95) rotateY(12deg);
+    transform: scale(0.96) rotateY(8deg);
     filter: blur(2px);
   }
   100% {
@@ -1338,48 +1352,9 @@ img {
   transform: scale(2.2);
 }
 
-/* Floating Quick Flip Pill on Image Stage */
+/* Floating Quick Flip Pill: Hidden to keep garment mockup 100% visible and clean */
 .stage-flip-pill {
-  position: absolute;
-  bottom: 24px;
-  left: 50%;
-  transform: translateX(-50%);
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 22px;
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  border-radius: 24px;
-  border: 1px solid rgba(194, 178, 128, 0.55);
-  background-image: linear-gradient(rgba(17, 17, 17, 0.45), rgba(17, 17, 17, 0.45)), var(--camo-pattern);
-  background-size: 140px 140px;
-  color: #FFFFFF;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  cursor: pointer;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6), 0 0 18px rgba(75, 83, 32, 0.4);
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.85);
-  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
-  z-index: 10;
-  white-space: nowrap;
-}
-
-.stage-flip-pill:hover {
-  background-image: linear-gradient(rgba(17, 17, 17, 0.25), rgba(17, 17, 17, 0.25)), var(--camo-pattern);
-  border-color: var(--camo-sand);
-  transform: translateX(-50%) translateY(-2px) scale(1.04);
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.7), 0 0 24px rgba(75, 83, 32, 0.6);
-}
-
-.stage-flip-pill__icon {
-  font-size: 14px;
-  transition: transform 0.35s ease;
-}
-
-.stage-flip-pill:hover .stage-flip-pill__icon {
-  transform: rotate(180deg);
+  display: none !important;
 }
 
 /* Modal Specs (Right Column - Formatted to beautifully fill available vertical space) */
@@ -1389,7 +1364,7 @@ img {
   height: 100%;
   justify-content: space-between;
   box-sizing: border-box;
-  background-color: #111218;
+  background-color: #0E0F14;
   overflow-y: auto;
 }
 
@@ -1398,9 +1373,9 @@ img {
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  padding: 22px 28px;
+  padding: 20px 28px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  background-color: #111218;
+  background-color: #0E0F14;
   flex-shrink: 0;
 }
 
@@ -1416,27 +1391,27 @@ img {
   text-shadow: 0 2px 8px rgba(0, 0, 0, 0.95);
 }
 
-/* Modal Front / Back View Switcher Capsule */
+/* Modal View Switcher Capsule */
 .modal-view-switcher {
   display: inline-flex;
   align-items: center;
-  background-color: rgba(255, 255, 255, 0.06);
+  background-color: rgba(255, 255, 255, 0.05);
   padding: 3px;
   border-radius: 24px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   gap: 3px;
   flex-shrink: 0;
 }
 
 .modal-view-tab {
-  padding: 7px 18px;
+  padding: 6px 16px;
   font-size: 11px;
   font-weight: 800;
   letter-spacing: 0.06em;
   border-radius: 20px;
-  border: none;
+  border: 1px solid transparent;
   background: transparent;
-  color: #A0A4AF;
+  color: #8E919C;
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   white-space: nowrap;
@@ -1444,16 +1419,14 @@ img {
 
 .modal-view-tab:hover {
   color: #FFFFFF;
-  background-color: rgba(75, 83, 32, 0.35);
+  background-color: rgba(255, 255, 255, 0.08);
 }
 
 .modal-view-tab.is-active {
-  background-image: linear-gradient(rgba(17, 17, 17, 0.32), rgba(17, 17, 17, 0.32)), var(--camo-pattern);
-  background-size: 120px 120px;
-  color: #FFFFFF;
-  border: 1px solid rgba(194, 178, 128, 0.55);
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.85);
-  box-shadow: 0 2px 10px rgba(75, 83, 32, 0.5);
+  background-color: #FFFFFF;
+  color: #0A0B0E;
+  border-color: #FFFFFF;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.6);
 }
 
 .modal-view-tab:disabled {
@@ -1467,7 +1440,7 @@ img {
 .voting-terminal {
   padding: 20px 28px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  background-color: #15161E;
+  background-color: #121319;
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -1482,28 +1455,32 @@ img {
 }
 
 .voting-terminal__score {
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 800;
   letter-spacing: 0.04em;
   color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .voting-user-status {
-  font-size: 11px;
-  font-weight: 800;
+  font-size: 10.5px;
+  font-weight: 700;
   letter-spacing: 0.06em;
   padding: 4px 12px;
   border-radius: 14px;
-  background-color: rgba(255, 255, 255, 0.08);
-  color: #A0A4AF;
+  background-color: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #8E919C;
+  transition: all 0.2s ease;
 }
 
 .voting-user-status.is-voted {
-  background-image: linear-gradient(rgba(17, 17, 17, 0.32), rgba(17, 17, 17, 0.32)), var(--camo-pattern);
-  background-size: 110px 110px;
-  color: #FFFFFF;
-  border: 1px solid var(--camo-sand);
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.85);
+  background-color: rgba(212, 175, 55, 0.12);
+  color: #E5C365;
+  border: 1px solid rgba(212, 175, 55, 0.4);
+  text-shadow: none;
 }
 
 .voting-scale {
@@ -1515,12 +1492,12 @@ img {
 
 .vote-num-btn {
   flex: 1;
-  height: 42px;
+  height: 40px;
   font-size: 13px;
   font-weight: 800;
   text-align: center;
   border: 1px solid rgba(255, 255, 255, 0.12);
-  background-color: rgba(255, 255, 255, 0.06);
+  background-color: rgba(255, 255, 255, 0.05);
   color: #FFFFFF;
   border-radius: 8px;
   cursor: pointer;
@@ -1531,11 +1508,11 @@ img {
 }
 
 .vote-num-btn:hover {
-  background-color: var(--camo-olive);
+  background-color: rgba(255, 255, 255, 0.18);
   color: #FFFFFF;
-  border-color: var(--camo-sand);
+  border-color: rgba(255, 255, 255, 0.4);
   transform: translateY(-2px);
-  box-shadow: 0 4px 14px rgba(75, 83, 32, 0.5);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
 }
 
 .vote-num-btn:active {
@@ -1543,13 +1520,13 @@ img {
 }
 
 .vote-num-btn.is-active {
-  background-image: linear-gradient(rgba(17, 17, 17, 0.30), rgba(17, 17, 17, 0.30)), var(--camo-pattern);
-  background-size: 110px 110px;
-  color: #FFFFFF;
-  border: 1px solid var(--camo-sand);
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9);
-  box-shadow: 0 4px 14px rgba(75, 83, 32, 0.6);
-  animation: votePop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  background-color: #FFFFFF;
+  color: #0A0B0E;
+  border: 1px solid #FFFFFF;
+  font-weight: 900;
+  box-shadow: 0 0 16px rgba(255, 255, 255, 0.6);
+  transform: scale(1.05);
+  animation: votePop 0.28s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 .voting-terminal__meta {
@@ -1572,10 +1549,9 @@ img {
 
 .voting-meter__fill {
   height: 100%;
-  background-image: var(--camo-pattern);
-  background-size: 80px 80px;
+  background: linear-gradient(90deg, #A8892D 0%, #D4AF37 50%, #F5DE88 100%);
   border-radius: 3px;
-  box-shadow: 0 0 8px rgba(75, 83, 32, 0.55);
+  box-shadow: 0 0 8px rgba(212, 175, 55, 0.5);
   transition: width 0.35s ease;
 }
 
@@ -1588,7 +1564,7 @@ img {
   flex-direction: column;
   justify-content: space-evenly;
   margin: 0;
-  padding: 6px 0;
+  padding: 8px 0;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
@@ -1596,8 +1572,8 @@ img {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 14px 28px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  padding: 13px 28px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
   transition: background-color 0.15s ease;
 }
 
@@ -1606,23 +1582,23 @@ img {
 }
 
 .spec-row:hover {
-  background-color: rgba(255, 255, 255, 0.04);
+  background-color: rgba(255, 255, 255, 0.03);
 }
 
 .spec-row dt {
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.08em;
-  color: #8E929E;
+  color: #7E828E;
   text-transform: uppercase;
 }
 
 .spec-row dd {
   margin: 0;
-  font-size: 13px;
+  font-size: 12.5px;
   font-weight: 800;
   color: #FFFFFF;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.03em;
   text-align: right;
 }
 
@@ -1631,8 +1607,8 @@ img {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 18px 28px;
-  background-color: #111218;
+  padding: 16px 28px;
+  background-color: #0E0F14;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
   flex-shrink: 0;
 }
@@ -1642,13 +1618,13 @@ img {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 10px 22px;
+  padding: 9px 20px;
   font-size: 11px;
   font-weight: 800;
   letter-spacing: 0.06em;
   border-radius: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background-color: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background-color: rgba(255, 255, 255, 0.05);
   color: #FFFFFF;
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
@@ -1656,18 +1632,18 @@ img {
 
 .nav-prev-btn:hover,
 .nav-next-btn:hover {
-  background-color: var(--camo-olive);
-  border-color: var(--camo-sand);
-  color: #FFFFFF;
+  background-color: #FFFFFF;
+  border-color: #FFFFFF;
+  color: #0A0B0E;
   transform: translateY(-1px);
-  box-shadow: 0 0 12px rgba(75, 83, 32, 0.5);
+  box-shadow: 0 4px 14px rgba(255, 255, 255, 0.25);
 }
 
 .modal-pagination__index {
-  font-size: 12px;
+  font-size: 11.5px;
   font-weight: 800;
-  letter-spacing: 0.08em;
-  color: var(--muted);
+  letter-spacing: 0.1em;
+  color: #7E828E;
 }
 
 /* ==========================================================================
@@ -1778,44 +1754,51 @@ img {
 }
 
 .modal-util-btn {
-  padding: 5px 9px;
-  font-size: 10px;
+  padding: 6px 14px;
+  font-size: 10.5px;
   font-weight: 700;
   letter-spacing: 0.06em;
-  border: 1px solid var(--divider);
-  background-color: var(--bg);
-  color: var(--ink);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background-color: rgba(255, 255, 255, 0.06);
+  color: #FFFFFF;
+  border-radius: 16px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .modal-util-btn:hover {
-  border-color: var(--ink);
-  background-color: var(--surface);
+  border-color: #FFFFFF;
+  background-color: #FFFFFF;
+  color: #0A0B0E;
 }
 
 .modal-util-btn--danger {
-  border-color: #B42318;
-  color: #B42318;
+  border-color: rgba(239, 68, 68, 0.4);
+  background-color: rgba(239, 68, 68, 0.12);
+  color: #F87171;
 }
 
 .modal-util-btn--danger:hover,
 .modal-util-btn--danger.is-armed {
-  background-color: #B42318;
+  background-color: #EF4444;
+  border-color: #EF4444;
   color: #FFFFFF;
+  box-shadow: 0 0 14px rgba(239, 68, 68, 0.4);
 }
 
 .modal-util-btn--edit {
-  border-color: rgba(194, 178, 128, 0.45);
-  background-color: rgba(75, 83, 32, 0.25);
-  color: var(--camo-sand);
+  border-color: rgba(212, 175, 55, 0.4);
+  background-color: rgba(212, 175, 55, 0.12);
+  color: #E5C365;
   font-weight: 800;
-  border-radius: 14px;
+  border-radius: 16px;
 }
 
 .modal-util-btn--edit:hover {
-  background-color: var(--camo-olive);
-  border-color: #FFFFFF;
-  color: #FFFFFF;
-  box-shadow: 0 0 12px rgba(75, 83, 32, 0.6);
+  background-color: #D4AF37;
+  border-color: #D4AF37;
+  color: #0A0B0E;
+  box-shadow: 0 0 14px rgba(212, 175, 55, 0.4);
 }
 
 .viewer-toolbar-right {
@@ -4057,9 +4040,7 @@ img {
   }
 
   .stage-flip-pill {
-    bottom: 12px;
-    padding: 7px 16px;
-    font-size: 10px;
+    display: none !important;
   }
 
   .modal-specs {
@@ -4515,44 +4496,46 @@ img {
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
-  width: 44px;
-  height: 44px;
+  width: 46px;
+  height: 46px;
   border-radius: 50%;
-  background: rgba(14, 15, 18, 0.72);
-  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: rgba(10, 11, 14, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   color: #FFFFFF;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 22px;
+  font-size: 24px;
   font-weight: 300;
   cursor: pointer;
-  z-index: 10;
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
+  z-index: 15;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
   user-select: none;
+  opacity: 0.85;
 }
 
 .stage-nav-arrow:hover {
-  background: var(--camo-olive);
-  border-color: var(--camo-sand);
-  color: #FFFFFF;
-  transform: translateY(-50%) scale(1.1);
-  box-shadow: 0 0 16px rgba(75, 83, 32, 0.7);
+  background: #FFFFFF;
+  border-color: #FFFFFF;
+  color: #0A0B0E;
+  opacity: 1;
+  transform: translateY(-50%) scale(1.08);
+  box-shadow: 0 8px 26px rgba(0, 0, 0, 0.85);
 }
 
 .stage-nav-arrow:active {
-  transform: translateY(-50%) scale(0.95);
+  transform: translateY(-50%) scale(0.94);
 }
 
 .stage-nav-arrow--prev {
-  left: 18px;
+  left: 20px;
 }
 
 .stage-nav-arrow--next {
-  right: 18px;
+  right: 20px;
 }
 
 /* Modal Gallery Thumbnails Strip */
@@ -4560,9 +4543,9 @@ img {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  padding: 10px 16px;
-  background: rgba(10, 11, 14, 0.96);
+  gap: 10px;
+  padding: 12px 20px;
+  background: #08090C;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
   overflow-x: auto;
   max-width: 100%;
@@ -4571,31 +4554,32 @@ img {
 
 .modal-gallery-thumb-btn {
   position: relative;
-  width: 50px;
-  height: 50px;
+  width: 52px;
+  height: 52px;
   border-radius: 8px;
-  background: #14151B;
-  border: 1.5px solid rgba(255, 255, 255, 0.16);
+  background: #111218;
+  border: 1.5px solid rgba(255, 255, 255, 0.14);
   cursor: pointer;
   overflow: hidden;
-  padding: 2px;
+  padding: 3px;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  transition: all 0.2s ease;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .modal-gallery-thumb-btn:hover {
-  border-color: var(--camo-sand);
+  border-color: rgba(255, 255, 255, 0.45);
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.6);
 }
 
 .modal-gallery-thumb-btn.is-active {
   border-color: #FFFFFF;
-  box-shadow: 0 0 14px rgba(194, 178, 128, 0.75);
-  background-color: rgba(75, 83, 32, 0.35);
+  background-color: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 0 16px rgba(255, 255, 255, 0.3);
+  transform: scale(1.04);
 }
 
 .modal-gallery-thumb-img {
@@ -4611,7 +4595,7 @@ img {
   font-size: 8px;
   font-weight: 800;
   color: #FFFFFF;
-  background: rgba(0, 0, 0, 0.75);
+  background: rgba(0, 0, 0, 0.85);
   padding: 1px 4px;
   border-radius: 3px;
   letter-spacing: 0.05em;
@@ -5309,7 +5293,7 @@ img {
 
   #inspectionModal .modal-header {
     flex-shrink: 0 !important;
-    padding: 8px 10px !important;
+    padding: 10px 14px !important;
     background: #0B0C0F !important;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
     z-index: 20;
@@ -5323,44 +5307,44 @@ img {
   #inspectionModal .modal-header__left {
     display: flex !important;
     align-items: center !important;
-    gap: 4px !important;
+    gap: 6px !important;
     min-width: 0 !important;
     overflow: hidden !important;
     flex-shrink: 1 !important;
   }
 
   #inspectionModal .modal-code {
-    font-size: 10px !important;
+    font-size: 11px !important;
     white-space: nowrap !important;
   }
 
   #inspectionModal .camo-badge {
-    font-size: 8px !important;
-    padding: 2px 4px !important;
+    font-size: 8.5px !important;
+    padding: 2px 5px !important;
     white-space: nowrap !important;
   }
 
   #inspectionModal .modal-cat {
-    font-size: 8px !important;
+    font-size: 8.5px !important;
     white-space: nowrap !important;
   }
 
   #inspectionModal .modal-header__right {
     display: flex !important;
     align-items: center !important;
-    gap: 4px !important;
+    gap: 6px !important;
     flex-shrink: 0 !important;
   }
 
   #inspectionModal .modal-util-btn {
-    padding: 4px 6px !important;
-    font-size: 9px !important;
+    padding: 5px 8px !important;
+    font-size: 9.5px !important;
     white-space: nowrap !important;
   }
 
   #inspectionModal .modal-close-btn {
-    padding: 4px 8px !important;
-    font-size: 9px !important;
+    padding: 5px 10px !important;
+    font-size: 10px !important;
     white-space: nowrap !important;
   }
 
@@ -5378,10 +5362,10 @@ img {
 
   #inspectionModal .modal-viewer {
     width: 100% !important;
-    height: clamp(190px, 30vh, 250px) !important;
+    height: clamp(280px, 45vh, 420px) !important;
     flex-shrink: 0 !important;
     position: relative !important;
-    background: radial-gradient(circle at center, #20222B 0%, #0C0D11 80%) !important;
+    background: radial-gradient(circle at center, #14151B 0%, #08090C 85%) !important;
     border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
     box-sizing: border-box !important;
   }
@@ -5390,46 +5374,52 @@ img {
     min-height: 0 !important;
     height: 100% !important;
     width: 100% !important;
-    padding: 6px !important;
+    padding: 12px !important;
     box-sizing: border-box !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
+    background: transparent !important;
   }
 
   #inspectionModal .modal-viewer__stage img {
     max-height: 100% !important;
     max-width: 100% !important;
     object-fit: contain !important;
+    filter: drop-shadow(0 12px 28px rgba(0, 0, 0, 0.85)) !important;
   }
 
   #inspectionModal .stage-nav-arrow {
-    width: 34px !important;
-    height: 34px !important;
+    width: 38px !important;
+    height: 38px !important;
     font-size: 20px !important;
-    background: rgba(0, 0, 0, 0.7) !important;
-    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    background: rgba(10, 11, 14, 0.8) !important;
+    border: 1px solid rgba(255, 255, 255, 0.25) !important;
+    opacity: 0.9 !important;
   }
 
   #inspectionModal .stage-flip-pill {
-    bottom: 6px !important;
-    padding: 4px 10px !important;
-    font-size: 8.5px !important;
+    display: none !important;
   }
 
   #inspectionModal .modal-gallery-thumbs {
-    padding: 4px 8px !important;
-    gap: 6px !important;
+    padding: 6px 10px !important;
+    gap: 8px !important;
     width: 100% !important;
     box-sizing: border-box !important;
     overflow-x: auto !important;
   }
 
+  #inspectionModal .modal-gallery-thumb-btn {
+    width: 44px !important;
+    height: 44px !important;
+  }
+
   #inspectionModal .modal-specs {
-    padding: 10px 12px 14px !important;
+    padding: 12px 14px 18px !important;
     display: flex !important;
     flex-direction: column !important;
-    gap: 8px !important;
+    gap: 10px !important;
     width: 100% !important;
     box-sizing: border-box !important;
     overflow-x: hidden !important;
@@ -5439,13 +5429,17 @@ img {
     margin-bottom: 2px !important;
     width: 100% !important;
     box-sizing: border-box !important;
+    padding: 8px 0 !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 8px !important;
   }
 
   #inspectionModal .modal-specs__title {
     font-family: 'Dark Graffiti', 'Permanent Marker', cursive, sans-serif !important;
-    font-size: 15px !important;
+    font-size: 16px !important;
     line-height: 1.2 !important;
-    margin-bottom: 6px !important;
+    margin-bottom: 0 !important;
     word-break: break-word !important;
     text-align: center !important;
   }
@@ -5455,13 +5449,13 @@ img {
     position: sticky !important;
     bottom: 0 !important;
     z-index: 40 !important;
-    background: rgba(13, 14, 19, 0.98) !important;
-    backdrop-filter: blur(12px) !important;
-    -webkit-backdrop-filter: blur(12px) !important;
-    border: 1px solid rgba(194, 178, 128, 0.45) !important;
-    box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.85) !important;
-    padding: 8px 10px calc(8px + env(safe-area-inset-bottom)) !important;
-    border-radius: 12px !important;
+    background: rgba(14, 15, 20, 0.98) !important;
+    backdrop-filter: blur(16px) !important;
+    -webkit-backdrop-filter: blur(16px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.9) !important;
+    padding: 10px 12px calc(10px + env(safe-area-inset-bottom)) !important;
+    border-radius: 14px !important;
     margin-top: 4px !important;
     width: 100% !important;
     box-sizing: border-box !important;
@@ -5471,21 +5465,21 @@ img {
     display: flex !important;
     justify-content: space-between !important;
     align-items: center !important;
-    margin-bottom: 5px !important;
+    margin-bottom: 6px !important;
   }
 
   #inspectionModal .voting-terminal__score {
-    font-size: 12px !important;
+    font-size: 13px !important;
   }
 
   #inspectionModal .voting-user-status {
-    font-size: 8.5px !important;
-    padding: 2px 5px !important;
+    font-size: 9px !important;
+    padding: 3px 7px !important;
   }
 
   #inspectionModal .voting-scale {
     display: flex !important;
-    gap: 1.5px !important;
+    gap: 2px !important;
     width: 100% !important;
     justify-content: space-between !important;
     overflow-x: visible !important;
@@ -5495,40 +5489,42 @@ img {
   #inspectionModal .vote-num-btn {
     min-width: 0 !important;
     flex: 1 1 0 !important;
-    height: 36px !important;
-    font-size: 12px !important;
+    height: 38px !important;
+    font-size: 12.5px !important;
     font-weight: 800 !important;
     padding: 0 !important;
     border-radius: 6px !important;
     background: rgba(255, 255, 255, 0.08) !important;
-    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    border: 1px solid rgba(255, 255, 255, 0.14) !important;
     color: #FFFFFF !important;
   }
 
   #inspectionModal .vote-num-btn.is-active {
-    background: linear-gradient(135deg, #4B5320 0%, #C2B280 100%) !important;
+    background: #FFFFFF !important;
     color: #0A0B0E !important;
-    border-color: #C2B280 !important;
-    box-shadow: 0 0 10px rgba(194, 178, 128, 0.6) !important;
+    border-color: #FFFFFF !important;
+    box-shadow: 0 0 14px rgba(255, 255, 255, 0.6) !important;
+    font-weight: 900 !important;
   }
 
   #inspectionModal .modal-vote-send-hint {
     display: flex !important;
     flex-direction: column !important;
     align-items: stretch !important;
-    gap: 5px !important;
-    padding: 6px 8px !important;
-    margin: 5px 0 !important;
+    gap: 6px !important;
+    padding: 8px 10px !important;
+    margin: 6px 0 !important;
     text-align: center !important;
     width: 100% !important;
     box-sizing: border-box !important;
+    border-radius: 8px !important;
   }
 
   #inspectionModal .modal-vote-send-btn {
     width: 100% !important;
     justify-content: center !important;
-    padding: 6px 12px !important;
-    font-size: 9.5px !important;
+    padding: 7px 12px !important;
+    font-size: 10.5px !important;
     box-sizing: border-box !important;
   }
 
@@ -5547,7 +5543,7 @@ img {
 
   #inspectionModal .modal-pagination {
     margin-top: 6px !important;
-    padding: 8px 10px !important;
+    padding: 10px 12px !important;
     width: 100% !important;
     box-sizing: border-box !important;
   }
