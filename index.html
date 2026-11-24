@@ -4,6 +4,14 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover" />
   <title>RDP // RAGAZZI DI PROVINCIA — ARCHIVIO DIGITALE &amp; VOTAZIONE</title>
+  <meta name="theme-color" content="#0A0B0E" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="description" content="Ragazzi di Provincia (RDP) — Archivio digitale underground, streetwear brutalista e piattaforma di votazione interattiva community." />
+  <meta property="og:title" content="RDP // RAGAZZI DI PROVINCIA — ARCHIVIO DIGITALE" />
+  <meta property="og:description" content="Archivio digitale streetwear underground. Esplora i mockup della collezione SS26, vota i capi e partecipa alla direzione creativa dell'Atelier." />
+  <meta property="og:type" content="website" />
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230C0D10'/%3E%3Cpath d='M0 12 C10 4 24 6 34 16 L64 26 L64 48 C48 56 32 50 16 38 Z' fill='%234B5320' opacity='0.55'/%3E%3Ctext x='50%25' y='55%25' font-family='monospace' font-weight='900' font-size='21' fill='%23FFFFFF' text-anchor='middle' dominant-baseline='middle' letter-spacing='-1'%3ERDP%3C/text%3E%3C/svg%3E" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
@@ -91,6 +99,15 @@
                 <span id="cloudBtnLabel">CLOUD SYNC</span>
               </button>
             </div>
+
+            <!-- Blocco Audio FX -->
+            <div class="popover-block">
+              <span class="popover-block-label">EFFETTI SONORI</span>
+              <button class="sound-toggle-btn" id="soundToggleBtn" type="button" title="Attiva o disattiva gli effetti sonori procedurali dell'Atelier">
+                <span class="sound-dot is-active" id="soundDot"></span>
+                <span id="soundBtnLabel">AUDIO FX: ATTIVI</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -104,6 +121,12 @@
       <div class="intro-screen">
         <!-- Main Minimal Brand Centerpiece directly on the Wall -->
         <div class="intro-screen__center">
+          <div class="intro-eyebrow">
+            <span class="camo-dot" aria-hidden="true"></span>
+            <span>DROP DIGITALE SS26 // ARCHIVIO ATELIER APERTO</span>
+            <span class="camo-dot" aria-hidden="true"></span>
+          </div>
+
           <h1 class="intro-title intro-title--hero">
             <div class="intro-graffiti-wrapper">
               <span class="intro-title__graffiti" id="introGraffitiTitle">Ragazzi di Provincia</span>
@@ -121,6 +144,43 @@
               <span>SCHEDA VOTI &amp; FEEDBACK</span>
               <span>↗</span>
             </button>
+          </div>
+
+          <!-- Anteprima Rapida Capi Collezione (Mini Reel Orizzontale) -->
+          <div class="intro-preview-reel-wrap">
+            <div class="intro-preview-reel-label">MOCKUP CERTIFICATI DROP SS26 // CLICCA PER ISPEZIONARE:</div>
+            <div class="intro-preview-reel" id="introPreviewReel" role="region" aria-label="Anteprima rapida capi">
+              <!-- Popolato dinamicamente da app.js -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Ticker Tattico Ambientale Inferiore -->
+        <div class="intro-ticker-wrap" aria-hidden="true">
+          <div class="intro-ticker-track">
+            <span>// ATELIER RAGAZZI DI PROVINCIA</span>
+            <span>•</span>
+            <span>DROP DIGITALE SS26</span>
+            <span>•</span>
+            <span>11 MOCKUP CERTIFICATI</span>
+            <span>•</span>
+            <span>MILANO SUBURBIA</span>
+            <span>•</span>
+            <span>VOTAZIONI COMMUNITY APERTE</span>
+            <span>•</span>
+            <span>PARTECIPA ALLA DIREZIONE CREATIVA</span>
+            <span>•</span>
+            <span>COTTON UP TO 540 GSM</span>
+            <span>•</span>
+            <span>// ATELIER RAGAZZI DI PROVINCIA</span>
+            <span>•</span>
+            <span>DROP DIGITALE SS26</span>
+            <span>•</span>
+            <span>11 MOCKUP CERTIFICATI</span>
+            <span>•</span>
+            <span>MILANO SUBURBIA</span>
+            <span>•</span>
+            <span>VOTAZIONI COMMUNITY APERTE</span>
           </div>
         </div>
       </div>
@@ -146,6 +206,53 @@
           <button class="filter-btn" data-category="ACCESSORIES" role="tab" aria-selected="false">
             ACCESSORIES <span class="filter-btn__count" data-count-for="ACCESSORIES">00</span>
           </button>
+        </div>
+
+        <!-- Strumenti Ricerca e Ordinamento -->
+        <div class="dir-tools-group">
+          <!-- Live Search Bar -->
+          <div class="dir-search-wrap">
+            <span class="dir-search-icon" aria-hidden="true">⌕</span>
+            <input
+              type="text"
+              id="dirSearchInput"
+              class="dir-search-input"
+              placeholder="CERCA NEL CATALOGO..."
+              autocomplete="off"
+              spellcheck="false"
+              aria-label="Cerca capi per nome, codice o materiale"
+            />
+            <button
+              type="button"
+              id="dirSearchClearBtn"
+              class="dir-search-clear-btn"
+              title="Cancella ricerca"
+              aria-label="Cancella ricerca"
+              style="display: none;"
+            >×</button>
+          </div>
+
+          <!-- Sort Selector Dropdown -->
+          <div class="dir-sort-wrap">
+            <button
+              type="button"
+              id="dirSortToggleBtn"
+              class="dir-sort-btn"
+              title="Ordina capi"
+              aria-haspopup="true"
+              aria-expanded="false"
+            >
+              <span class="dir-sort-icon">⇅</span>
+              <span id="dirSortLabel">ORDINA: DEFAULT</span>
+              <span class="dir-sort-chevron">▾</span>
+            </button>
+            <div class="dir-sort-menu" id="dirSortMenu" hidden>
+              <button type="button" class="sort-option is-active" data-sort="code">DEFAULT (CODICE RDP)</button>
+              <button type="button" class="sort-option" data-sort="rating">★ VOTO PIÙ ALTO</button>
+              <button type="button" class="sort-option" data-sort="votes">COMMUNITY FAVORITE</button>
+              <button type="button" class="sort-option" data-sort="title">ALFABETICO (A-Z)</button>
+            </div>
+          </div>
         </div>
 
         <!-- Elementi Telemetria Nascosti per JS Compatibilità -->
@@ -191,6 +298,22 @@
               <div class="ballot-summary-card__voter" id="ballotVoterDisplay">
                 <span id="ballotVoterNameLabel">VOTANTE: NON REGISTRATO</span>
                 <button class="ballot-change-voter-btn" id="ballotChangeVoterBtn" type="button">Registrati ora</button>
+              </div>
+            </div>
+
+            <!-- Profile Analytics & Actions Bar -->
+            <div class="ballot-analytics-bar" id="ballotAnalyticsBar">
+              <div class="ballot-profile-pill" id="ballotProfilePill">
+                <span class="ballot-profile-icon">⚡</span>
+                <span id="ballotProfileText">PROFILO ATELIER: IN ATTESA DEI TUOI VOTI</span>
+              </div>
+              <div class="ballot-actions-cluster">
+                <button type="button" class="ballot-action-btn" id="copyBallotTextBtn" title="Copia il riepilogo dei tuoi voti negli appunti per condividerlo">
+                  [COPIA SCHEDA VOTI 📋]
+                </button>
+                <button type="button" class="ballot-action-btn ballot-action-btn--reset" id="resetMyVotesBtn" title="Azzera tutti i voti personali espressi">
+                  [AZZERA VOTI]
+                </button>
               </div>
             </div>
 
@@ -268,6 +391,9 @@
           <span class="modal-cat" id="modalCategory">TEES</span>
         </div>
         <div class="modal-header__right">
+          <button class="modal-util-btn modal-util-btn--share" id="modalShareBtn" type="button" title="Condividi questo capo con amici o sui social">
+            [CONDIVIDI ↗]
+          </button>
           <button class="modal-util-btn modal-util-btn--edit" id="modalEditBtn" type="button" style="display: none;" title="Modifica immagini, dati e dettagli di questo capo (Solo Creator)">
             ✎ [MODIFICA_CAPO]
           </button>
@@ -888,6 +1014,7 @@
   <script src="ratings.js"></script>
   <script src="mailer.js"></script>
   <script src="physics.js"></script>
+  <script src="sound.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

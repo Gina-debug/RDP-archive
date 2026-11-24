@@ -11,7 +11,8 @@
 
   // Application State
   let activeCategory = "ALL";
-  let activeSortBy = "code"; // "code" | "rating" | "votes"
+  let activeSortBy = "code"; // "code" | "rating" | "votes" | "title"
+  let searchQuery = "";
   let globalPageMode = "interactive"; // "interactive" | "front_only" | "back_only" | "split_dual"
   let cardPageStates = {}; // itemId -> "front" | "back"
   let seedItems = [];
@@ -129,6 +130,30 @@
   const exportArchiveBtn = document.getElementById("exportArchiveBtn");
   const resetVotesBtn = document.getElementById("resetVotesBtn");
   const restoreDeletedBtn = document.getElementById("restoreDeletedBtn");
+
+  // Sound FX Engine Elements
+  const soundToggleBtn = document.getElementById("soundToggleBtn");
+  const soundDot = document.getElementById("soundDot");
+  const soundBtnLabel = document.getElementById("soundBtnLabel");
+
+  // Directory Tools: Live Search & Sort Elements
+  const dirSearchInput = document.getElementById("dirSearchInput");
+  const dirSearchClearBtn = document.getElementById("dirSearchClearBtn");
+  const dirSortToggleBtn = document.getElementById("dirSortToggleBtn");
+  const dirSortMenu = document.getElementById("dirSortMenu");
+  const dirSortLabel = document.getElementById("dirSortLabel");
+  const dirSortOptions = document.querySelectorAll(".sort-option");
+
+  // Lightbox Share Button
+  const modalShareBtn = document.getElementById("modalShareBtn");
+
+  // Ballot Profile & Actions Elements
+  const ballotProfileText = document.getElementById("ballotProfileText");
+  const copyBallotTextBtn = document.getElementById("copyBallotTextBtn");
+  const resetMyVotesBtn = document.getElementById("resetMyVotesBtn");
+
+  // Intro Preview Reel Element
+  const introPreviewReel = document.getElementById("introPreviewReel");
 
   // Lightbox Modal Elements
   const inspectionModal = document.getElementById("inspectionModal");
@@ -353,6 +378,7 @@
     // All'apertura del sito mostra per prima la pagina Intro minimal
     switchMainView("intro");
     await reloadArchiveData();
+    checkUrlHashGarment();
   }
 
   let reloadDebounceTimer = null;
@@ -433,6 +459,7 @@
 
     updateCounts();
     renderGrid();
+    renderIntroPreviewReel();
     updateBallotSummary();
     autoUpgradeShowcaseImages(allItems);
   }
@@ -626,6 +653,20 @@
       items = items.filter((item) => item.category === activeCategory);
     }
 
+    if (searchQuery && searchQuery.trim().length > 0) {
+      const q = searchQuery.trim().toLowerCase();
+      items = items.filter((item) => {
+        const titleMatch = (item.title || "").toLowerCase().includes(q);
+        const codeMatch = (item.code || "").toLowerCase().includes(q);
+        const catMatch = (item.category || "").toLowerCase().includes(q);
+        const specMatch = (item.specs || []).some((s) => s.toLowerCase().includes(q));
+        const badgeMatch = (item.statusBadge || "").toLowerCase().includes(q);
+        const fabricMatch = (item.fabric || "").toLowerCase().includes(q);
+        const colorMatch = (item.colorway || "").toLowerCase().includes(q);
+        return titleMatch || codeMatch || catMatch || specMatch || badgeMatch || fabricMatch || colorMatch;
+      });
+    }
+
     const sorted = [...items];
     if (activeSortBy === "rating") {
       sorted.sort((a, b) => {
@@ -639,9 +680,11 @@
         const statsB = RDPRatings.getItemStats(b);
         return statsB.totalVotes - statsA.totalVotes;
       });
+    } else if (activeSortBy === "title") {
+      sorted.sort((a, b) => (a.title || "").localeCompare(b.title || ""));
     } else {
       // Default: archive code sequence
-      sorted.sort((a, b) => a.code.localeCompare(b.code));
+      sorted.sort((a, b) => (a.code || "").localeCompare(b.code || ""));
     }
 
     return sorted;
@@ -706,15 +749,35 @@
     activeDirLabel.textContent = dirNames[activeCategory] || activeCategory;
 
     if (items.length === 0) {
-      archiveGrid.innerHTML = "";
-      const emptyEl = document.createElement("div");
-      emptyEl.style.gridColumn = "1 / -1";
-      emptyEl.style.padding = "64px 20px";
-      emptyEl.style.textAlign = "center";
-      emptyEl.style.fontSize = "12px";
-      emptyEl.style.color = "var(--muted)";
-      emptyEl.textContent = "NESSUN CAPO TROVATO IN QUESTA CATEGORIA";
-      archiveGrid.appendChild(emptyEl);
+      archiveGrid.innerHTML = `
+        <div class="archive-empty-state">
+          <div class="empty-state-icon">⌕</div>
+          <h3 class="empty-state-title">NESSUN CAPO TROVATO</h3>
+          <p class="empty-state-desc">
+            Nessun mock-up corrisponde ai criteri ${searchQuery ? `("${escapeHtml(searchQuery)}")` : `per la categoria "${escapeHtml(activeCategory)}"`}. Prova a modificare i filtri o la ricerca.
+          </p>
+          <button type="button" class="empty-state-reset-btn" id="emptyStateResetBtn">
+            RIPRISTINA TUTTI I CAPI ↺
+          </button>
+        </div>
+      `;
+      const resetBtn = document.getElementById("emptyStateResetBtn");
+      if (resetBtn) {
+        resetBtn.addEventListener("click", () => {
+          if (window.RDPSound) window.RDPSound.playClick();
+          searchQuery = "";
+          if (dirSearchInput) dirSearchInput.value = "";
+          if (dirSearchClearBtn) dirSearchClearBtn.style.display = "none";
+          activeCategory = "ALL";
+          filterButtons.forEach((b) => {
+            const active = b.dataset.category === "ALL";
+            b.classList.toggle("is-active", active);
+            b.setAttribute("aria-selected", active ? "true" : "false");
+          });
+          updateCounts();
+          renderGrid();
+        });
+      }
       return;
     }
 
@@ -865,6 +928,16 @@
             />
           ` : ""}
         </div>
+        <div class="card-status-badge ${item.statusBadge && item.statusBadge.includes('CAMO') ? 'is-camo' : ''}">
+          <span class="card-status-dot"></span>
+          <span>${escapeHtml(item.statusBadge || item.category || 'ARCHIVE')}</span>
+        </div>
+        ${userVote !== null && userVote !== undefined ? `
+          <div class="card-voted-pill" title="Il tuo voto per questo capo: ${userVote}/10">
+            <span class="card-voted-pill__star">★</span>
+            <span>${userVote}/10</span>
+          </div>
+        ` : ""}
         ${creatorEditBtnHtml}
       </div>
       <div class="archive-card__meta">
@@ -972,6 +1045,40 @@
       editBtn.remove();
     }
 
+    // Status Badge
+    let statusBadgeEl = card.querySelector(".card-status-badge");
+    const badgeText = item.statusBadge || item.category || "ARCHIVE";
+    if (!statusBadgeEl && imgWrap) {
+      statusBadgeEl = document.createElement("div");
+      statusBadgeEl.className = `card-status-badge ${item.statusBadge && item.statusBadge.includes("CAMO") ? "is-camo" : ""}`;
+      statusBadgeEl.innerHTML = `<span class="card-status-dot"></span><span>${escapeHtml(badgeText)}</span>`;
+      imgWrap.appendChild(statusBadgeEl);
+    } else if (statusBadgeEl) {
+      statusBadgeEl.className = `card-status-badge ${item.statusBadge && item.statusBadge.includes("CAMO") ? "is-camo" : ""}`;
+      const textSpan = statusBadgeEl.querySelector("span:last-child");
+      if (textSpan && textSpan.textContent !== badgeText) {
+        textSpan.textContent = badgeText;
+      }
+    }
+
+    // Voted Indicator Pill
+    let votedPillEl = card.querySelector(".card-voted-pill");
+    if (stats.userVote !== null && stats.userVote !== undefined) {
+      if (!votedPillEl && imgWrap) {
+        votedPillEl = document.createElement("div");
+        votedPillEl.className = "card-voted-pill";
+        votedPillEl.title = `Il tuo voto per questo capo: ${stats.userVote}/10`;
+        votedPillEl.innerHTML = `<span class="card-voted-pill__star">★</span><span>${stats.userVote}/10</span>`;
+        imgWrap.appendChild(votedPillEl);
+      } else if (votedPillEl) {
+        votedPillEl.title = `Il tuo voto per questo capo: ${stats.userVote}/10`;
+        const scoreSpan = votedPillEl.querySelector("span:last-child");
+        if (scoreSpan) scoreSpan.textContent = `${stats.userVote}/10`;
+      }
+    } else if (votedPillEl) {
+      votedPillEl.remove();
+    }
+
     // Immagini: Primaria (showcase) e Secondaria (dettaglio per hover fluido Protect LDN)
     const cardImgs = getItemImages(item);
     const showcaseSrc = getShowcaseImage(item);
@@ -1031,6 +1138,7 @@
     }
 
     RDPRatings.setRating(itemId, score);
+    if (window.RDPSound) window.RDPSound.playVote(score);
     updateCounts();
 
     if (!inspectionModal.hidden && activeModalItemId === itemId) {
@@ -1087,6 +1195,12 @@
     if (inspectionModal) {
       inspectionModal.hidden = false;
       document.body.style.overflow = "hidden";
+      if (item.code) {
+        try {
+          history.replaceState(null, "", `#${item.code}`);
+        } catch (_e) {}
+      }
+      if (window.RDPSound) window.RDPSound.playSnap();
     }
   }
 
@@ -1098,6 +1212,12 @@
     activeModalItemId = null;
     resetDeleteArmed();
     resetZoom();
+    if (window.location.hash) {
+      try {
+        history.replaceState(null, "", window.location.pathname + window.location.search);
+      } catch (_e) {}
+    }
+    if (window.RDPSound) window.RDPSound.playClick();
   }
 
   function navigateModalImage(direction = 1) {
@@ -1109,6 +1229,7 @@
     activeModalView = activeModalImageIndex === 1 ? "back" : (activeModalImageIndex === 0 ? "front" : `img_${activeModalImageIndex}`);
     resetZoom();
     renderInspectionModal(item);
+    if (window.RDPSound) window.RDPSound.playSnap();
   }
 
   function setActiveModalImage(index) {
@@ -1374,6 +1495,12 @@
     resetDeleteArmed();
     resetZoom();
     renderInspectionModal(nextItem);
+    if (nextItem.code) {
+      try {
+        history.replaceState(null, "", `#${nextItem.code}`);
+      } catch (_e) {}
+    }
+    if (window.RDPSound) window.RDPSound.playWhoosh();
   }
 
   function handleDownloadCurrentImage() {
@@ -2630,6 +2757,7 @@
     // Category Filter Buttons
     filterButtons.forEach((btn) => {
       btn.addEventListener("click", () => {
+        if (window.RDPSound) window.RDPSound.playClick();
         activeCategory = btn.dataset.category;
         filterButtons.forEach((b) => {
           const active = b === btn;
@@ -2641,9 +2769,183 @@
       });
     });
 
+    // Live Search Bar Listeners
+    if (dirSearchInput) {
+      dirSearchInput.addEventListener("input", () => {
+        searchQuery = dirSearchInput.value;
+        if (dirSearchClearBtn) {
+          dirSearchClearBtn.style.display = searchQuery.length > 0 ? "flex" : "none";
+        }
+        updateCounts();
+        renderGrid();
+      });
+      dirSearchInput.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") {
+          searchQuery = "";
+          dirSearchInput.value = "";
+          if (dirSearchClearBtn) dirSearchClearBtn.style.display = "none";
+          updateCounts();
+          renderGrid();
+        }
+      });
+    }
+
+    if (dirSearchClearBtn) {
+      dirSearchClearBtn.addEventListener("click", () => {
+        if (window.RDPSound) window.RDPSound.playClick();
+        searchQuery = "";
+        if (dirSearchInput) {
+          dirSearchInput.value = "";
+          dirSearchInput.focus();
+        }
+        dirSearchClearBtn.style.display = "none";
+        updateCounts();
+        renderGrid();
+      });
+    }
+
+    // Sort Dropdown Selector
+    if (dirSortToggleBtn && dirSortMenu) {
+      dirSortToggleBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        if (window.RDPSound) window.RDPSound.playClick();
+        const isOpen = !dirSortMenu.hidden;
+        dirSortMenu.hidden = isOpen;
+        dirSortToggleBtn.setAttribute("aria-expanded", String(!isOpen));
+      });
+
+      document.addEventListener("click", (e) => {
+        if (!dirSortMenu.hidden && !e.target.closest(".dir-sort-wrap")) {
+          dirSortMenu.hidden = true;
+          dirSortToggleBtn.setAttribute("aria-expanded", "false");
+        }
+      });
+    }
+
+    if (dirSortOptions) {
+      dirSortOptions.forEach((opt) => {
+        opt.addEventListener("click", () => {
+          if (window.RDPSound) window.RDPSound.playClick();
+          activeSortBy = opt.dataset.sort;
+          dirSortOptions.forEach((o) => o.classList.toggle("is-active", o === opt));
+          if (dirSortLabel) {
+            const cleanLabel = opt.textContent.replace("DEFAULT ", "").replace("★ ", "");
+            dirSortLabel.textContent = `ORDINA: ${cleanLabel}`;
+          }
+          if (dirSortMenu) dirSortMenu.hidden = true;
+          if (dirSortToggleBtn) dirSortToggleBtn.setAttribute("aria-expanded", "false");
+          renderGrid();
+        });
+      });
+    }
+
+    // Audio FX Procedural Toggle
+    const updateSoundUI = () => {
+      const active = window.RDPSound ? window.RDPSound.isEnabled() : true;
+      if (soundDot) soundDot.classList.toggle("is-active", active);
+      if (soundBtnLabel) soundBtnLabel.textContent = `AUDIO FX: ${active ? "ATTIVI" : "DISATTIVATI"}`;
+    };
+    updateSoundUI();
+
+    if (soundToggleBtn) {
+      soundToggleBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        if (window.RDPSound) {
+          window.RDPSound.toggle();
+          updateSoundUI();
+          showToast(window.RDPSound.isEnabled() ? "EFFETTI AUDIO ATELIER ATTIVATI 🔊" : "EFFETTI AUDIO DISATTIVATI 🔇");
+        }
+      });
+    }
+
+    // Modal Share Button
+    if (modalShareBtn) {
+      modalShareBtn.addEventListener("click", async () => {
+        if (!activeModalItemId) return;
+        const currentItem = allItems.find((i) => i.id === activeModalItemId);
+        if (!currentItem) return;
+
+        const shareUrl = `${window.location.origin}${window.location.pathname}#${currentItem.code || currentItem.id}`;
+        const shareData = {
+          title: `RDP ARCHIVE // ${currentItem.title}`,
+          text: `Guarda "${currentItem.title}" (${currentItem.code}) dall'Atelier Ragazzi di Provincia — Drop SS26:`,
+          url: shareUrl
+        };
+
+        if (window.RDPSound) window.RDPSound.playSnap();
+
+        if (navigator.share) {
+          try {
+            await navigator.share(shareData);
+            showToast(`LINK CONDIVISO // ${currentItem.code}`);
+          } catch (err) {
+            if (err.name !== "AbortError") {
+              if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(shareUrl).then(() => {
+                  showToast(`LINK COPIATO NEGLI APPUNTI // ${currentItem.code}`);
+                });
+              }
+            }
+          }
+        } else if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(shareUrl).then(() => {
+            showToast(`LINK COPIATO NEGLI APPUNTI // ${currentItem.code}`);
+          });
+        } else {
+          showToast(`LINK: ${shareUrl}`);
+        }
+      });
+    }
+
+    // Ballot Extra Actions
+    if (copyBallotTextBtn) copyBallotTextBtn.addEventListener("click", handleCopyBallotText);
+    if (resetMyVotesBtn) resetMyVotesBtn.addEventListener("click", handleResetUserVotes);
+
+    // Mobile Touch Swipe Gestures on Viewer Stage
+    let touchStartX = 0;
+    let touchStartY = 0;
+    if (modalStage) {
+      modalStage.addEventListener("touchstart", (e) => {
+        if (e.touches && e.touches.length === 1) {
+          touchStartX = e.touches[0].clientX;
+          touchStartY = e.touches[0].clientY;
+        }
+      }, { passive: true });
+
+      modalStage.addEventListener("touchend", (e) => {
+        if (e.changedTouches && e.changedTouches.length === 1) {
+          const diffX = e.changedTouches[0].clientX - touchStartX;
+          const diffY = e.changedTouches[0].clientY - touchStartY;
+          if (Math.abs(diffX) > 42 && Math.abs(diffX) > Math.abs(diffY) * 1.4) {
+            if (diffX < 0) {
+              // Swipe left -> next image or next garment
+              const currentItem = allItems.find((i) => i.id === activeModalItemId);
+              const imgs = currentItem ? getItemImages(currentItem) : [];
+              if (imgs.length > 1 && activeModalImageIndex < imgs.length - 1) {
+                navigateModalImage(1);
+              } else {
+                navigateModal(1);
+              }
+            } else {
+              // Swipe right -> prev image or prev garment
+              if (activeModalImageIndex > 0) {
+                navigateModalImage(-1);
+              } else {
+                navigateModal(-1);
+              }
+            }
+          }
+        }
+      }, { passive: true });
+    }
+
+    // Deep link hash listener
+    window.addEventListener("hashchange", checkUrlHashGarment);
+
     // Page Mode Buttons (Interactive Gallery / Grid)
     pageModeButtons.forEach((btn) => {
       btn.addEventListener("click", () => {
+        if (window.RDPSound) window.RDPSound.playClick();
         globalPageMode = btn.dataset.pageMode;
         pageModeButtons.forEach((b) => {
           b.classList.toggle("is-active", b === btn);
@@ -2655,6 +2957,7 @@
     // Sort Buttons (Code / Rating / Votes)
     sortButtons.forEach((btn) => {
       btn.addEventListener("click", () => {
+        if (window.RDPSound) window.RDPSound.playClick();
         activeSortBy = btn.dataset.sortBy;
         sortButtons.forEach((b) => {
           b.classList.toggle("is-active", b === btn);
@@ -3053,6 +3356,9 @@
   let activeMainView = "intro"; // "intro" | "showcase" | "feedback"
 
   function switchMainView(targetView) {
+    if (activeMainView !== targetView && window.RDPSound) {
+      window.RDPSound.playWhoosh();
+    }
     activeMainView = targetView;
     const isIntro = targetView === "intro";
     const isShowcase = targetView === "showcase";
@@ -3321,6 +3627,43 @@
 
     ballotCounterBadge.textContent = `${votedCount} / ${allItems.length} CAPI VOTATI`;
 
+    // Calcolo Taste Profile & Voto Medio Personale
+    let sumScores = 0;
+    const catScores = {};
+    allItems.forEach((item) => {
+      const score = typeof userVotes[item.id] === "number" ? userVotes[item.id] : null;
+      if (score !== null) {
+        sumScores += score;
+        const cat = item.category || "OTHER";
+        if (!catScores[cat]) catScores[cat] = { sum: 0, count: 0 };
+        catScores[cat].sum += score;
+        catScores[cat].count++;
+      }
+    });
+
+    if (ballotProfileText) {
+      if (votedCount === 0) {
+        ballotProfileText.textContent = "PROFILO ATELIER: IN ATTESA DEI TUOI VOTI (0/11)";
+      } else {
+        const avg = (sumScores / votedCount).toFixed(1);
+        let topCat = "CORE SPEC";
+        let maxCatAvg = -1;
+        Object.keys(catScores).forEach((c) => {
+          const cAvg = catScores[c].sum / catScores[c].count;
+          if (cAvg > maxCatAvg) {
+            maxCatAvg = cAvg;
+            topCat = c;
+          }
+        });
+
+        let archetype = "SELETTORE TATTICO";
+        if (Number(avg) >= 8.5) archetype = "ESTETA HARDCORE";
+        else if (Number(avg) < 7.0) archetype = "CRITICO RADICALE";
+
+        ballotProfileText.textContent = `PROFILO ATELIER: ${archetype} // MEDIA ${avg}/10 (FOCUS: ${topCat})`;
+      }
+    }
+
     const tabVoteCountPill = document.getElementById("tabVoteCountPill");
     if (tabVoteCountPill) {
       tabVoteCountPill.textContent = `${votedCount}/${allItems.length}`;
@@ -3336,6 +3679,93 @@
       } else {
         pendingBallotBar.hidden = true;
       }
+    }
+  }
+
+  function handleCopyBallotText() {
+    const userVotes = RDPRatings.getAllUserVotes();
+    const votedItemIds = Object.keys(userVotes);
+    if (votedItemIds.length === 0) {
+      showToast("NESSUN VOTO ESPRESSO DA COPIARE");
+      return;
+    }
+    const voter = RDPVoter.getProfile();
+    const voterName = voter ? voter.name : "COMMUNITY MEMBER";
+
+    let text = `RDP // RAGAZZI DI PROVINCIA — ARCHIVIO ATELIER SS26\n`;
+    text += `SCHEDA DI VALUTAZIONE COMMUNITY\n`;
+    text += `Votante: ${voterName}\n`;
+    text += `Capi Votati: ${votedItemIds.length} / ${allItems.length}\n`;
+    text += `--------------------------------------------------\n`;
+
+    allItems.forEach((item) => {
+      const score = userVotes[item.id];
+      if (typeof score === "number") {
+        text += `[${item.code}] ${item.title}: ★ ${score}/10 (${item.statusBadge || item.category})\n`;
+      }
+    });
+
+    text += `--------------------------------------------------\n`;
+    text += `Atelier Ragazzi di Provincia // Drop Digitale SS26\n`;
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(() => {
+        if (window.RDPSound) window.RDPSound.playSnap();
+        showToast("SCHEDA VOTI COPIATA NEGLI APPUNTI 📋");
+      }).catch(() => {
+        showToast("SCHEDA PRONTA // CONDIVIDI IL TUO DROP");
+      });
+    } else {
+      showToast("SCHEDA PRONTA // CONDIVIDI IL TUO DROP");
+    }
+  }
+
+  function renderIntroPreviewReel() {
+    const reel = document.getElementById("introPreviewReel");
+    if (!reel) return;
+    reel.innerHTML = "";
+    allItems.forEach((item) => {
+      const card = document.createElement("div");
+      card.className = "intro-reel-card";
+      card.tabIndex = 0;
+      card.role = "button";
+      card.title = `${item.title} (${item.code}) — Clicca per ispezionare`;
+      card.innerHTML = `
+        <img class="intro-reel-card__img" src="${escapeAttr(getShowcaseImage(item))}" alt="${escapeAttr(item.title)}" loading="lazy" />
+        <span class="intro-reel-card__code">${escapeHtml(item.code || "")}</span>
+      `;
+      card.addEventListener("click", () => {
+        if (window.RDPSound) window.RDPSound.playWhoosh();
+        switchMainView("showcase");
+        openInspectionModal(item.id, "front");
+      });
+      card.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          switchMainView("showcase");
+          openInspectionModal(item.id, "front");
+        }
+      });
+      reel.appendChild(card);
+    });
+  }
+
+  function checkUrlHashGarment() {
+    const hash = window.location.hash;
+    if (!hash || hash.length < 2) return;
+    const raw = hash.substring(1).trim().toUpperCase();
+    const clean = raw.replace(/[^A-Z0-9-]/g, "");
+    const found = allItems.find(
+      (item) =>
+        (item.code && item.code.toUpperCase() === clean) ||
+        (item.code && item.code.replace("-", "").toUpperCase() === clean.replace("-", "")) ||
+        (item.id && item.id.toUpperCase() === clean)
+    );
+    if (found) {
+      switchMainView("showcase");
+      setTimeout(() => {
+        openInspectionModal(found.id, "front");
+      }, 350);
     }
   }
 
